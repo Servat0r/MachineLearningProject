@@ -1,0 +1,15 @@
+1. Simplify Softmax and its gradient code;
+2. (Maybe) merge DifferentiableFunction and Gradient under a common interface. If necessary, we can set .grad(...) to
+return None for not anymore differentiable functions (or for stopping diff);
+3. Write down the PyTorch package for comparisons with PyTorch;
+4. Check .backward() methods against Backpropagation as we saw in class (used Comp. Graphs for writing it);
+5. Check MSELoss (should be incomplete);
+6. Refactor (weights, dweights) and (biases, dbiases) in Weighted/Linear/FullyConnectedLayer into a Parameter object
+for using Optimizers;
+7. Write Optimizers code (SGD, Momentum, Adam, Nesterov)!
+8. Add regularization to losses, either as weight_decay param or by adding separately Regularization objects (pass
+to Optimizers or Losses?);
+9. Add MEELoss;
+10. Write Conjugate Gradient - based Optimizer (joint with CM);
+11. Add Dataset, Dataloader and any other utility for data loading/analysis/preprocessing (if necessary)/...
+12. Write tests!
