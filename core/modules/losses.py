@@ -1,6 +1,7 @@
 from __future__ import annotations
 from core.utils.types import *
-from core.functions import *
+import core.diffs as dfs
+import core.functions as cf
 
 
 class Loss:
@@ -56,16 +57,14 @@ class CrossEntropyLoss(Loss):
     def __init__(self, clip_value: TReal = 1e-7):
         super(CrossEntropyLoss, self).__init__()
         self.clip_value = clip_value
-        self.func = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        self.func = CategoricalCrossEntropy(self.truth, self.clip_value)
-        return self.func(pred)
+        return cf.cross_entropy(self.input, self.truth, self.clip_value)
 
     def backward(self) -> np.ndarray:
-        return self.func.grad(self.func)(self.input)
+        return dfs.grad(cf.cross_entropy, self.input, self.truth, self.clip_value)
 
 
 class NLLoss(Loss):
@@ -76,7 +75,6 @@ class NLLoss(Loss):
     def __init__(self, clip_value=1e-7):
         super(NLLoss, self).__init__()
         self.clip_value = clip_value
-        self.func = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         """
@@ -85,13 +83,12 @@ class NLLoss(Loss):
         trshape = truth.shape
         ltrs = len(trshape)
         # Convert one-hot encoded labels to "regular" ones
-        norm_truth = np.argmax(truth, axis=ltrs-1) if ltrs >= 2 else truth
+        self.truth = np.argmax(truth, axis=ltrs-1) if ltrs >= 2 else truth
         self.input = pred
-        self.func = CategoricalCrossEntropy(norm_truth, self.clip_value)
-        return self.func(pred)
+        return cf.cross_entropy(self.input, self.truth, self.clip_value)
 
     def backward(self) -> np.ndarray:
-        return self.func.grad(self.func)(self.input)
+        return dfs.grad(cf.cross_entropy, self.input, self.truth, self.clip_value)
 
 
 class SoftmaxCrossEntropyLoss(Loss):
@@ -101,24 +98,21 @@ class SoftmaxCrossEntropyLoss(Loss):
     """
     def __init__(self, const_shift=0, max_shift=False, clip_value=1e-7):
         super(SoftmaxCrossEntropyLoss, self).__init__()
-        self.softmax = Softmax(const_shift, max_shift)
-        self.net = None
+        self.const_shift = const_shift
+        self.max_shift = max_shift
         self.clip_value = clip_value
-        self.func = None
+        self.net = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
-        if self.func is None:
-            self.func = CategoricalCrossEntropy(truth, self.clip_value)
-        else:
-            self.func.set_truth_values(truth)
-        self.net = self.softmax(pred)
-        return self.func(self.net)
+        self.net = cf.softmax(pred)
+        self.truth = truth
+        return cf.cross_entropy(self.net, self.truth, self.clip_value)
 
     def backward(self) -> np.ndarray:
-        dvals: np.ndarray = self.func.grad()(self.net)
+        dvals: np.ndarray = dfs.grad(cf.cross_entropy, self.net, self.truth, self.clip_value)
         # noinspection PyArgumentList
-        return self.softmax.grad()(self.input, dvals)
+        return dfs.vjp(cf.softmax, self.input, dvals)
 
 
 class SquaredErrorLoss(Loss):
@@ -128,14 +122,17 @@ class SquaredErrorLoss(Loss):
     compute respectively the average error over training examples and the sum
     over them.
     """
-    func = SquareError()
+    def __init__(self, const=0.5):
+        super(SquaredErrorLoss, self).__init__()
+        self.const = const
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
-        return self.func(pred - truth)  # todo sure?
+        self.truth = truth
+        return cf.square_error(self.truth - self.input, self.const)
 
     def backward(self) -> np.ndarray:
-        return self.func.grad()(self.input)
+        return dfs.grad(cf.square_error, self.truth - self.input, self.const)
 
 
 class MSELoss(Loss):
@@ -143,28 +140,17 @@ class MSELoss(Loss):
     Mean Squared Error Loss over a batch of training examples. Its .forward(...)
     method is equivalent to SquaredErrorLoss.mean(...).
     """
-    func = SquareError()
+    def __init__(self, const=0.5):
+        super(MSELoss, self).__init__()
+        self.const = const
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
-        return np.mean(self.func(pred - truth))  # todo sure?
+        self.truth = truth
+        return np.mean(cf.square_error(self.truth - self.input))
 
     def backward(self) -> np.ndarray:
-        return self.func.grad()(self.input) / len(self.input)
-
-
-class MeanAbsErrorLoss(Loss):
-    """
-    Mean Absolute error Loss.
-    """
-    func = AbsError()
-
-    def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        self.input = pred
-        return self.func(pred - truth)  # todo sure?
-
-    def backward(self) -> np.ndarray:
-        pass
+        return dfs.grad(cf.square_error, self.truth - self.input, self.const / len(self.input))
 
 
 __all__ = [
@@ -174,5 +160,4 @@ __all__ = [
     'SoftmaxCrossEntropyLoss',
     'SquaredErrorLoss',
     'MSELoss',
-    'MeanAbsErrorLoss',
 ]

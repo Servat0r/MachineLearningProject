@@ -2,7 +2,8 @@
 from __future__ import annotations
 from core.utils.types import *
 from core.utils import Initializer, ZeroInitializer
-from core.functions import *
+import core.diffs as dfs
+import core.functions as cf
 
 
 class Layer:
@@ -173,7 +174,6 @@ class LinearLayer(WeightedLayer):
         if not self.check_backward_input_shape(dvals.shape):
             raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.out_features}), got {dvals.shape}")
         # Calculate update to layer's weights and biases
-        dshape = dvals.shape
         self.dbiases = dvals    # (l, 1, n)
         dvals2 = np.transpose(dvals, axes=[0, 2, 1])    # (l, n, 1)
         tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
@@ -188,7 +188,7 @@ class ActivationLayer(Layer):
     Represents an activation function layer: accepts an input of the shape (l, 1, n)
     and returns an output of the same shape after having applied an activation function.
     """
-    def __init__(self, func: ActivationFunction):
+    def __init__(self, func: Callable):
         super(ActivationLayer, self).__init__()
         self.func = func
 
@@ -212,14 +212,14 @@ class ActivationLayer(Layer):
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
             raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {dvals.shape}")
-        return dvals * self.func.egrad()(self.input)
+        return dfs.vjp(self.func, self.input, dvals)
 
 
 class FullyConnectedLayer(LinearLayer):
     """
     A fully-connected layer with activation function for all the neurons.
     """
-    def __init__(self, in_features: int, out_features: int, func: ActivationFunction,
+    def __init__(self, in_features: int, out_features: int, func: Callable,
                  initializer: Initializer, init_args: dict[str, Any] = None):
         # Initialize linear part
         super(FullyConnectedLayer, self).__init__(initializer, in_features, out_features, init_args)
@@ -236,39 +236,41 @@ class FullyConnectedLayer(LinearLayer):
         return self.output
 
     def backward(self, dvals: np.ndarray):
-        dvals = dvals * self.func.egrad()(self.net)
+        dvals = dfs.vjp(self.func, self.net, dvals)
         return super(FullyConnectedLayer, self).backward(dvals)
 
 
 class SignLayer(ActivationLayer):
 
     def __init__(self):
-        super(SignLayer, self).__init__(func=Sign())
+        super(SignLayer, self).__init__(func=cf.sign)
 
 
 class SigmoidLayer(ActivationLayer):
 
     def __init__(self):
-        super(SigmoidLayer, self).__init__(func=Sigmoid())
+        super(SigmoidLayer, self).__init__(func=cf.sigmoid)
 
 
 class TanhLayer(ActivationLayer):
 
     def __init__(self):
-        super(TanhLayer, self).__init__(func=Tanh())
+        super(TanhLayer, self).__init__(func=cf.tanh)
 
 
 class ReLULayer(ActivationLayer):
 
     def __init__(self):
-        super(ReLULayer, self).__init__(func=ReLU())
+        super(ReLULayer, self).__init__(func=cf.relu)
 
 
 class SoftmaxLayer(Layer):
 
     def __init__(self, const_shift=0, max_shift=False):
         super(SoftmaxLayer, self).__init__()
-        self.func = Softmax(const_shift=const_shift, max_shift=max_shift)
+        self.func = cf.softmax
+        self.const_shift = const_shift
+        self.max_shift = max_shift
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
@@ -284,14 +286,13 @@ class SoftmaxLayer(Layer):
         if not self.check_input_shape(input.shape):
             raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {input.shape}")
         self.input = input
-        self.output = self.func(self.input)
+        self.output = self.func(self.input, self.const_shift, self.max_shift)
         return self.output
 
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
             raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {dvals.shape}")
-        # noinspection PyArgumentList
-        return self.func.grad(self.func)(self.input, dvals)
+        return dfs.vjp(self.func, self.input, dvals, self.const_shift, self.max_shift)
 
 
 __all__ = [
