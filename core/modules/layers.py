@@ -69,6 +69,7 @@ class WeightedLayer(Layer):
         self.weights, self.biases = self._initialize_weights(initializer, init_args=init_args)
         # Gradients for weights updating
         self.dweights, self.dbiases = self._initialize_weights(ZeroInitializer(), init_args=init_args)
+        # todo the above is useless, unless they get overwritten!
 
     def get_weights(self, copy=True) -> np.ndarray:
         """
@@ -138,7 +139,8 @@ class LinearLayer(WeightedLayer):
     of the shape (l, 1, out_features).
     """
 
-    def __init__(self, initializer: Initializer, in_features: int, out_features: int, init_args: dict[str, Any] = None):
+    def __init__(self, initializer: Initializer, in_features: int,
+                 out_features: int, init_args: dict[str, Any] = None):
         self.in_features = in_features
         self.out_features = out_features
         super(LinearLayer, self).__init__(initializer, init_args=init_args)
@@ -157,7 +159,8 @@ class LinearLayer(WeightedLayer):
     def check_backward_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
             return False
-        return all([len(shape) == 3, shape[0] > 0, shape[1] == self.out_features, shape[2] == 1])
+        return all([len(shape) == 3, shape[0] > 0, shape[1] == 1, shape[2] == self.out_features])
+        # todo now the above is only for row vectors
 
     def forward(self, input: np.ndarray) -> np.ndarray:
         if not self.check_input_shape(input.shape):
@@ -168,13 +171,15 @@ class LinearLayer(WeightedLayer):
 
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
-            raise ValueError(f"Invalid input shape: expected (l > 0, {self.out_features}, 1), got {dvals.shape}")
+            raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.out_features}), got {dvals.shape}")
         # Calculate update to layer's weights and biases
         dshape = dvals.shape
-        self.dweights = dvals @ self.input
-        self.dbiases = np.reshape(dvals, (dshape[0], dshape[2], dshape[1]))
+        self.dbiases = dvals    # (l, 1, n)
+        dvals2 = np.transpose(dvals, axes=[0, 2, 1])    # (l, n, 1)
+        tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
+        self.dweights = tinp @ dvals  # (l, m, 1) * (l, 1, n)
         # Now calculate values to backpropagate to previous layer
-        out_dvalues = self.weights @ dvals
+        out_dvalues = np.transpose(self.weights @ dvals2, axes=[0, 2, 1])
         return out_dvalues
 
 
@@ -195,7 +200,7 @@ class ActivationLayer(Layer):
     def check_backward_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
             return False
-        return all([len(shape) == 3, shape[0] > 0, shape[1] > 0, shape[2] == 1])
+        return all([len(shape) == 3, shape[0] > 0, shape[1] == 1, shape[2] > 0])
 
     def forward(self, input: np.ndarray) -> np.ndarray:
         if not self.check_input_shape(input.shape):
@@ -206,10 +211,8 @@ class ActivationLayer(Layer):
 
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
-            raise ValueError(f"Invalid shape: expected (l > 0, n > 0, 1), got {dvals.shape}")
-        inshape = self.input.shape
-        y = np.reshape(self.func.grad()(self.input), (inshape[0], inshape[2], inshape[1]))
-        return dvals * y
+            raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {dvals.shape}")
+        return dvals * self.func.egrad()(self.input)
 
 
 class FullyConnectedLayer(LinearLayer):
@@ -233,9 +236,7 @@ class FullyConnectedLayer(LinearLayer):
         return self.output
 
     def backward(self, dvals: np.ndarray):
-        inshape = self.net.shape
-        y = np.reshape(self.func.grad()(self.net), (inshape[0], inshape[2], inshape[1]))
-        dvals = dvals * y
+        dvals = dvals * self.func.egrad()(self.net)
         return super(FullyConnectedLayer, self).backward(dvals)
 
 
@@ -265,6 +266,10 @@ class ReLULayer(ActivationLayer):
 
 class SoftmaxLayer(Layer):
 
+    def __init__(self, const_shift=0, max_shift=False):
+        super(SoftmaxLayer, self).__init__()
+        self.func = Softmax(const_shift=const_shift, max_shift=max_shift)
+
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
             return False
@@ -273,20 +278,20 @@ class SoftmaxLayer(Layer):
     def check_backward_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
             return False
-        return all([len(shape) == 3, shape[0] > 0, shape[1] > 0, shape[2] == 1])
+        return all([len(shape) == 3, shape[0] > 0, shape[1] == 1, shape[2] > 0])
 
     def forward(self, input: np.ndarray) -> np.ndarray:
         if not self.check_input_shape(input.shape):
             raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {input.shape}")
         self.input = input
-        self.output = Softmax()(self.input)
+        self.output = self.func(self.input)
         return self.output
 
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
-            raise ValueError(f"Invalid shape: expected (l > 0, n > 0, 1), got {dvals.shape}")
-        y = Softmax().grad()(self.input)  # (l, n, n)
-        return y @ dvals    # (l, n, 1)
+            raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {dvals.shape}")
+        # noinspection PyArgumentList
+        return self.func.grad(self.func)(self.input, dvals)
 
 
 __all__ = [

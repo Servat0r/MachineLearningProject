@@ -1,6 +1,3 @@
-1. Simplify Softmax and its gradient code;
-2. (Maybe) merge DifferentiableFunction and Gradient under a common interface. If necessary, we can set .grad(...) to
-return None for not anymore differentiable functions (or for stopping diff);
 3. Write down the PyTorch package for comparisons with PyTorch;
 4. Check .backward() methods against Backpropagation as we saw in class (used Comp. Graphs for writing it);
 5. Check MSELoss (should be incomplete);

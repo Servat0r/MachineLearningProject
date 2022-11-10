@@ -1,7 +1,4 @@
 from __future__ import annotations
-
-import numpy as np
-
 from core.utils.types import *
 from core.functions import *
 
@@ -52,7 +49,6 @@ class Loss:
         self.output = None
 
 
-# todo maybe it is better to rename it to NLLoss since it does NOT include Softmax
 class CrossEntropyLoss(Loss):
     """
     Categorical Cross Entropy Loss. Note that this class does NOT include a Softmax layer.
@@ -60,17 +56,42 @@ class CrossEntropyLoss(Loss):
     def __init__(self, clip_value: TReal = 1e-7):
         super(CrossEntropyLoss, self).__init__()
         self.clip_value = clip_value
+        self.func = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        function = CategoricalCrossEntropy(truth, self.clip_value)
-        return function(pred)
+        self.func = CategoricalCrossEntropy(self.truth, self.clip_value)
+        return self.func(pred)
 
     def backward(self) -> np.ndarray:
-        dvals = CategoricalCrossEntropy(self.truth, self.clip_value).grad()(self.input)
-        dshape = dvals.shape
-        return np.reshape(dvals, (dshape[0], dshape[2], dshape[1]))
+        return self.func.grad(self.func)(self.input)
+
+
+class NLLoss(Loss):
+    """
+    Negative Log Likelihoods Loss, assuming that the target distribution
+    is of the form [..., 1, ...] (e.g. one-hot encoded labels).
+    """
+    def __init__(self, clip_value=1e-7):
+        super(NLLoss, self).__init__()
+        self.clip_value = clip_value
+        self.func = None
+
+    def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        """
+        It is assumed here that truth has shape 1.
+        """
+        trshape = truth.shape
+        ltrs = len(trshape)
+        # Convert one-hot encoded labels to "regular" ones
+        norm_truth = np.argmax(truth, axis=ltrs-1) if ltrs >= 2 else truth
+        self.input = pred
+        self.func = CategoricalCrossEntropy(norm_truth, self.clip_value)
+        return self.func(pred)
+
+    def backward(self) -> np.ndarray:
+        return self.func.grad(self.func)(self.input)
 
 
 class SoftmaxCrossEntropyLoss(Loss):
@@ -81,40 +102,66 @@ class SoftmaxCrossEntropyLoss(Loss):
     def __init__(self, const_shift=0, max_shift=False, clip_value=1e-7):
         super(SoftmaxCrossEntropyLoss, self).__init__()
         self.softmax = Softmax(const_shift, max_shift)
+        self.net = None
         self.clip_value = clip_value
+        self.func = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
-        cross_entropy = CategoricalCrossEntropy(truth, self.clip_value)
-        smax_pred = self.softmax(pred)
-        return cross_entropy(smax_pred)
+        if self.func is None:
+            self.func = CategoricalCrossEntropy(truth, self.clip_value)
+        else:
+            self.func.set_truth_values(truth)
+        self.net = self.softmax(pred)
+        return self.func(self.net)
 
     def backward(self) -> np.ndarray:
-        pass
+        dvals: np.ndarray = self.func.grad()(self.net)
+        # noinspection PyArgumentList
+        return self.softmax.grad()(self.input, dvals)
+
+
+class SquaredErrorLoss(Loss):
+    """
+    Squared Error Loss. Default .forward(...) method computes the squared error
+    for each pattern SEPARATELY with NO reduction, while .mean(...) and .sum(...)
+    compute respectively the average error over training examples and the sum
+    over them.
+    """
+    func = SquareError()
+
+    def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        self.input = pred
+        return self.func(pred - truth)  # todo sure?
+
+    def backward(self) -> np.ndarray:
+        return self.func.grad()(self.input)
 
 
 class MSELoss(Loss):
     """
-    Mean Square Error Loss.
+    Mean Squared Error Loss over a batch of training examples. Its .forward(...)
+    method is equivalent to SquaredErrorLoss.mean(...).
     """
+    func = SquareError()
+
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
-        return SquareError()(pred - truth)  # todo sure?
+        return np.mean(self.func(pred - truth))  # todo sure?
 
     def backward(self) -> np.ndarray:
-        dvals = SquareError().grad()(self.input)
-        dshape = dvals.shape
-        dvals = np.reshape(dvals, (dshape[0], dshape[2], dshape[1]))
-        return dvals
+        return self.func.grad()(self.input) / len(self.input)
 
 
 class MeanAbsErrorLoss(Loss):
     """
     Mean Absolute error Loss.
     """
+    func = AbsError()
+
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
-        return AbsError()(pred - truth)  # todo sure?
+        return self.func(pred - truth)  # todo sure?
 
     def backward(self) -> np.ndarray:
         pass
@@ -123,7 +170,9 @@ class MeanAbsErrorLoss(Loss):
 __all__ = [
     'Loss',
     'CrossEntropyLoss',
+    'NLLoss',
     'SoftmaxCrossEntropyLoss',
+    'SquaredErrorLoss',
     'MSELoss',
     'MeanAbsErrorLoss',
 ]
