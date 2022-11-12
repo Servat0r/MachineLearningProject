@@ -3,6 +3,9 @@ Basic functions with diffs and vjp registrations.
 # todo VJPs in this case produce (l, 1, n) outputs.
 """
 from __future__ import annotations
+
+import numpy as np
+
 from .utils import *
 import core.diffs as dfs
 from core.diffs import row_vector_input_shape_checker as rv_input_check,\
@@ -126,17 +129,18 @@ class SquareError(Callable):
     """
     Calculates square error (coefficient * ||x||^2) for the patterns SEPARATELY.
     """
-    def __init__(self, coefficient=0.5):
+    def __init__(self, truth_values: np.ndarray, coefficient=0.5):
         self.coefficient = coefficient
+        self.truth_values = truth_values
 
     @dfs.set_primitive(input_checker=rv_input_check, input_normalizer=rv_input_norm, input_arg=1)
     def __call__(self, x: np.ndarray):
-        y = self.coefficient * np.square(np.linalg.norm(x, axis=2))
+        y = self.coefficient * np.square(np.linalg.norm(self.truth_values - x, axis=2))
         return y
 
     @dfs.set_grad(__call__, input_checker=rv_input_check, input_normalizer=rv_input_norm, input_arg=1)
     def grad(self, x: np.ndarray, coeff=1):
-        return self.coefficient * coeff * 2 * x
+        return -1.0 * self.coefficient * coeff * 2 * x
 
 
 # Sigmoid

@@ -1,9 +1,9 @@
 # Base layers for a Neural Network
 from __future__ import annotations
-from core.utils.types import *
-from core.utils import Initializer
+from core.utils import *
 import core.diffs as dfs
 import core.functions as cf
+from .parameters import *
 
 
 class Layer:
@@ -50,6 +50,10 @@ class Layer:
         self.input = None
         self.output = None
 
+    @abstractmethod
+    def get_parameters(self) -> Set[Parameters]:
+        pass
+
     def set_to_train(self):
         self.__is_training = True
 
@@ -68,11 +72,9 @@ class WeightedLayer(Layer):
     def __init__(self, initializer: Initializer, init_args: dict[str, Any] = None):
         super(WeightedLayer, self).__init__()
         self.weights, self.biases = self._initialize_weights(initializer, init_args=init_args)
-        # Gradients for weights updating (initialized to empty values because we overwrite them,
-        # otherwise we need to give up on maintaining batch results for each input separate)
-        # (i.e., if we want to do something different from summing up over the batches, this
-        # would not be possible)
-        self.dweights, self.dbiases = None, None
+        self.parameters = WeightedLayerParameters(
+            self.weights, self.biases, grad_reduction=WeightedLayerParameters.SUM,
+        )
 
     def get_weights(self, copy=True) -> np.ndarray:
         """
@@ -90,15 +92,18 @@ class WeightedLayer(Layer):
         return self.biases.copy() if copy else self.biases
 
     def get_dweights(self, copy=True) -> np.ndarray:
-        return self.dweights.copy() if copy else self.dweights
+        return self.parameters.get_dweights(copy)
 
     def get_dbiases(self, copy=True) -> np.ndarray | None:
-        return self.dbiases.copy() if copy else self.dbiases
+        return self.parameters.get_dbiases(copy)
 
     @abstractmethod
     def _initialize_weights(self, initializer: Initializer,
                             init_args: dict[str, Any] = None) -> tuple[np.ndarray, Optional[np.ndarray]]:
         pass
+
+    def get_parameters(self) -> Set[Parameters]:
+        return {self.parameters}
 
 
 class SequentialLayer(Layer):
@@ -134,6 +139,12 @@ class SequentialLayer(Layer):
             layer = self.layers[len(self) - 1 - i]
             current_dvals = layer.backward(current_dvals)
         return current_dvals
+
+    def get_parameters(self) -> Set[Parameters]:
+        parameters = set()
+        for layer in self.layers:
+            parameters.update(layer.get_parameters())
+        return parameters
 
 
 class LinearLayer(WeightedLayer):
@@ -176,10 +187,11 @@ class LinearLayer(WeightedLayer):
         if not self.check_backward_input_shape(dvals.shape):
             raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.out_features}), got {dvals.shape}")
         # Calculate update to layer's weights and biases
-        self.dbiases = dvals   # (l, 1, n)
         dvals2 = np.transpose(dvals, axes=[0, 2, 1])    # (l, n, 1)
         tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
-        self.dweights = tinp @ dvals  # (l, m, 1) * (l, 1, n)
+        dbiases = dvals   # (l, 1, n) todo need to make a copy?
+        dweights = tinp @ dvals  # (l, m, 1) * (l, 1, n)
+        self.parameters.update_grads(dweights, dbiases)
         # Now calculate values to backpropagate to previous layer
         out_dvalues = np.transpose(self.weights @ dvals2, axes=[0, 2, 1])
         return out_dvalues
@@ -220,6 +232,9 @@ class ActivationLayer(Layer):
         else:
             return dfs.vjp(self.func, self.input, dvals)
 
+    def get_parameters(self) -> Set[Parameters]:
+        return set()    # we don't have parameters here!
+
 
 class FullyConnectedLayer(Layer):
     """
@@ -252,6 +267,9 @@ class FullyConnectedLayer(Layer):
     def backward(self, dvals: np.ndarray):
         dvals = self.activation.backward(dvals)  # net is actually saved as input to the activation layer
         return self.linear.backward(dvals)
+
+    def get_parameters(self) -> Set[Parameters]:
+        return self.linear.get_parameters().union(self.activation.get_parameters())
 
 
 class SignLayer(ActivationLayer):

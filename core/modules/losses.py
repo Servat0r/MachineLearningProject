@@ -137,11 +137,11 @@ class SquaredErrorLoss(Loss):
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        self.func = cf.SquareError(self.const)
-        return self.func(self.truth - self.input)
+        self.func = cf.SquareError(self.truth, self.const)
+        return self.func(self.input)
 
     def backward(self) -> np.ndarray:
-        return dfs.grad(type(self.func), self.func, self.truth - self.input)
+        return dfs.grad(type(self.func), self.func, self.input)
 
 
 class MSELoss(Loss):
@@ -157,11 +157,11 @@ class MSELoss(Loss):
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        self.func = cf.SquareError(self.const)
-        return np.mean(self.func(self.truth - self.input))
+        self.func = cf.SquareError(self.truth, self.const)
+        return np.mean(self.func(self.input))
 
     def backward(self) -> np.ndarray:
-        return dfs.grad(type(self.func), self.func, self.truth - self.input, self.const / len(self.input))
+        return dfs.grad(type(self.func), self.func, self.input, self.const / len(self.input))
 
 
 __all__ = [
