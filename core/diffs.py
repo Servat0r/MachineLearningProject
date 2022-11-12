@@ -8,7 +8,7 @@ from __future__ import annotations
 from functools import wraps
 from .utils import *
 
-__diffs__: dict[Callable, dict[str, Callable]] = {}
+diffs__: dict[Callable, dict[str, Callable]] = {}
 __shape_checks__: bool = __debug__
 SCALAR = 'scalar'  # f : R -> R
 GRADIENT = 'gradient'  # f : R^n -> R
@@ -135,18 +135,19 @@ def set_primitive(input_checker: Optional[Callable] = None,
     Simple decorator to register a primitive (yet not necessarily
     differentiable) function.
     """
-    def wrapper(func: Callable):
+    def wrapper(func: Callable | type):
+        real_func = func.__call__ if isinstance(func, type) else func   # handle functions and classes
         # Apply input shape decorators to func
         if input_checker is not None:
-            func = set_input_shape_checker(input_checker, input_arg)(func)
+            real_func = set_input_shape_checker(input_checker, input_arg)(func)
         if input_normalizer is not None:
-            func = set_input_shape_normalizer(input_normalizer, input_arg)(func)
-        __diffs__[func] = {}
+            real_func = set_input_shape_normalizer(input_normalizer, input_arg)(func)
+        diffs__[real_func] = {}
         return func
     return wrapper
 
 
-def set_diff(func: Callable, diff_type=GRADIENT, input_checker: Optional[Callable] = None,
+def set_diff(func: Callable | type, diff_type=GRADIENT, input_checker: Optional[Callable] = None,
              input_normalizer: Optional[Callable] = None, input_arg: int = 0):
     """
     Decorator to register a DiffObject class as differential of
@@ -161,11 +162,12 @@ def set_diff(func: Callable, diff_type=GRADIENT, input_checker: Optional[Callabl
     """
 
     def wrapper(dfunc: Callable):
+        real_func = func.__call__ if isinstance(func, type) else func
         # Checks if 'func' is not already registered with a differential.
-        diffs: dict = __diffs__.get(func) or {}
+        diffs: dict = diffs__.get(real_func) or {}
         old_dfunc = diffs.get(diff_type, None)
         if old_dfunc is not None:
-            raise KeyError(f"Function {func} has already a '{diff_type}' " +
+            raise KeyError(f"Function {real_func} has already a '{diff_type}' " +
                            f"differential registered: {old_dfunc}")
         # Apply input shape decorators to dfunc
         if input_checker is not None:
@@ -173,13 +175,13 @@ def set_diff(func: Callable, diff_type=GRADIENT, input_checker: Optional[Callabl
         if input_normalizer is not None:
             dfunc = set_input_shape_normalizer(input_normalizer, input_arg)(dfunc)
         diffs[diff_type] = dfunc
-        __diffs__[func] = diffs
+        diffs__[real_func] = diffs
         return dfunc
 
     return wrapper
 
 
-def set_grad(func: Callable, input_checker: Optional[Callable] = None,
+def set_grad(func: Callable , input_checker: Optional[Callable] = None,
              input_normalizer: Optional[Callable] = None, input_arg: int = 0):
     return set_diff(func, GRADIENT, input_checker, input_normalizer, input_arg)
 
@@ -205,10 +207,13 @@ def set_vjp(func: Callable, input_checker: Optional[Callable] = None,
 
 
 def get_diff(func: Callable, diff_type=GRADIENT):
-    diffs = __diffs__.get(func)
+    real_func = func.__call__ if isinstance(func, type) else func
+    diffs = diffs__.get(real_func)
+    if diffs is None:
+        raise KeyError(f"Function {real_func} is not registered!")
     diff = diffs.get(diff_type, None)
     if diff is None:
-        raise KeyError(f"Function {func} has no registered '{diff_type}' differential")
+        raise KeyError(f"Function {real_func} has no registered '{diff_type}' differential")
     return diff
 
 

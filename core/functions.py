@@ -5,7 +5,138 @@ Basic functions with diffs and vjp registrations.
 from __future__ import annotations
 from .utils import *
 import core.diffs as dfs
-from core.diffs import row_vector_input_shape_checker as rv_input_check, row_vector_input_shape_normalizer as rv_input_norm
+from core.diffs import row_vector_input_shape_checker as rv_input_check,\
+    row_vector_input_shape_normalizer as rv_input_norm
+
+
+# Class-based activation functions
+class ActivationFunction(Callable):
+    """
+    Base class for activation functions.
+    """
+    @abstractmethod
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        pass
+
+
+class Softmax(Callable):
+
+    def __init__(self, const_shift=0, max_shift=False):
+        super(Softmax, self).__init__()
+        self.const_shift = const_shift  # constant shift for arguments
+        self.max_shift = max_shift      # subtracting the maximum input value from all inputs
+
+    def __shift_x(self, x: np.ndarray) -> np.ndarray:
+        """
+        Applies constant and/or maximum shift to input data BEFORE applying Softmax.
+        This is a common technique for avoiding numerical instability if the input
+        array contains large positive values. Since the function x -> x - c for c
+        constant has the identity matrix as differential, the operation is made
+        in-place since the backprop value is 1.  # todo check if it is correct!
+        """
+        if self.const_shift != 0:
+            x += self.const_shift
+        if self.max_shift:
+            x -= np.max(x, axis=2, keepdims=True)
+        return x
+
+    @dfs.set_primitive(input_checker=rv_input_check, input_normalizer=rv_input_norm, input_arg=1)
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        self.__shift_x(x)   # todo check if actually modifies inplace!
+        xc = np.exp(x)
+        s = np.sum(xc, axis=2, keepdims=True)
+        xc /= s
+        return xc
+
+    @dfs.set_jacobian(__call__)
+    def jacobian(self, x: np.ndarray):
+        s = self(x)  # (l, 1, n)
+        # Calculate the common part
+        st = np.transpose(s, axes=[0, 2, 1])  # (l, n, 1)
+        y = (-1.0) * (st @ s)  # (l, n, n)
+        # Reshape for summing elements on the ("last two") diagonals
+        l, n = y.shape[0], y.shape[2]
+        ind = np.array(range(n))
+        y[:, ind, ind] = s[:, 0, ind]
+        # todo actually for small matrices (10^1 or 10^2) a double for-loop is faster
+        # todo for 10^3 or higher, the above y[:,ind,ind] ... is much faster
+        return y
+
+    @dfs.set_vjp(__call__)
+    def vjp(self, x: np.ndarray, dvals: np.ndarray):
+        s = self(x)
+        sd = s * dvals
+        sd_sum = np.sum(sd, axis=1, keepdims=True)
+        return sd - sd_sum * s
+
+
+class CategoricalCrossEntropy(Callable):
+
+    def __init__(self, target_truth_values: np.ndarray, clip_value: TReal = 1e-7):
+        super(CategoricalCrossEntropy, self).__init__()
+        target_truth_values = dfs.row_vector_target_shape_normalizer(target_truth_values)
+        self.target_truth_values = target_truth_values
+        self.clip_value = clip_value
+
+    def set_truth_values(self, truth_values: np.ndarray):
+        self.target_truth_values = truth_values
+
+    def check_input_shape(self, x: np.ndarray) -> bool:
+        """
+        Input values should have the shape (l, 1, n).
+        :param x:
+        :return:
+        """
+        x_shape = x.shape
+        t_shape = self.target_truth_values.shape
+        return all([
+            len(x_shape) == 3, x_shape[0] == t_shape[0], x_shape[1] == 1,
+            x_shape[2] > 0 if len(t_shape) == 1 else x_shape[2] == t_shape[2],  # todo check what's going on here!
+        ])
+
+    @dfs.set_primitive(input_checker=check_input_shape, input_normalizer=rv_input_norm, input_arg=1)
+    def __call__(self, x: np.ndarray):
+        samples = len(x)
+        x_clipped = np.clip(x, self.clip_value, 1 - self.clip_value)
+        correct_confidences = []
+
+        trshape = self.target_truth_values.shape
+        if len(trshape) == 1:  # (l,)
+            correct_confidences = x_clipped[range(samples), 0, self.target_truth_values]
+        elif len(trshape) == 3:  # (l, 1, n)
+            filtered_x = x_clipped * self.target_truth_values
+            correct_confidences = np.sum(filtered_x, axis=2)
+
+        negative_log_likelihoods = -np.log(correct_confidences)
+        return negative_log_likelihoods
+
+    @dfs.set_grad(__call__, input_checker=check_input_shape, input_normalizer=rv_input_norm, input_arg=1)
+    def grad(self, x: np.ndarray):
+        x_clip = - 1.0 / np.clip(x, self.clip_value, 1 - self.clip_value)
+        trshape = self.target_truth_values.shape
+        if len(trshape) == 1:
+            # If labels are sparse, turn them into one-hot encoded ones
+            self.target_truth_values = np.eye(x.shape[2])[self.target_truth_values]
+            self.target_truth_values = np.reshape(self.target_truth_values, (trshape[0], 1, x.shape[2]))
+        result = x_clip * self.target_truth_values
+        return result
+
+
+class SquareError(Callable):
+    """
+    Calculates square error (coefficient * ||x||^2) for the patterns SEPARATELY.
+    """
+    def __init__(self, coefficient=0.5):
+        self.coefficient = coefficient
+
+    @dfs.set_primitive(input_checker=rv_input_check, input_normalizer=rv_input_norm, input_arg=1)
+    def __call__(self, x: np.ndarray):
+        y = self.coefficient * np.square(np.linalg.norm(x, axis=2))
+        return y
+
+    @dfs.set_grad(__call__, input_checker=rv_input_check, input_normalizer=rv_input_norm, input_arg=1)
+    def grad(self, x: np.ndarray, coeff=1):
+        return self.coefficient * coeff * 2 * x
 
 
 # Sigmoid
@@ -165,6 +296,13 @@ def abs_error(x: np.ndarray):
 
 
 __all__ = [
+    'dfs',  # conveniently import module with "uniform" name
+
+    'ActivationFunction',
+    'Softmax',
+    'CategoricalCrossEntropy',
+    'SquareError',
+
     'sigmoid',
     'sign',
     'tanh',

@@ -1,7 +1,7 @@
 # Base layers for a Neural Network
 from __future__ import annotations
 from core.utils.types import *
-from core.utils import Initializer, ZeroInitializer
+from core.utils import Initializer
 import core.diffs as dfs
 import core.functions as cf
 
@@ -34,10 +34,10 @@ class Layer:
         pass
 
     @abstractmethod
-    def forward(self, input: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray) -> np.ndarray:
         """
         Forward pass of the current level.
-        :param input:
+        :param x:
         :return:
         """
         pass
@@ -56,8 +56,8 @@ class Layer:
     def set_to_eval(self):
         self.__is_training = False
 
-    def __call__(self, input: np.ndarray) -> np.ndarray:
-        return self.forward(input)
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        return self.forward(x)
 
 
 class WeightedLayer(Layer):
@@ -68,9 +68,11 @@ class WeightedLayer(Layer):
     def __init__(self, initializer: Initializer, init_args: dict[str, Any] = None):
         super(WeightedLayer, self).__init__()
         self.weights, self.biases = self._initialize_weights(initializer, init_args=init_args)
-        # Gradients for weights updating
-        self.dweights, self.dbiases = self._initialize_weights(ZeroInitializer(), init_args=init_args)
-        # todo the above is useless, unless they get overwritten!
+        # Gradients for weights updating (initialized to empty values because we overwrite them,
+        # otherwise we need to give up on maintaining batch results for each input separate)
+        # (i.e., if we want to do something different from summing up over the batches, this
+        # would not be possible)
+        self.dweights, self.dbiases = None, None
 
     def get_weights(self, copy=True) -> np.ndarray:
         """
@@ -116,9 +118,9 @@ class SequentialLayer(Layer):
     def check_backward_input_shape(self, shape: int | Sequence) -> bool:
         return self.layers[-1].check_backward_input_shape(shape)
 
-    def forward(self, input: np.ndarray) -> np.ndarray:
-        self.input = input
-        current_output = input
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        self.input = x
+        current_output = x
         for layer in self.layers:
             current_output = layer.forward(current_output)
         self.output = current_output
@@ -163,10 +165,10 @@ class LinearLayer(WeightedLayer):
         return all([len(shape) == 3, shape[0] > 0, shape[1] == 1, shape[2] == self.out_features])
         # todo now the above is only for row vectors
 
-    def forward(self, input: np.ndarray) -> np.ndarray:
-        if not self.check_input_shape(input.shape):
-            raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.in_features}), got {input.shape}.")
-        self.input = input
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        if not self.check_input_shape(x.shape):
+            raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.in_features}), got {x.shape}.")
+        self.input = x
         self.output = self.input @ self.weights + (self.biases if self.biases is not None else 0)
         return self.output
 
@@ -174,7 +176,7 @@ class LinearLayer(WeightedLayer):
         if not self.check_backward_input_shape(dvals.shape):
             raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.out_features}), got {dvals.shape}")
         # Calculate update to layer's weights and biases
-        self.dbiases = dvals    # (l, 1, n)
+        self.dbiases = dvals   # (l, 1, n)
         dvals2 = np.transpose(dvals, axes=[0, 2, 1])    # (l, n, 1)
         tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
         self.dweights = tinp @ dvals  # (l, m, 1) * (l, 1, n)
@@ -191,6 +193,7 @@ class ActivationLayer(Layer):
     def __init__(self, func: Callable):
         super(ActivationLayer, self).__init__()
         self.func = func
+        self.func_is_type = isinstance(func, type)  # for classes
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
@@ -202,42 +205,53 @@ class ActivationLayer(Layer):
             return False
         return all([len(shape) == 3, shape[0] > 0, shape[1] == 1, shape[2] > 0])
 
-    def forward(self, input: np.ndarray) -> np.ndarray:
-        if not self.check_input_shape(input.shape):
-            raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {input.shape}")
-        self.input = input
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        if not self.check_input_shape(x.shape):
+            raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {x.shape}")
+        self.input = x
         self.output = self.func(self.input)
         return self.output
 
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
             raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {dvals.shape}")
-        return dfs.vjp(self.func, self.input, dvals)
+        if self.func_is_type:
+            return dfs.vjp(type(self.func), self.func, self.input, dvals)
+        else:
+            return dfs.vjp(self.func, self.input, dvals)
 
 
-class FullyConnectedLayer(LinearLayer):
+class FullyConnectedLayer(Layer):
     """
     A fully-connected layer with activation function for all the neurons.
     """
-    def __init__(self, in_features: int, out_features: int, func: Callable,
-                 initializer: Initializer, init_args: dict[str, Any] = None):
+    def __init__(
+            self, in_features: int, out_features: int, activation_layer: ActivationLayer = None,
+            func: Callable = None, initializer: Initializer = None, init_args: dict[str, Any] = None
+    ):
+        super(FullyConnectedLayer, self).__init__()
         # Initialize linear part
-        super(FullyConnectedLayer, self).__init__(initializer, in_features, out_features, init_args)
-        # Activation part
-        self.func = func
-        self.net = None
+        self.linear = LinearLayer(initializer, in_features, out_features, init_args)
+        self.activation = None
+        if activation_layer is not None:
+            self.activation = activation_layer
+        else:
+            self.activation = ActivationLayer(func)
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
-        return super(FullyConnectedLayer, self).check_input_shape(shape)
+        return self.linear.check_input_shape(shape)
 
-    def forward(self, input: np.ndarray) -> np.ndarray:
-        self.net = super(FullyConnectedLayer, self).forward(input)
-        self.output = self.func(self.net)
+    def check_backward_input_shape(self, shape: int | Sequence) -> bool:
+        return self.activation.check_backward_input_shape(shape)
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        net = self.linear.forward(x)
+        self.output = self.activation.forward(net)
         return self.output
 
     def backward(self, dvals: np.ndarray):
-        dvals = dfs.vjp(self.func, self.net, dvals)
-        return super(FullyConnectedLayer, self).backward(dvals)
+        dvals = self.activation.backward(dvals)  # net is actually saved as input to the activation layer
+        return self.linear.backward(dvals)
 
 
 class SignLayer(ActivationLayer):
@@ -264,35 +278,12 @@ class ReLULayer(ActivationLayer):
         super(ReLULayer, self).__init__(func=cf.relu)
 
 
-class SoftmaxLayer(Layer):
+class SoftmaxLayer(ActivationLayer):
 
     def __init__(self, const_shift=0, max_shift=False):
-        super(SoftmaxLayer, self).__init__()
-        self.func = cf.softmax
-        self.const_shift = const_shift
-        self.max_shift = max_shift
-
-    def check_input_shape(self, shape: int | Sequence) -> bool:
-        if isinstance(shape, int):
-            return False
-        return all([len(shape) == 3, shape[0] > 0, shape[1] == 1, shape[2] > 0])
-
-    def check_backward_input_shape(self, shape: int | Sequence) -> bool:
-        if isinstance(shape, int):
-            return False
-        return all([len(shape) == 3, shape[0] > 0, shape[1] == 1, shape[2] > 0])
-
-    def forward(self, input: np.ndarray) -> np.ndarray:
-        if not self.check_input_shape(input.shape):
-            raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {input.shape}")
-        self.input = input
-        self.output = self.func(self.input, self.const_shift, self.max_shift)
-        return self.output
-
-    def backward(self, dvals: np.ndarray):
-        if not self.check_backward_input_shape(dvals.shape):
-            raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {dvals.shape}")
-        return dfs.vjp(self.func, self.input, dvals, self.const_shift, self.max_shift)
+        func = cf.Softmax(const_shift, max_shift)
+        super(SoftmaxLayer, self).__init__(type(func))
+        self.func = func
 
 
 __all__ = [

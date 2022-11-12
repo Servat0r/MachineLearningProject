@@ -1,3 +1,3 @@
 from .utils import *
-from .old_functions import *
+from .functions import *
 from .modules import *

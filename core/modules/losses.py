@@ -57,14 +57,16 @@ class CrossEntropyLoss(Loss):
     def __init__(self, clip_value: TReal = 1e-7):
         super(CrossEntropyLoss, self).__init__()
         self.clip_value = clip_value
+        self.func = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        return cf.cross_entropy(self.input, self.truth, self.clip_value)
+        self.func = cf.CategoricalCrossEntropy(self.truth, self.clip_value)
+        return self.func(self.input)
 
     def backward(self) -> np.ndarray:
-        return dfs.grad(cf.cross_entropy, self.input, self.truth, self.clip_value)
+        return dfs.grad(type(self.func), self.func, self.input)
 
 
 class NLLoss(Loss):
@@ -75,6 +77,7 @@ class NLLoss(Loss):
     def __init__(self, clip_value=1e-7):
         super(NLLoss, self).__init__()
         self.clip_value = clip_value
+        self.func = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         """
@@ -85,10 +88,11 @@ class NLLoss(Loss):
         # Convert one-hot encoded labels to "regular" ones
         self.truth = np.argmax(truth, axis=ltrs-1) if ltrs >= 2 else truth
         self.input = pred
-        return cf.cross_entropy(self.input, self.truth, self.clip_value)
+        self.func = cf.CategoricalCrossEntropy(self.truth, self.clip_value)
+        return self.func(self.input)
 
     def backward(self) -> np.ndarray:
-        return dfs.grad(cf.cross_entropy, self.input, self.truth, self.clip_value)
+        return dfs.grad(type(self.func), self.func, self.input, self.truth, self.clip_value)
 
 
 class SoftmaxCrossEntropyLoss(Loss):
@@ -102,17 +106,20 @@ class SoftmaxCrossEntropyLoss(Loss):
         self.max_shift = max_shift
         self.clip_value = clip_value
         self.net = None
+        self.softmax = cf.Softmax(const_shift, max_shift)
+        self.cross_entropy = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
-        self.net = cf.softmax(pred)
+        self.net = self.softmax(pred)
         self.truth = truth
-        return cf.cross_entropy(self.net, self.truth, self.clip_value)
+        self.cross_entropy = cf.CategoricalCrossEntropy(self.truth, self.clip_value)
+        return self.cross_entropy(self.net)
 
     def backward(self) -> np.ndarray:
-        dvals: np.ndarray = dfs.grad(cf.cross_entropy, self.net, self.truth, self.clip_value)
+        dvals: np.ndarray = dfs.grad(type(self.cross_entropy), self.cross_entropy, self.net)
         # noinspection PyArgumentList
-        return dfs.vjp(cf.softmax, self.input, dvals)
+        return dfs.vjp(type(self.softmax), self.softmax, self.input, dvals)
 
 
 class SquaredErrorLoss(Loss):
@@ -125,14 +132,16 @@ class SquaredErrorLoss(Loss):
     def __init__(self, const=0.5):
         super(SquaredErrorLoss, self).__init__()
         self.const = const
+        self.func = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        return cf.square_error(self.truth - self.input, self.const)
+        self.func = cf.SquareError(self.const)
+        return self.func(self.truth - self.input)
 
     def backward(self) -> np.ndarray:
-        return dfs.grad(cf.square_error, self.truth - self.input, self.const)
+        return dfs.grad(type(self.func), self.func, self.truth - self.input)
 
 
 class MSELoss(Loss):
@@ -143,14 +152,16 @@ class MSELoss(Loss):
     def __init__(self, const=0.5):
         super(MSELoss, self).__init__()
         self.const = const
+        self.func = None
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        return np.mean(cf.square_error(self.truth - self.input))
+        self.func = cf.SquareError(self.const)
+        return np.mean(self.func(self.truth - self.input))
 
     def backward(self) -> np.ndarray:
-        return dfs.grad(cf.square_error, self.truth - self.input, self.const / len(self.input))
+        return dfs.grad(type(self.func), self.func, self.truth - self.input, self.const / len(self.input))
 
 
 __all__ = [

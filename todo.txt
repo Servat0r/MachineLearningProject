@@ -1,5 +1,4 @@
 3. Write down the PyTorch package for comparisons with PyTorch;
-4. Check .backward() methods against Backpropagation as we saw in class (used Comp. Graphs for writing it);
 5. Check MSELoss (should be incomplete);
 6. Refactor (weights, dweights) and (biases, dbiases) in Weighted/Linear/FullyConnectedLayer into a Parameter object
 for using Optimizers;
