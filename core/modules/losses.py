@@ -2,6 +2,7 @@ from __future__ import annotations
 from core.utils.types import *
 import core.diffs as dfs
 import core.functions as cf
+from .regularization import *
 
 
 class Loss:
@@ -157,11 +158,40 @@ class MSELoss(Loss):
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        self.func = cf.SquareError(self.truth, self.const)
-        return np.mean(self.func(self.input))
+        self.func = cf.MeanSquareError(self.truth, self.const)
+        return self.func(self.input)
 
     def backward(self) -> np.ndarray:
-        return dfs.grad(type(self.func), self.func, self.input, self.const / len(self.input))
+        return dfs.grad(type(self.func), self.func, self.input)
+
+
+class RegularizedLoss(Loss):
+    """
+    A loss with a regularization term.
+    """
+    def __init__(self, base_loss: Loss, regularizers: Regularizer | Iterable[Regularizer]):
+        super(RegularizedLoss, self).__init__()
+        self.base_loss = base_loss
+        regularizers = {regularizers} if isinstance(regularizers, Regularizer) else regularizers
+        self.regularizers = regularizers
+
+    def forward(self, pred: np.ndarray, truth: np.ndarray,
+                target_shape: tuple = (1,)) -> np.ndarray:
+        loss_fwd = self.base_loss.forward(pred, truth)
+        reg_fwd = np.zeros(target_shape)
+        for regularizer in self.regularizers:
+            regularizer(target_shape, reg_fwd)
+        if isinstance(target_shape, int) or all([len(target_shape) == 1, target_shape[0] == 1]):
+            reg_fwd = reg_fwd.item()
+        loss_fwd += reg_fwd
+        return loss_fwd
+
+    def backward(self) -> np.ndarray:
+        # Backward pass "direct" handling (i.e., by updating gradients of the weights)
+        # without an underlying computational graph is complicated
+        # For regularizers like L1, the actual backward pass happens when calling
+        # update_param_grads() for each regularizer.
+        return self.base_loss.backward()
 
 
 __all__ = [
@@ -171,4 +201,5 @@ __all__ = [
     'SoftmaxCrossEntropyLoss',
     'SquaredErrorLoss',
     'MSELoss',
+    'RegularizedLoss',
 ]

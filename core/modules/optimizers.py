@@ -2,26 +2,13 @@
 from __future__ import annotations
 from ..utils import *
 from .parameters import WeightedLayerParameters as WLParameters
+from .schedulers import *
 from .layers import *
 from .losses import *
 
 
 # Base class
 class Optimizer:
-
-    # An example of exponential lr decay that can be given as argument when initializing
-    @staticmethod
-    def exp_lr_decay(decay: float):  # todo is 'exponential'? (check slides!)
-        return lambda iters, lr: 1. / (1. + decay * iters)
-
-    # An example of linear lr decay that can be given as argument when initializing
-    @staticmethod
-    def linear_lr_decay(start_lr: float, end_lr: float, max_iter: int):
-        def closure(iters: int, lr: float):
-            beta = iters / max_iter
-            return (1. - beta) * start_lr + beta * end_lr
-
-        return closure
 
     def __init__(self, parameters: WLParameters | Iterable[WLParameters]):
         self.iterations = 0
@@ -56,6 +43,12 @@ class Optimizer:
         pass
 
     @abstractmethod
+    def update_reg_values(self, parameter, w_vals: np.ndarray, b_vals: np.ndarray):
+        """
+        Subroutine for handling regularization terms in updating.
+        """
+
+    @abstractmethod
     def update_body(self):
         """
         To be executed at the heart of update(), between before_update() and after_update().
@@ -80,12 +73,12 @@ class Optimizer:
         self.parameters.add(parameters)
 
     def update_parameters(self, parameters: WLParameters | Iterable[WLParameters]):
-        parameters = parameters if isinstance(parameters, Iterable) else {parameters}
+        parameters = {parameters} if not isinstance(parameters, Iterable) else parameters
         self.init_new_parameters(parameters)
         self.parameters.update(parameters)
 
     def remove_parameters(self, parameters: WLParameters | Iterable[WLParameters]) -> tuple[int, Set[WLParameters]]:
-        parameters = parameters if isinstance(parameters, Iterable) else {parameters}
+        parameters = {parameters} if not isinstance(parameters, Iterable) else parameters
         n_removed, not_removed = 0, set()
         for parameter in parameters:
             try:
@@ -97,16 +90,14 @@ class Optimizer:
 
 
 # SGD Optimizer with optional momentum (todo add Nesterov momentum?)
-# todo add weight decay handling!
 class SGD(Optimizer):
 
     def __init__(self, parameters: WLParameters | Iterable[WLParameters],
-                 lr=0.1, lr_decay_func: Callable[[int, float], float] = None,
-                 # todo maybe write a Scheduler, like in PyTorch
+                 lr=0.1, lr_decay_scheduler: Scheduler = None,
                  weight_decay=0., momentum=0.):
         self.lr = lr
         self.current_lr = lr
-        self.lr_decay_func = lr_decay_func
+        self.lr_decay_scheduler = lr_decay_scheduler
         self.weight_decay = weight_decay
         self.momentum = momentum
         super(SGD, self).__init__(parameters)
@@ -120,8 +111,20 @@ class SGD(Optimizer):
                     parameter.bias_momentums = np.zeros_like(parameter.get_biases(copy=False))
 
     def before_update(self):
-        if self.lr_decay_func is not None:
-            self.current_lr = self.lr_decay_func(self.iterations, self.current_lr)
+        if self.lr_decay_scheduler is not None:
+            self.current_lr = self.lr_decay_scheduler(self.iterations, self.current_lr)
+
+    def update_reg_values(self, parameter, w_vals: np.ndarray, b_vals: np.ndarray):
+        """
+        Subroutine for handling regularization terms in updating.
+        """
+        for reg_name, reg_updates in parameter.regularizer_updates.items():
+            regw_updates, regb_updates = reg_updates.get('weights'), reg_updates.get('biases')
+            if regw_updates is not None:
+                w_vals -= regw_updates  # self.apply_reduction(regw_updates) todo sure? we are ignoring batch size!
+            if regb_updates is not None:
+                b_vals -= regb_updates  # self.apply_reduction(regb_updates) todo same as above
+        return w_vals, b_vals   # todo necessary?
 
     def update_body(self):
         weight_updates = {}
@@ -132,19 +135,34 @@ class SGD(Optimizer):
                 # Build weights updates
                 w_updates = self.momentum * parameter.weight_momentums - \
                             self.current_lr * parameter.get_dweights(copy=False)
-                weight_updates[parameter] = w_updates
-                parameter.weight_momentums = w_updates
-
                 # Build biases updates
                 b_updates = self.momentum * parameter.bias_momentums - \
                             self.current_lr * parameter.get_dbiases(copy=False)
+
+                # Handle regularizations
+                w_updates, b_updates = self.update_reg_values(parameter, w_updates, b_updates)
+
+                # Handle weight decay case (i.e., implicit L2 regul.) todo eliminate!
+                if self.weight_decay != 0.:
+                    w_updates += self.weight_decay * parameter.get_weights(copy=False)
+                    b_updates += self.weight_decay * parameter.get_biases(copy=False)
+
+                # Register updates for the parameter
+                weight_updates[parameter] = w_updates
                 bias_updates[parameter] = b_updates
+
+                # Update parameter current momentums
+                parameter.weight_momentums = w_updates
                 parameter.bias_momentums = b_updates
         else:
             # Build updates for "vanilla" SGD (i.e., without momentum)
             for parameter in self.parameters:
                 w_updates = - self.current_lr * parameter.get_dweights(copy=False)
                 b_updates = - self.current_lr * parameter.get_dbiases(copy=False)
+
+                # Handle regularizations
+                w_updates, b_updates = self.update_reg_values(parameter, w_updates, b_updates)
+
                 weight_updates[parameter] = w_updates
                 bias_updates[parameter] = b_updates
 

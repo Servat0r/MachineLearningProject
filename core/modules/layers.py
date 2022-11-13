@@ -4,6 +4,7 @@ from core.utils import *
 import core.diffs as dfs
 import core.functions as cf
 from .parameters import *
+from .regularization import *
 
 
 class Layer:
@@ -69,12 +70,19 @@ class WeightedLayer(Layer):
     """
     Base class for layers that include weights and biases.
     """
-    def __init__(self, initializer: Initializer, init_args: dict[str, Any] = None):
+    def __init__(self, initializer: Initializer, init_args: dict[str, Any] = None,
+                 regularizers: Regularizer | Iterable[Regularizer] = None):
         super(WeightedLayer, self).__init__()
         self.weights, self.biases = self._initialize_weights(initializer, init_args=init_args)
         self.parameters = WeightedLayerParameters(
             self.weights, self.biases, grad_reduction=WeightedLayerParameters.SUM,
         )
+        self.regularizers = None
+        if regularizers is not None:
+            regularizers = {regularizers} if not isinstance(regularizers, Iterable) else regularizers
+            self.regularizers = set(regularizers)
+            for regularizer in self.regularizers:
+                regularizer.init_new_parameters(self.get_parameters())
 
     def get_weights(self, copy=True) -> np.ndarray:
         """
@@ -154,10 +162,11 @@ class LinearLayer(WeightedLayer):
     """
 
     def __init__(self, initializer: Initializer, in_features: int,
-                 out_features: int, init_args: dict[str, Any] = None):
+                 out_features: int, init_args: dict[str, Any] = None,
+                 regularizers: Regularizer | Iterable[Regularizer] = None):
         self.in_features = in_features
         self.out_features = out_features
-        super(LinearLayer, self).__init__(initializer, init_args=init_args)
+        super(LinearLayer, self).__init__(initializer, init_args=init_args, regularizers=regularizers)
 
     def _initialize_weights(self, initializer: Initializer, init_args: dict[str, Any] = None):
         weights_shape = (self.in_features, self.out_features)
@@ -194,6 +203,12 @@ class LinearLayer(WeightedLayer):
         self.parameters.update_grads(dweights, dbiases)
         # Now calculate values to backpropagate to previous layer
         out_dvalues = np.transpose(self.weights @ dvals2, axes=[0, 2, 1])
+        # Handle regularization
+        # todo need to modify because like this, if a regularizer is global then param
+        # todo grads are computed multiple times!
+        if self.regularizers is not None:
+            for regularizer in self.regularizers:
+                regularizer.update_param_grads(layer=self)
         return out_dvalues
 
 
@@ -242,11 +257,12 @@ class FullyConnectedLayer(Layer):
     """
     def __init__(
             self, in_features: int, out_features: int, activation_layer: ActivationLayer = None,
-            func: Callable = None, initializer: Initializer = None, init_args: dict[str, Any] = None
+            func: Callable = None, initializer: Initializer = None, init_args: dict[str, Any] = None,
+            regularizers: Regularizer | Iterable[Regularizer] = None,
     ):
         super(FullyConnectedLayer, self).__init__()
         # Initialize linear part
-        self.linear = LinearLayer(initializer, in_features, out_features, init_args)
+        self.linear = LinearLayer(initializer, in_features, out_features, init_args, regularizers)
         self.activation = None
         if activation_layer is not None:
             self.activation = activation_layer
