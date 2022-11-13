@@ -1,5 +1,8 @@
 # Parameters Classes for usage with Optimizers (inspired by PyTorch)
 from __future__ import annotations
+
+import numpy as np
+
 from ..utils import *
 from .layers import *
 
@@ -11,11 +14,11 @@ class Parameters:
     pass
 
 
-# todo Implement "natively" support for Regularizers!
 class WeightedLayerParameters(Parameters):
 
     SUM = 'sum'  # sum all gradient values in the current batch as raw gradient reduction
     MEAN = 'mean'  # take average of all gradient vales in the current batch as raw gradient reduction
+    REDS = [SUM, MEAN]
 
     def __init__(self, weights: np.ndarray, biases: np.ndarray, grad_reduction=None,
                  layer: Layer = None, regularizers=None):
@@ -24,18 +27,20 @@ class WeightedLayerParameters(Parameters):
         # otherwise we need to give up on maintaining batch results for each input separate)
         # (i.e., if we want to do something different from summing up over the batches, this
         # would not be possible)
-        self.dweights, self.dbiases = None, None
         if not self._check_grad_reduction(grad_reduction):
             raise ValueError(f"Unknown raw gradients reduction '{grad_reduction}'")
+        if grad_reduction in self.REDS:
+            self.dweights, self.dbiases = np.zeros_like(weights), np.zeros_like(biases)
+        else:
+            self.dweights, self.dbiases = None, None
         self.layer = layer  # Pointer to referring layer
         self.grad_reduction = grad_reduction
-        self.regularizers = set()
         self.regularizer_updates = {}
         if regularizers is not None:
             regularizers = {regularizers} if not isinstance(regularizers, Iterable) else regularizers
-            self.regularizers = regularizers
             for regularizer in regularizers:
                 regularizer.init_new_parameters({self})
+        self.weight_momentums, self.bias_momentums = None, None
 
     @staticmethod
     def _check_grad_reduction(grad_reduction):
@@ -72,8 +77,6 @@ class WeightedLayerParameters(Parameters):
     def update_weights_and_biases(self, w_vals: np.ndarray, b_vals: np.ndarray):
         self.weights += w_vals
         self.biases += b_vals
-
-    # todo add_regularizers, remove_regularizers
 
 
 __all__ = [

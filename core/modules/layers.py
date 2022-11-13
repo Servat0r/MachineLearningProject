@@ -71,9 +71,11 @@ class WeightedLayer(Layer):
     Base class for layers that include weights and biases.
     """
     def __init__(self, initializer: Initializer, init_args: dict[str, Any] = None,
-                 regularizers: Regularizer | Iterable[Regularizer] = None):
+                 regularizers: Regularizer | Iterable[Regularizer] = None,
+                 grad_reduction=WeightedLayerParameters.SUM):
         super(WeightedLayer, self).__init__()
         self.weights, self.biases = self._initialize_weights(initializer, init_args=init_args)
+        self.grad_reduction = grad_reduction
         self.parameters = WeightedLayerParameters(
             self.weights, self.biases, grad_reduction=WeightedLayerParameters.SUM,
         )
@@ -163,10 +165,13 @@ class LinearLayer(WeightedLayer):
 
     def __init__(self, initializer: Initializer, in_features: int,
                  out_features: int, init_args: dict[str, Any] = None,
-                 regularizers: Regularizer | Iterable[Regularizer] = None):
+                 regularizers: Regularizer | Iterable[Regularizer] = None,
+                 grad_reduction=WeightedLayerParameters.SUM):
         self.in_features = in_features
         self.out_features = out_features
-        super(LinearLayer, self).__init__(initializer, init_args=init_args, regularizers=regularizers)
+        super(LinearLayer, self).__init__(
+            initializer, init_args=init_args, regularizers=regularizers, grad_reduction=grad_reduction,
+        )
 
     def _initialize_weights(self, initializer: Initializer, init_args: dict[str, Any] = None):
         weights_shape = (self.in_features, self.out_features)
@@ -192,15 +197,21 @@ class LinearLayer(WeightedLayer):
         self.output = self.input @ self.weights + (self.biases if self.biases is not None else 0)
         return self.output
 
+    def __backward_on_sum(self, dvals: np.ndarray):
+        """
+        Specialized version of backward() when it is needed only to sum up over examples.
+        """
+        tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
+        self.parameters.dweights[:, :] = np.sum(tinp @ dvals, axis=0)[:, :]
+        self.parameters.dbiases = dvals
+
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
             raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.out_features}), got {dvals.shape}")
+        if self.grad_reduction == WeightedLayerParameters.SUM:
+            self.__backward_on_sum(dvals)
         # Calculate update to layer's weights and biases
         dvals2 = np.transpose(dvals, axes=[0, 2, 1])    # (l, n, 1)
-        tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
-        dbiases = dvals   # (l, 1, n) todo need to make a copy?
-        dweights = tinp @ dvals  # (l, m, 1) * (l, 1, n)
-        self.parameters.update_grads(dweights, dbiases)
         # Now calculate values to backpropagate to previous layer
         out_dvalues = np.transpose(self.weights @ dvals2, axes=[0, 2, 1])
         # Handle regularization

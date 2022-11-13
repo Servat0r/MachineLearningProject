@@ -1,5 +1,8 @@
 # Regularized losses (L1, L2 etc.)
 from __future__ import annotations
+
+import numpy as np
+
 from ..utils import *
 from .parameters import Parameters, WeightedLayerParameters as WLParameters
 
@@ -19,16 +22,9 @@ class Regularizer(Callable):
     def key(self) -> str:
         return type(self).__name__
 
+    @abstractmethod
     def init_new_parameters(self, parameters: Set[Parameters]):
-        for parameter in parameters:
-            if not hasattr(parameter, 'regularizer_updates'):
-                parameter.regularizer_updates = {self.key: {'weights': None, 'biases': None}}
-            elif parameter.regularizer_updates.get(self.key) is not None:
-                raise RuntimeError(f"Attempted to add more than one different '{self.key}' regularizers!")
-            else:
-                parameter.regularizer_updates[self.key] = {'weights': None, 'biases': None}
-            parameter.regularizers.add(self)
-            self.parameters.add(parameter)
+        pass
 
     @abstractmethod
     def __call__(self, target_shape: tuple = (1, 1), result_arr: np.ndarray = None) -> np.ndarray:
@@ -45,8 +41,7 @@ class Regularizer(Callable):
         for parameter in parameters:
             try:
                 self.parameters.remove(parameter)
-                parameter.regularizers.remove(self)
-                parameter.regularized_updates.pop(self.key, None)
+                parameter.regularizer_updates.pop(self.key, None)
                 n_removed += 1
             except KeyError:
                 not_removed.add(parameter)
@@ -54,8 +49,7 @@ class Regularizer(Callable):
 
     def reset_parameters(self):
         for parameter in self.parameters:
-            parameter.regularized_updates.pop(self.key, None)
-            parameter.regularizers.remove(self)
+            parameter.regularizer_updates.pop(self.key, None)
         self.parameters = set()
 
     @abstractmethod
@@ -68,7 +62,7 @@ class L1Regularizer(Regularizer):
     L1 Regularizator, with the possibility to vary the subgradient used.
     """
     @staticmethod
-    def default_subgrad_func(parameter: WLParameters):
+    def default_subgrad_func(parameter: WLParameters) -> tuple[np.ndarray, np.ndarray]:
         """
         Default subgradient function for L1 regularization. Given a set of Parameters
         with their weights, it returns the absolute value of the sign of each weight.
@@ -86,12 +80,25 @@ class L1Regularizer(Regularizer):
         self.subgrad_func = subgrad_func if subgrad_func is not None else self.default_subgrad_func
         self.l1_lambda = l1_lambda
 
+    def init_new_parameters(self, parameters: Set[WLParameters]):
+        for parameter in parameters:
+            if parameter.regularizer_updates.get(self.key) is not None:
+                raise RuntimeError(f"Attempted to add more than one different '{self.key}' regularizers!")
+            else:
+                parameter.regularizer_updates[self.key] = {
+                    'weights': np.zeros_like(parameter.weights),  # we will use this unique vector for all operations!
+                    'biases': np.zeros_like(parameter.biases),
+                }
+            self.parameters.add(parameter)
+
     def update_param_grads(self, layer=None):
         parameters = self.parameters if layer is None else list(filter(lambda par: par.layer == layer, self.parameters))
         for parameter in parameters:
             weights, biases = self.subgrad_func(parameter)
-            parameter.regularized_updates[self.key]['weights'] = self.l1_lambda * weights
-            parameter.regularized_updates[self.key]['biases'] = self.l1_lambda * biases
+            np.copyto(parameter.regularizer_updates[self.key]['weights'], self.l1_lambda * weights)
+            np.copyto(parameter.regularizer_updates[self.key]['biases'], self.l1_lambda * biases)
+            # parameter.regularizer_updates[self.key]['weights'] = self.l1_lambda * weights
+            # parameter.regularizer_updates[self.key]['biases'] = self.l1_lambda * biases
 
     def __call__(self, target_shape: tuple = (1, 1), result_arr: np.ndarray = None):
         result = np.zeros(target_shape) if result_arr is None else result_arr
@@ -114,13 +121,26 @@ class L2Regularizer(Regularizer):
         super(L2Regularizer, self).__init__(parameters)
         self.l2_lambda = l2_lambda
 
+    def init_new_parameters(self, parameters: Set[WLParameters]):
+        for parameter in parameters:
+            if parameter.regularizer_updates.get(self.key) is not None:
+                raise RuntimeError(f"Attempted to add more than one different '{self.key}' regularizers!")
+            else:
+                parameter.regularizer_updates[self.key] = {
+                    'weights': np.zeros_like(parameter.weights),  # we will use this unique vector for all operations!
+                    'biases': np.zeros_like(parameter.biases),
+                }
+            self.parameters.add(parameter)
+
     def update_param_grads(self, layer=None):
         parameters = self.parameters if layer is None else list(filter(lambda par: par.layer == layer, self.parameters))
         for parameter in parameters:
-            weights = 2 * self.l2_lambda * parameter.get_weights(copy=False)
-            biases = 2 * self.l2_lambda * parameter.get_biases(copy=False)
-            parameter.regularized_updates[self.key]['weights'] = weights
-            parameter.regularized_updates[self.key]['biases'] = biases
+            np.copyto(parameter.regularizer_updates[self.key]['weights'], 2 * self.l2_lambda * parameter.weights)
+            np.copyto(parameter.regularizer_updates[self.key]['biases'], 2 * self.l2_lambda * parameter.biases)
+            # weights = 2 * self.l2_lambda * parameter.get_weights(copy=False)
+            # biases = 2 * self.l2_lambda * parameter.get_biases(copy=False)
+            # parameter.regularizer_updates[self.key]['weights'] = weights
+            # parameter.regularizer_updates[self.key]['biases'] = biases
 
     def __call__(self, target_shape: tuple = (1, 1), result_arr: np.ndarray = None) -> np.ndarray:
         result = np.zeros(target_shape) if result_arr is None else result_arr

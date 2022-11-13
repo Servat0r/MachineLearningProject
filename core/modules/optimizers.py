@@ -3,8 +3,6 @@ from __future__ import annotations
 from ..utils import *
 from .parameters import WeightedLayerParameters as WLParameters
 from .schedulers import *
-from .layers import *
-from .losses import *
 
 
 # Base class
@@ -105,8 +103,7 @@ class SGD(Optimizer):
     def init_new_parameters(self, parameters: Set[WLParameters]):
         if self.momentum != 0.:
             for parameter in parameters:
-                parameter = cast(WLParameters, parameter)
-                if not hasattr(parameter, 'weight_momentums'):
+                if parameter.weight_momentums is None:
                     parameter.weight_momentums = np.zeros_like(parameter.get_weights(copy=False))
                     parameter.bias_momentums = np.zeros_like(parameter.get_biases(copy=False))
 
@@ -127,33 +124,27 @@ class SGD(Optimizer):
         return w_vals, b_vals   # todo necessary?
 
     def update_body(self):
-        weight_updates = {}
-        bias_updates = {}
         if self.momentum != 0.:
             # Build updates for SGD with momentum
             for parameter in self.parameters:
                 # Build weights updates
-                w_updates = self.momentum * parameter.weight_momentums - \
+                parameter.weight_momentums[:] = self.momentum * parameter.weight_momentums - \
                             self.current_lr * parameter.get_dweights(copy=False)
                 # Build biases updates
-                b_updates = self.momentum * parameter.bias_momentums - \
+                parameter.bias_momentums[:] = self.momentum * parameter.bias_momentums - \
                             self.current_lr * parameter.get_dbiases(copy=False)
 
                 # Handle regularizations
-                w_updates, b_updates = self.update_reg_values(parameter, w_updates, b_updates)
+                # w_updates, b_updates = self.update_reg_values(parameter, w_updates, b_updates)
+                self.update_reg_values(parameter, parameter.weight_momentums[:], parameter.bias_momentums[:])
 
                 # Handle weight decay case (i.e., implicit L2 regul.) todo eliminate!
                 if self.weight_decay != 0.:
-                    w_updates += self.weight_decay * parameter.get_weights(copy=False)
-                    b_updates += self.weight_decay * parameter.get_biases(copy=False)
+                    parameter.weight_momentums += self.weight_decay * parameter.get_weights(copy=False)
+                    parameter.bias_momentums += self.weight_decay * parameter.get_biases(copy=False)
 
-                # Register updates for the parameter
-                weight_updates[parameter] = w_updates
-                bias_updates[parameter] = b_updates
-
-                # Update parameter current momentums
-                parameter.weight_momentums = w_updates
-                parameter.bias_momentums = b_updates
+                # Update weights and biases using momentum updates
+                parameter.update_weights_and_biases(parameter.weight_momentums, parameter.bias_momentums)
         else:
             # Build updates for "vanilla" SGD (i.e., without momentum)
             for parameter in self.parameters:
@@ -163,12 +154,7 @@ class SGD(Optimizer):
                 # Handle regularizations
                 w_updates, b_updates = self.update_reg_values(parameter, w_updates, b_updates)
 
-                weight_updates[parameter] = w_updates
-                bias_updates[parameter] = b_updates
-
-        # Update weights and biases using either 'vanilla' updates or momentum ones
-        for parameter in self.parameters:
-            parameter.update_weights_and_biases(weight_updates[parameter], bias_updates[parameter])
+                parameter.update_weights_and_biases(w_updates, b_updates)
 
     def after_update(self):
         self.iterations += 1
