@@ -1,8 +1,5 @@
 # Regularized losses (L1, L2 etc.)
 from __future__ import annotations
-
-import numpy as np
-
 from ..utils import *
 from .parameters import Parameters, WeightedLayerParameters as WLParameters
 

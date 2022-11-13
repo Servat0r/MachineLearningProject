@@ -13,6 +13,7 @@ class Layer:
         self.__is_training = False
         self.input = None
         self.output = None
+        self.regularizers = set()
 
     @abstractmethod
     def check_input_shape(self, shape: int | Sequence) -> bool:
@@ -64,6 +65,19 @@ class Layer:
     def __call__(self, x: np.ndarray) -> np.ndarray:
         return self.forward(x)
 
+    def add_regularizers(self, regularizers: Regularizer | Iterable[Regularizer]):
+        self.regularizers.update(regularizers)
+        for regularizer in self.regularizers:
+            regularizer.init_new_parameters(self.get_parameters())
+
+    def get_regularizers(self):
+        return self.regularizers
+
+    def dump_regularizers(self):
+        res = self.regularizers
+        self.regularizers = set()
+        return res
+
 
 class WeightedLayer(Layer):
 
@@ -79,12 +93,9 @@ class WeightedLayer(Layer):
         self.parameters = WeightedLayerParameters(
             self.weights, self.biases, grad_reduction=WeightedLayerParameters.SUM,
         )
-        self.regularizers = None
         if regularizers is not None:
             regularizers = {regularizers} if not isinstance(regularizers, Iterable) else regularizers
-            self.regularizers = set(regularizers)
-            for regularizer in self.regularizers:
-                regularizer.init_new_parameters(self.get_parameters())
+            self.add_regularizers(regularizers)
 
     def get_weights(self, copy=True) -> np.ndarray:
         """
@@ -118,12 +129,24 @@ class WeightedLayer(Layer):
 
 class SequentialLayer(Layer):
 
+    def __retrieve_regularizers(self):
+        """
+        Extracts all declared regularizers from the internal layers to handle
+        all of them only from this layer.
+        """
+        for layer in self.layers:
+            self.regularizers.update(layer.dump_regularizers())
+
     def __init__(self, layers: Sequence[Layer]):
         super(SequentialLayer, self).__init__()
         self.layers = layers
+        self.__retrieve_regularizers()
 
     def __len__(self):
         return len(self.layers)
+
+    def __getitem__(self, item):
+        return self.layers[item]
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
@@ -148,6 +171,12 @@ class SequentialLayer(Layer):
         for i in range(len(self)):
             layer = self.layers[len(self) - 1 - i]
             current_dvals = layer.backward(current_dvals)
+        # Handle regularizers from underlying layers
+        # todo In this implementation there is no control if the regularizer are also in
+        # todo OTHER models; a safer (yet more costly) way should be that of maintaining
+        # todo an index of layers for each parameter and filter by them
+        for regularizer in self.regularizers:
+            regularizer.update_param_grads()
         return current_dvals
 
     def get_parameters(self) -> Set[Parameters]:
@@ -215,11 +244,8 @@ class LinearLayer(WeightedLayer):
         # Now calculate values to backpropagate to previous layer
         out_dvalues = np.transpose(self.weights @ dvals2, axes=[0, 2, 1])
         # Handle regularization
-        # todo need to modify because like this, if a regularizer is global then param
-        # todo grads are computed multiple times!
-        if self.regularizers is not None:
-            for regularizer in self.regularizers:
-                regularizer.update_param_grads(layer=self)
+        for regularizer in self.regularizers:
+            regularizer.update_param_grads(layer=self)
         return out_dvalues
 
 

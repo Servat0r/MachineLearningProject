@@ -78,6 +78,21 @@ class WeightedLayerParameters(Parameters):
         self.weights += w_vals
         self.biases += b_vals
 
+    def zero_grads(self):
+        """
+        Zeroes dweights, dbiases for more security.
+        """
+        if self.dweights is not None:
+            self.dweights.fill(0.)
+        if self.dbiases is not None:
+            self.dbiases.fill(0.)
+        for reg_name, reg_update in self.regularizer_updates.items():
+            regw, regb = self.regularizer_updates[reg_name].get('weights'), self.regularizer_updates[reg_name].get('biases')
+            if regw is not None:
+                regw.fill(0.)
+            if regb is not None:
+                regb.fill(0.)
+
 
 __all__ = [
     'Parameters',

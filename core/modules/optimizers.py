@@ -61,7 +61,7 @@ class Optimizer:
         self.iterations = 0
         return iters
 
-    def reset_parameters(self, dump=True) -> Set[WLParameters] | None:
+    def remove_all_parameters(self, dump=True) -> Set[WLParameters] | None:
         params = self.parameters if dump else None
         self.parameters = set()
         return params
@@ -85,6 +85,10 @@ class Optimizer:
             except KeyError:
                 not_removed.add(parameter)
         return n_removed, not_removed
+
+    def zero_grads(self):
+        for parameter in self.parameters:
+            parameter.zero_grads()
 
 
 # SGD Optimizer with optional momentum (todo add Nesterov momentum?)
