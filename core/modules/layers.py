@@ -13,7 +13,6 @@ class Layer:
         self.__is_training = False
         self.input = None
         self.output = None
-        self.regularizers = set()
 
     @abstractmethod
     def check_input_shape(self, shape: int | Sequence) -> bool:
@@ -66,17 +65,8 @@ class Layer:
         return self.forward(x)
 
     def add_regularizers(self, regularizers: Regularizer | Iterable[Regularizer]):
-        self.regularizers.update(regularizers)
-        for regularizer in self.regularizers:
+        for regularizer in regularizers:
             regularizer.init_new_parameters(self.get_parameters())
-
-    def get_regularizers(self):
-        return self.regularizers
-
-    def dump_regularizers(self):
-        res = self.regularizers
-        self.regularizers = set()
-        return res
 
 
 class WeightedLayer(Layer):
@@ -85,7 +75,6 @@ class WeightedLayer(Layer):
     Base class for layers that include weights and biases.
     """
     def __init__(self, initializer: Initializer, init_args: dict[str, Any] = None,
-                 regularizers: Regularizer | Iterable[Regularizer] = None,
                  grad_reduction=WeightedLayerParameters.SUM):
         super(WeightedLayer, self).__init__()
         self.weights, self.biases = self._initialize_weights(initializer, init_args=init_args)
@@ -93,9 +82,6 @@ class WeightedLayer(Layer):
         self.parameters = WeightedLayerParameters(
             self.weights, self.biases, grad_reduction=WeightedLayerParameters.SUM,
         )
-        if regularizers is not None:
-            regularizers = {regularizers} if not isinstance(regularizers, Iterable) else regularizers
-            self.add_regularizers(regularizers)
 
     def get_weights(self, copy=True) -> np.ndarray:
         """
@@ -129,18 +115,17 @@ class WeightedLayer(Layer):
 
 class SequentialLayer(Layer):
 
-    def __retrieve_regularizers(self):
-        """
-        Extracts all declared regularizers from the internal layers to handle
-        all of them only from this layer.
-        """
+    def __retrieve_parameters(self):
         for layer in self.layers:
-            self.regularizers.update(layer.dump_regularizers())
+            self.parameters.update(layer.get_parameters())
+        print(f"Sequential Layer {len(self.parameters)}")
+        return self.parameters
 
     def __init__(self, layers: Sequence[Layer]):
         super(SequentialLayer, self).__init__()
         self.layers = layers
-        self.__retrieve_regularizers()
+        self.parameters = set()
+        self.__retrieve_parameters()
 
     def __len__(self):
         return len(self.layers)
@@ -175,15 +160,14 @@ class SequentialLayer(Layer):
         # todo In this implementation there is no control if the regularizer are also in
         # todo OTHER models; a safer (yet more costly) way should be that of maintaining
         # todo an index of layers for each parameter and filter by them
-        for regularizer in self.regularizers:
-            regularizer.update_param_grads()
         return current_dvals
 
     def get_parameters(self) -> Set[Parameters]:
-        parameters = set()
+        return self.parameters
+
+    def add_regularizers(self, regularizers: Regularizer | Iterable[Regularizer]):
         for layer in self.layers:
-            parameters.update(layer.get_parameters())
-        return parameters
+            layer.add_regularizers(regularizers)
 
 
 class LinearLayer(WeightedLayer):
@@ -194,12 +178,11 @@ class LinearLayer(WeightedLayer):
 
     def __init__(self, initializer: Initializer, in_features: int,
                  out_features: int, init_args: dict[str, Any] = None,
-                 regularizers: Regularizer | Iterable[Regularizer] = None,
                  grad_reduction=WeightedLayerParameters.SUM):
         self.in_features = in_features
         self.out_features = out_features
         super(LinearLayer, self).__init__(
-            initializer, init_args=init_args, regularizers=regularizers, grad_reduction=grad_reduction,
+            initializer, init_args=init_args, grad_reduction=grad_reduction,
         )
 
     def _initialize_weights(self, initializer: Initializer, init_args: dict[str, Any] = None):
@@ -232,7 +215,7 @@ class LinearLayer(WeightedLayer):
         """
         tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
         self.parameters.dweights[:, :] = np.sum(tinp @ dvals, axis=0)[:, :]
-        self.parameters.dbiases = dvals
+        self.parameters.dbiases = np.sum(dvals, axis=0)
 
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
@@ -243,9 +226,6 @@ class LinearLayer(WeightedLayer):
         dvals2 = np.transpose(dvals, axes=[0, 2, 1])    # (l, n, 1)
         # Now calculate values to backpropagate to previous layer
         out_dvalues = np.transpose(self.weights @ dvals2, axes=[0, 2, 1])
-        # Handle regularization
-        for regularizer in self.regularizers:
-            regularizer.update_param_grads(layer=self)
         return out_dvalues
 
 

@@ -23,6 +23,9 @@ EVAL_BATCH_SIZE = 2000
 TRAIN_MB_SIZE = 1000
 N_EPOCHS = 4
 SEED = 10
+FACTOR = 100.
+NOISE_FACTOR = 1.5
+L1_LAMBDA = 0.001
 
 
 class MyTestCase(unittest.TestCase):
@@ -44,43 +47,34 @@ class MyTestCase(unittest.TestCase):
         self.mb_num = math.ceil(self.train_batch_size / self.train_mb_size)
         if self.seed is not None:
             np.random.seed(self.seed)
-        self.regularizers = {cm.L1Regularizer(l1_lambda=0.01)}   # L1 regularization
-        # self.mse_loss = cm.RegularizedLoss(cm.MSELoss(), regularizers=self.regularizers)
-        self.mse_loss = cm.MSELoss()
 
     def setUp(self) -> None:
         self.model = cm.Model(
-            cm.SequentialLayer([
+            [
                 cm.FullyConnectedLayer(self.input_dim, self.hidden_layer_size, func=cf.tanh,
-                                       initializer=cu.RandomNormalDefaultInitializer(),),
-                                       # regularizers=self.regularizers),
+                                       initializer=cu.RandomUniformInitializer(-1.0, 1.0)),
                 cm.FullyConnectedLayer(self.hidden_layer_size, 1, func=cf.tanh,
-                                       initializer=cu.RandomNormalDefaultInitializer(),)
-                                       # regularizers=self.regularizers),
-            ])
-        )
-        self.sgd_optimizer = cm.SGD(
-            cu.cast(set[WLParameters], self.model.get_parameters()),
-            momentum=0.9,
+                                       initializer=cu.RandomUniformInitializer(-0.8, 0.8))
+            ],
+            regularizers={cm.L1Regularizer(l1_lambda=L1_LAMBDA)},
         )
 
-        train_base_shape = (self.train_batch_size, 1)
-        eval_base_shape = (self.eval_batch_size, 1)
-
-        x_train = 100. * np.random.randn(*train_base_shape, self.input_dim)  # 2000 inputs of dimension 100
-        y_train = np.sin(np.sum(x_train, axis=2)) + np.random.randn(*train_base_shape)
-        y_train = np.reshape(y_train, train_base_shape + (1,))
+        x_train = FACTOR * np.random.randn(self.train_batch_size, 1, self.input_dim)  # 2000 inputs of dimension 100
+        y_train = np.sin(np.sum(x_train, axis=2)) + NOISE_FACTOR / FACTOR * np.random.randn(self.train_batch_size, 1)
+        x_train += NOISE_FACTOR * np.random.randn(self.train_batch_size, 1, self.input_dim)
+        y_train = np.reshape(y_train, (self.train_batch_size, 1, 1))
         # y = sin(x1+...+xn) + random (gaussian) noise
 
-        x_eval = 100. * np.random.randn(*eval_base_shape, self.input_dim)
-        y_eval = np.sin(np.sum(x_eval, axis=2))
-        y_eval = np.reshape(y_eval, eval_base_shape + (1,))
+        x_eval = FACTOR * np.random.randn(self.eval_batch_size, 1, self.input_dim)
+        y_eval = np.sin(np.sum(x_eval, axis=2)) + NOISE_FACTOR / FACTOR * np.random.randn(self.eval_batch_size, 1)
+        x_eval += NOISE_FACTOR * np.random.randn(self.eval_batch_size, 1, self.input_dim)
+        y_eval = np.reshape(y_eval, (self.eval_batch_size, 1, 1))
 
         # Create and configure datasets and dataloaders
         self.train_dataset = cd.ArrayDataset(x_train, y_train)
         self.eval_dataset = cd.ArrayDataset(x_eval, y_eval)
         self.train_dataloader = cd.DataLoader(
-            self.train_dataset, batch_size=self.train_mb_size, shuffle=True, log_to='train_dataloder_log.json',
+            self.train_dataset, batch_size=self.train_mb_size, shuffle=False, log_to='train_dataloder_log.json',
         )
         self.eval_dataloader = cd.DataLoader(
             self.eval_dataset, batch_size=self.eval_batch_size, shuffle=False, log_to='eval_dataloder_log.json',
@@ -88,14 +82,13 @@ class MyTestCase(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.model = None
-        self.sgd_optimizer = None
         self.train_dataset, self.eval_dataset, self.train_dataloader, self.eval_dataloader = None, None, None, None
 
     def test_main(self):
-        # total_train_mse_losses = []
-        # epoch_training_mse_losses = np.zeros(self.mb_num)
-        # total_eval_mse_losses = []
-        self.model.compile(optimizer=self.sgd_optimizer, loss=self.mse_loss)
+        self.model.compile(
+            optimizer=cm.SGD(momentum=0.9),
+            loss=cm.MSELoss(),
+        )
         train_epoch_losses, eval_epoch_losses = self.model.train(
             self.train_dataloader, self.eval_dataloader, n_epochs=self.n_epochs,
         )

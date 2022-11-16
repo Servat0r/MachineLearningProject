@@ -153,12 +153,12 @@ class MSELoss(Loss):
     def __init__(self, const=0.5):
         super(MSELoss, self).__init__()
         self.const = const
-        self.func = None
+        self.func = cf.MeanSquareError()
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        self.func = cf.MeanSquareError(self.truth, self.const)
+        self.func.truth_values = truth
         return self.func(self.input)
 
     def backward(self) -> np.ndarray:

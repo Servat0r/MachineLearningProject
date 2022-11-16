@@ -5,15 +5,20 @@ from .layers import *
 from .losses import *
 from .optimizers import *
 from ..data import *
+from .regularization import *
 
 
 class Model:
     """
     Base class for a Neural Network
     """
-    def __init__(self, layers: Layer | Sequence[Layer]):
+    def __init__(self, layers: Layer | Sequence[Layer], regularizers: Regularizer | Iterable[Regularizer] = None):
         self.layers = layers if isinstance(layers, SequentialLayer) else SequentialLayer(layers)
-        self.regularizers = layers.get_regularizers()
+        if regularizers is not None:
+            self.regularizers = {regularizers} if isinstance(regularizers, Regularizer) else regularizers
+            self.layers.add_regularizers(self.regularizers)
+        else:
+            self.regularizers = set()
         self.optimizer = None
         self.loss = None
         self.metrics = None
@@ -32,12 +37,14 @@ class Model:
         return self.layers.get_parameters()
 
     # todo maybe we can handle automatic creation of dataloder based on n_epochs
-    def compile(self, optimizer: Optimizer, loss: Loss, metrics=None):
+    def compile(self, optimizer: Optimizer, loss: Loss, metrics=None, add_model_parameters=True):
         """
         Configures the model for training.
         """
         # todo create metrics (accuracy, mse/abs/mee, timing, ram usage)!
         self.optimizer = optimizer
+        if add_model_parameters:
+            self.optimizer.update_parameters(self.get_parameters())
         if len(self.regularizers) > 0:
             self.loss = RegularizedLoss(loss, regularizers=self.regularizers)
         else:
@@ -77,8 +84,12 @@ class Model:
                 print(f'[Epoch {epoch}, Minibatch {mb}]: loss values over {len(input_mb)} '
                       f'training examples = {loss_val}')
                 train_mb_losses[mb] = loss_val
+                # Backward of loss and hidden layers
                 dvals = self.loss.backward()
                 self.layers.backward(dvals)
+                # Backward of regularizers
+                for regularizer in self.regularizers:
+                    regularizer.update_param_grads()
                 self.optimizer.update()
             train_dataloader.after_epoch()
             train_epoch_losses[epoch] = np.mean(train_mb_losses).item()

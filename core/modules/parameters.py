@@ -1,8 +1,5 @@
 # Parameters Classes for usage with Optimizers (inspired by PyTorch)
 from __future__ import annotations
-
-import numpy as np
-
 from ..utils import *
 from .layers import *
 

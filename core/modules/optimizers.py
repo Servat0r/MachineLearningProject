@@ -8,10 +8,12 @@ from .schedulers import *
 # Base class
 class Optimizer:
 
-    def __init__(self, parameters: WLParameters | Iterable[WLParameters]):
+    def __init__(self, parameters: WLParameters | Iterable[WLParameters] = None):
         self.iterations = 0
-        self.parameters: Set[WLParameters] = {parameters} if not isinstance(parameters, Iterable) else set(parameters)
-        self.init_new_parameters(self.parameters)
+        self.parameters = set()
+        if parameters is not None:
+            self.parameters: Set[WLParameters] = {parameters} if not isinstance(parameters, Iterable) else set(parameters)
+            self.init_new_parameters(self.parameters)
 
     @abstractmethod
     def init_new_parameters(self, parameters: Set[WLParameters]):
@@ -94,7 +96,7 @@ class Optimizer:
 # SGD Optimizer with optional momentum (todo add Nesterov momentum?)
 class SGD(Optimizer):
 
-    def __init__(self, parameters: WLParameters | Iterable[WLParameters],
+    def __init__(self, parameters: WLParameters | Iterable[WLParameters] = None,
                  lr=0.1, lr_decay_scheduler: Scheduler = None,
                  weight_decay=0., momentum=0.):
         self.lr = lr

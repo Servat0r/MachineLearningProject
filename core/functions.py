@@ -146,7 +146,7 @@ class MeanSquareError(Callable):
     """
     Calculates square error (coefficient * ||x||^2) for the patterns SEPARATELY.
     """
-    def __init__(self, truth_values: np.ndarray, coefficient=0.5):
+    def __init__(self, truth_values: np.ndarray = None, coefficient=0.5):
         self.coefficient = coefficient
         self.truth_values = truth_values
 
@@ -158,7 +158,7 @@ class MeanSquareError(Callable):
     @dfs.set_grad(__call__, input_checker=rv_input_check, input_normalizer=rv_input_norm, input_arg=1)
     def grad(self, x: np.ndarray):
         c = -2.0 * self.coefficient / self.truth_values.shape[0]
-        return c * x
+        return c * (self.truth_values - x)
 
 
 # Sigmoid
@@ -301,14 +301,14 @@ def _cross_entropy_grad(x: np.ndarray, truth_values: np.ndarray, clip_value: TRe
 
 
 @dfs.set_primitive(input_checker=rv_input_check, input_normalizer=rv_input_norm)
-def square_error(x: np.ndarray, const: float = 0.5):
-    y = const * np.square(np.linalg.norm(x, axis=2))
+def square_error(x: np.ndarray, truth: np.ndarray, const: float = 0.5):
+    y = const * np.square(np.linalg.norm(truth - x, axis=2))
     return y
 
 
 @dfs.set_grad(square_error, input_checker=rv_input_check, input_normalizer=rv_input_norm)
-def _square_error_grad(x: np.ndarray, const: float = 0.5):
-    return 2 * const * x
+def _square_error_grad(x: np.ndarray, truth: np.ndarray, const: float = 0.5):
+    return 2 * const * (truth - x)
 
 
 @dfs.set_primitive(input_checker=rv_input_check, input_normalizer=rv_input_norm)
