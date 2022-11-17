@@ -1,16 +1,21 @@
 # Base layers for a Neural Network
 from __future__ import annotations
 from core.utils import *
-from .parameters import *
-from .regularization import *
 
 
 class Layer:
 
-    def __init__(self):
+    def __init__(self, frozen=False):
         self.__is_training = False
         self.input = None
         self.output = None
+        self.frozen = frozen
+
+    def freeze_layer(self):
+        self.frozen = True
+
+    def unfreeze_layer(self):
+        self.frozen = False
 
     @abstractmethod
     def is_parametrized(self) -> bool:
@@ -65,8 +70,8 @@ class Layer:
 
 class SequentialLayer(Layer):
 
-    def __init__(self, layers: Sequence[Layer]):
-        super(SequentialLayer, self).__init__()
+    def __init__(self, layers: Sequence[Layer], frozen=False):
+        super(SequentialLayer, self).__init__(frozen=frozen)
         self.layers = layers
 
     def __len__(self):
@@ -76,7 +81,7 @@ class SequentialLayer(Layer):
         return self.layers[item]
 
     def is_parametrized(self) -> bool:
-        return any(layer.is_parametrized() for layer in self.layers)
+        return any(layer.is_parametrized() for layer in self.layers) and not self.frozen
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
@@ -114,10 +119,10 @@ class LinearLayer(Layer):
     of the shape (l, 1, out_features).
     """
 
-    def __init__(self, initializer: Initializer, in_features: int,
-                 out_features: int, init_args: dict[str, Any] = None,
-                 grad_reduction='mean'):
-        super(LinearLayer, self).__init__()
+    def __init__(self, in_features: int, out_features: int,
+                 initializer: Initializer, init_args: dict[str, Any] = None,
+                 grad_reduction='mean', frozen=False):
+        super(LinearLayer, self).__init__(frozen=frozen)
         self.in_features = in_features
         self.out_features = out_features
         init_args = init_args if init_args is not None else {}
@@ -132,7 +137,7 @@ class LinearLayer(Layer):
         self.bias_momentums = np.zeros_like(self.biases)
 
     def is_parametrized(self) -> bool:
-        return True
+        return not self.frozen
 
     def get_weights(self, copy=True) -> np.ndarray:
         """
@@ -280,11 +285,12 @@ class FullyConnectedLayer(Layer):
     """
     def __init__(
             self, in_features: int, out_features: int, activation_layer: ActivationLayer,
-            initializer: Initializer = None, init_args: dict[str, Any] = None, grad_reduction='mean',
+            initializer: Initializer = None, init_args: dict[str, Any] = None,
+            grad_reduction='mean', frozen=False,
     ):
-        super(FullyConnectedLayer, self).__init__()
+        super(FullyConnectedLayer, self).__init__(frozen=frozen)
         # Initialize linear part
-        self.linear = LinearLayer(initializer, in_features, out_features, init_args, grad_reduction)
+        self.linear = LinearLayer(in_features, out_features, initializer, init_args, grad_reduction)
         self.activation = activation_layer
         self.net = None
 
@@ -303,6 +309,9 @@ class FullyConnectedLayer(Layer):
     def backward(self, dvals: np.ndarray):
         dvals = self.activation.backward(dvals)  # net is actually saved as input to the activation layer
         return self.linear.backward(dvals)
+
+    def is_parametrized(self) -> bool:
+        return self.linear.is_parametrized() and not self.frozen
 
 
 __all__ = [

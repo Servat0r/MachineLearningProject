@@ -2,7 +2,7 @@
 from __future__ import annotations
 from ..utils import *
 from .schedulers import *
-from .layers import SequentialLayer
+from .layers import SequentialLayer, FullyConnectedLayer
 
 
 # Base class
@@ -85,6 +85,8 @@ class SGD(Optimizer):
     def __update_body_momentum(self, layer):
         if isinstance(layer, SequentialLayer):
             self.update_body(layer.layers)
+        elif isinstance(layer, FullyConnectedLayer):
+            self.update_body({layer.linear})
         elif hasattr(layer, 'weight_momentums') and layer.is_parametrized():
             weight_updates = self.momentum * layer.weight_momentums - self.current_lr * layer.dweights
             layer.weight_momentums = weight_updates
@@ -99,6 +101,8 @@ class SGD(Optimizer):
     def __update_body_no_momentum(self, layer):
         if isinstance(layer, SequentialLayer):
             self.update_body(layer.layers)
+        elif isinstance(layer, FullyConnectedLayer):
+            self.update_body({layer.linear})
         elif layer.is_parametrized():
             weight_updates = - self.current_lr * layer.dweights
             bias_updates = - self.current_lr * layer.dbiases
@@ -109,6 +113,8 @@ class SGD(Optimizer):
     def update_body(self, layers: SequentialLayer | Iterable):
         if isinstance(layers, SequentialLayer):
             self.update_body(layers.layers)
+        elif isinstance(layers, FullyConnectedLayer):
+            self.update_body({layers.linear})
         elif isinstance(layers, Iterable):
             if self.momentum:
                 for layer in layers:
