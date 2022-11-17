@@ -4,11 +4,6 @@ import torch.nn as tnn
 import numpy as np
 from torch.utils.data import TensorDataset, DataLoader
 
-import nnfs
-from nnfs.datasets import sine_data
-
-nnfs.init()
-
 
 INPUT_DIM = 1
 HIDDEN_LAYER_SIZE = 64
@@ -75,6 +70,12 @@ class L1(tnn.Module):
     def forward(self, *args, **kwargs):
         # Simply forward and args and kwargs to module
         return self.module(*args, **kwargs)
+
+
+def sine_data(samples=1000):
+    x = np.arange(samples).reshape((samples, 1)) / samples
+    y = np.sin(x)
+    return x, y
 
 
 x_train, y_train = sine_data()

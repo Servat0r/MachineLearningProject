@@ -5,20 +5,14 @@ from .layers import *
 from .losses import *
 from .optimizers import *
 from ..data import *
-from .regularization import *
 
 
 class Model:
     """
     Base class for a Neural Network
     """
-    def __init__(self, layers: Layer | Sequence[Layer], regularizers: Regularizer | Iterable[Regularizer] = None):
+    def __init__(self, layers: Layer | Sequence[Layer]):
         self.layers = layers if isinstance(layers, SequentialLayer) else SequentialLayer(layers)
-        if regularizers is not None:
-            self.regularizers = {regularizers} if isinstance(regularizers, Regularizer) else regularizers
-            self.layers.add_regularizers(self.regularizers)
-        else:
-            self.regularizers = set()
         self.optimizer = None
         self.loss = None
         self.metrics = None
@@ -33,26 +27,17 @@ class Model:
     def save(fpath: str) -> Model:
         pass
 
-    def get_parameters(self):
-        return self.layers.get_parameters()
-
     # todo maybe we can handle automatic creation of dataloder based on n_epochs
-    def compile(self, optimizer: Optimizer, loss: Loss, metrics=None, add_model_parameters=True):
+    def compile(self, optimizer: Optimizer, loss: Loss, metrics=None):
         """
         Configures the model for training.
         """
         # todo create metrics (accuracy, mse/abs/mee, timing, ram usage)!
         self.optimizer = optimizer
-        if add_model_parameters:
-            self.optimizer.update_parameters(self.get_parameters())
-        if len(self.regularizers) > 0:
-            self.loss = RegularizedLoss(loss, regularizers=self.regularizers)
-        else:
-            self.loss = loss
+        self.loss = loss
         # todo add metrics handling
         self.layers.set_to_train()
 
-    # todo fixme Completare!
     def train(
             self, train_dataloader: DataLoader, eval_dataloader: DataLoader = None, n_epochs: int = 1,
             train_epoch_losses: np.ndarray = None, eval_epoch_losses: np.ndarray = None,
@@ -69,15 +54,13 @@ class Model:
             eval_dataloader.before_cycle()
 
         for epoch in range(n_epochs):
-            # train_iter, eval_iter = iter(train_dataloader), iter(eval_dataloader)
-            train_iter = iter(train_dataloader)
             # Callbacks before training epoch
             self.layers.set_to_train()
             train_dataloader.before_epoch()
             train_mb_losses.fill(0.)
             for mb in range(mb_num):
 
-                mb_data = next(train_iter)
+                mb_data = next(train_dataloader)
                 if mb_data is None:
                     break
                 input_mb, target_mb = mb_data[0], mb_data[1]
@@ -85,21 +68,18 @@ class Model:
                 loss_val = self.loss(y_hat, target_mb)
                 print(f'[Epoch {epoch}, Minibatch {mb}]: loss values over {len(input_mb)} '
                       f'training examples = {loss_val}')
-                train_mb_losses[mb] = np.mean(loss_val, axis=0)
+                train_mb_losses[mb] = np.mean(loss_val, axis=0).item()
                 # Backward of loss and hidden layers
                 dvals = self.loss.backward(y_hat, target_mb)
                 self.layers.backward(dvals)
-                # Backward of regularizers
-                for regularizer in self.regularizers:
-                    regularizer.update_param_grads()
-                self.optimizer.update()
+                self.optimizer.update(self.layers)
             train_dataloader.after_epoch()
             train_epoch_losses[epoch] = np.mean(train_mb_losses).item()
+
             if eval_exists:
-                eval_iter = iter(eval_dataloader)
                 self.layers.set_to_eval()
                 eval_dataloader.before_epoch()
-                input_eval, target_eval = next(eval_iter)
+                input_eval, target_eval = next(eval_dataloader)
                 y_hat = self.layers(input_eval)
                 loss_val = self.loss(y_hat, target_eval)
                 print(f'[Epoch {epoch}]: loss values over {len(input_eval)} validation examples = {loss_val}')

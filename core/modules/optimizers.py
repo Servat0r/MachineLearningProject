@@ -1,24 +1,15 @@
 # Optimizers
 from __future__ import annotations
 from ..utils import *
-from .parameters import WeightedLayerParameters as WLParameters
 from .schedulers import *
+from .layers import SequentialLayer
 
 
 # Base class
 class Optimizer:
 
-    def __init__(self, parameters: WLParameters | Iterable[WLParameters] = None):
+    def __init__(self):
         self.iterations = 0
-        self.parameters = set()
-        if parameters is not None:
-            self.parameters: Set[WLParameters] = {parameters} if isinstance(parameters, WLParameters) \
-                else set(parameters)
-            self.init_new_parameters(self.parameters)
-
-    @abstractmethod
-    def init_new_parameters(self, parameters: Set[WLParameters]):
-        pass
 
     @abstractmethod
     def before_update(self):
@@ -27,12 +18,12 @@ class Optimizer:
         """
         pass
 
-    def update(self):
+    def update(self, layers):
         """
         Main method for updating parameters.
         """
         self.before_update()
-        result = self.update_body()
+        result = self.update_body(layers)
         self.after_update()
         return result
 
@@ -50,7 +41,7 @@ class Optimizer:
         """
 
     @abstractmethod
-    def update_body(self):
+    def update_body(self, layers):
         """
         To be executed at the heart of update(), between before_update() and after_update().
         """
@@ -64,53 +55,16 @@ class Optimizer:
         self.iterations = 0
         return iters
 
-    def remove_all_parameters(self, dump=True) -> Set[WLParameters] | None:
-        params = self.parameters if dump else None
-        self.parameters = set()
-        return params
-
-    def add_parameters(self, parameters: WLParameters):
-        self.init_new_parameters({parameters})
-        self.parameters.add(parameters)
-
-    def update_parameters(self, parameters: WLParameters | Iterable[WLParameters]):
-        parameters = {parameters} if not isinstance(parameters, Iterable) else parameters
-        self.init_new_parameters(parameters)
-        self.parameters.update(parameters)
-
-    def remove_parameters(self, parameters: WLParameters | Iterable[WLParameters]) -> tuple[int, Set[WLParameters]]:
-        parameters = {parameters} if not isinstance(parameters, Iterable) else parameters
-        n_removed, not_removed = 0, set()
-        for parameter in parameters:
-            try:
-                self.parameters.remove(parameter)
-                n_removed += 1
-            except KeyError:
-                not_removed.add(parameter)
-        return n_removed, not_removed
-
-    def zero_grads(self):
-        for parameter in self.parameters:
-            parameter.zero_grads()
-
 
 # SGD Optimizer with optional momentum (todo add Nesterov momentum?)
 class SGD(Optimizer):
 
-    def __init__(self, parameters: WLParameters | Iterable[WLParameters] = None,
-                 lr=0.1, lr_decay_scheduler: Scheduler = None, momentum=0.):
+    def __init__(self, lr=0.1, lr_decay_scheduler: Scheduler = None, momentum=0.):
+        super(SGD, self).__init__()
         self.lr = lr
         self.current_lr = lr
         self.lr_decay_scheduler = lr_decay_scheduler
         self.momentum = momentum
-        super(SGD, self).__init__(parameters)
-
-    def init_new_parameters(self, parameters: Set[WLParameters]):
-        if self.momentum != 0.:
-            for parameter in parameters:
-                if parameter.weight_momentums is None:
-                    parameter.weight_momentums = np.zeros_like(parameter.get_weights())
-                    parameter.bias_momentums = np.zeros_like(parameter.get_biases())
 
     def before_update(self):
         if self.lr_decay_scheduler is not None:
@@ -128,33 +82,42 @@ class SGD(Optimizer):
                 b_vals += regb_updates  # self.apply_reduction(regb_updates) todo same as above
         return w_vals, b_vals   # todo necessary?
 
-    def update_body(self):
-        if self.momentum != 0.:
-            # Build updates for SGD with momentum
-            for parameter in self.parameters:
-                # Build weights updates
-                parameter.weight_momentums = self.momentum * parameter.weight_momentums - \
-                            self.current_lr * parameter.get_dweights(copy=False)
-                # Build biases updates
-                parameter.bias_momentums = self.momentum * parameter.bias_momentums - \
-                            self.current_lr * parameter.get_dbiases(copy=False)
+    def __update_body_momentum(self, layer):
+        if isinstance(layer, SequentialLayer):
+            self.update_body(layer.layers)
+        elif hasattr(layer, 'weight_momentums') and layer.is_parametrized():
+            weight_updates = self.momentum * layer.weight_momentums - self.current_lr * layer.dweights
+            layer.weight_momentums = weight_updates
 
-                # Handle regularizations
-                # w_updates, b_updates = self.update_reg_values(parameter, w_updates, b_updates)
-                self.update_reg_values(parameter, parameter.weight_momentums, parameter.bias_momentums)
+            # Build bias updates
+            bias_updates = self.momentum * layer.bias_momentums - self.current_lr * layer.dbiases
+            layer.bias_momentums = bias_updates
 
-                # Update weights and biases using momentum updates
-                parameter.update_weights_and_biases(parameter.weight_momentums, parameter.bias_momentums)
+            layer.weights += weight_updates
+            layer.biases += bias_updates
+
+    def __update_body_no_momentum(self, layer):
+        if isinstance(layer, SequentialLayer):
+            self.update_body(layer.layers)
+        elif layer.is_parametrized():
+            weight_updates = - self.current_lr * layer.dweights
+            bias_updates = - self.current_lr * layer.dbiases
+
+            layer.weights += weight_updates
+            layer.biases += bias_updates
+
+    def update_body(self, layers: SequentialLayer | Iterable):
+        if isinstance(layers, SequentialLayer):
+            self.update_body(layers.layers)
+        elif isinstance(layers, Iterable):
+            if self.momentum:
+                for layer in layers:
+                    self.__update_body_momentum(layer)
+            else:
+                for layer in layers:
+                    self.__update_body_no_momentum(layer)
         else:
-            # Build updates for "vanilla" SGD (i.e., without momentum)
-            for parameter in self.parameters:
-                w_updates = - self.current_lr * parameter.get_dweights(copy=False)
-                b_updates = - self.current_lr * parameter.get_dbiases(copy=False)
-
-                # Handle regularizations
-                w_updates, b_updates = self.update_reg_values(parameter, w_updates, b_updates)
-
-                parameter.update_weights_and_biases(w_updates, b_updates)
+            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are {SequentialLayer} or {Iterable}")
 
     def after_update(self):
         self.iterations += 1

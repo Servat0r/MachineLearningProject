@@ -13,6 +13,10 @@ class Layer:
         self.output = None
 
     @abstractmethod
+    def is_parametrized(self) -> bool:
+        pass
+
+    @abstractmethod
     def check_input_shape(self, shape: int | Sequence) -> bool:
         """
         Checks shape of the input to the layer; must be of the form (l, <data_shape>)
@@ -49,10 +53,6 @@ class Layer:
         self.input = None
         self.output = None
 
-    @abstractmethod
-    def get_parameters(self) -> Set[Parameters]:
-        pass
-
     def set_to_train(self):
         self.__is_training = True
 
@@ -62,30 +62,21 @@ class Layer:
     def __call__(self, x: np.ndarray) -> np.ndarray:
         return self.forward(x)
 
-    def add_regularizers(self, regularizers: Regularizer | Iterable[Regularizer]):
-        for regularizer in regularizers:
-            regularizer.init_new_parameters(self.get_parameters())
-
 
 class SequentialLayer(Layer):
-
-    def __retrieve_parameters(self):
-        for layer in self.layers:
-            self.parameters.update(layer.get_parameters())
-        print(f"Sequential Layer {len(self.parameters)}")
-        return self.parameters
 
     def __init__(self, layers: Sequence[Layer]):
         super(SequentialLayer, self).__init__()
         self.layers = layers
-        self.parameters = set()
-        self.__retrieve_parameters()
 
     def __len__(self):
         return len(self.layers)
 
     def __getitem__(self, item):
         return self.layers[item]
+
+    def is_parametrized(self) -> bool:
+        return any(layer.is_parametrized() for layer in self.layers)
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
@@ -116,13 +107,6 @@ class SequentialLayer(Layer):
         # todo an index of layers for each parameter and filter by them
         return current_dvals
 
-    def get_parameters(self) -> Set[Parameters]:
-        return self.parameters
-
-    def add_regularizers(self, regularizers: Regularizer | Iterable[Regularizer]):
-        for layer in self.layers:
-            layer.add_regularizers(regularizers)
-
 
 class LinearLayer(Layer):
     """
@@ -141,7 +125,14 @@ class LinearLayer(Layer):
         biases_shape = (1, self.out_features)
         self.weights, self.biases = initializer(weights_shape, biases_shape, **init_args)
         self.grad_reduction = grad_reduction
-        self.parameter = WeightedLayerParameters(self.weights, self.biases, grad_reduction=None)
+        self.dweights = None
+        self.dbiases = None
+        # Will be initialized by Optimizer if momentum is used
+        self.weight_momentums = np.zeros_like(self.weights)
+        self.bias_momentums = np.zeros_like(self.biases)
+
+    def is_parametrized(self) -> bool:
+        return True
 
     def get_weights(self, copy=True) -> np.ndarray:
         """
@@ -159,13 +150,10 @@ class LinearLayer(Layer):
         return self.biases.copy() if copy else self.biases
 
     def get_dweights(self, copy=True) -> np.ndarray:
-        return self.parameter.get_dweights(copy)
+        return self.dweights.copy() if copy else self.dweights
 
     def get_dbiases(self, copy=True) -> np.ndarray | None:
-        return self.parameter.get_dbiases(copy)
-
-    def get_parameters(self) -> Set[Parameters]:
-        return {self.parameter}
+        return self.dbiases.copy() if copy else self.dbiases
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
@@ -190,16 +178,16 @@ class LinearLayer(Layer):
             raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.out_features}), got {dvals.shape}")
         tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
         # Calculate update to layer's weights and biases
-        self.parameter.dweights = tinp @ dvals
-        self.parameter.dbiases = dvals.copy()
+        self.dweights = tinp @ dvals
+        self.dbiases = dvals.copy()
 
         # Apply reductions if requested
         if self.grad_reduction == 'sum':
-            self.parameter.dweights = np.sum(self.parameter.dweights, axis=0)
-            self.parameter.dbiases = np.sum(self.parameter.dbiases, axis=0)
+            self.dweights = np.sum(self.dweights, axis=0)
+            self.dbiases = np.sum(self.dbiases, axis=0)
         elif self.grad_reduction == 'mean':
-            self.parameter.dweights = np.mean(self.parameter.dweights, axis=0)
-            self.parameter.dbiases = np.mean(self.parameter.dbiases, axis=0)
+            self.dweights = np.mean(self.dweights, axis=0)
+            self.dbiases = np.mean(self.dbiases, axis=0)
 
         # Now calculate values to backpropagate to previous layer
         return np.dot(dvals, self.weights.T)
@@ -210,6 +198,9 @@ class ActivationLayer(Layer):
     Represents an activation function layer: accepts an input of the shape (l, 1, n)
     and returns an output of the same shape after having applied an activation function.
     """
+    def is_parametrized(self) -> bool:
+        return False
+
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
             return False
@@ -219,9 +210,6 @@ class ActivationLayer(Layer):
         if isinstance(shape, int):
             return False
         return all([len(shape) == 3, shape[0] > 0, shape[1] == 1, shape[2] > 0])
-
-    def get_parameters(self) -> Set[Parameters]:
-        return set()    # we don't have parameters here!
 
 
 class SigmoidLayer(ActivationLayer):
@@ -315,9 +303,6 @@ class FullyConnectedLayer(Layer):
     def backward(self, dvals: np.ndarray):
         dvals = self.activation.backward(dvals)  # net is actually saved as input to the activation layer
         return self.linear.backward(dvals)
-
-    def get_parameters(self) -> Set[Parameters]:    # todo check if it does something strange ...
-        return self.linear.get_parameters().union(self.activation.get_parameters())
 
 
 __all__ = [
