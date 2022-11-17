@@ -23,9 +23,9 @@ class Optimizer:
         Main method for updating parameters.
         """
         self.before_update()
-        result = self.update_body(layers)
+        self.update_body(layers)
+        self.update_reg_values(layers)
         self.after_update()
-        return result
 
     @abstractmethod
     def after_update(self):
@@ -35,7 +35,7 @@ class Optimizer:
         pass
 
     @abstractmethod
-    def update_reg_values(self, parameter, w_vals: np.ndarray, b_vals: np.ndarray):
+    def update_reg_values(self, layers):
         """
         Subroutine for handling regularization terms in updating.
         """
@@ -70,24 +70,42 @@ class SGD(Optimizer):
         if self.lr_decay_scheduler is not None:
             self.current_lr = self.lr_decay_scheduler(self.iterations, self.current_lr)
 
-    def update_reg_values(self, parameter, w_vals: np.ndarray, b_vals: np.ndarray):
-        """
-        Subroutine for handling regularization terms in updating.
-        """
-        for reg_name, reg_updates in parameter.regularizer_updates.items():
-            regw_updates, regb_updates = reg_updates.get('weights'), reg_updates.get('biases')
-            if regw_updates is not None:
-                w_vals += regw_updates  # self.apply_reduction(regw_updates) todo sure? we are ignoring batch size!
-            if regb_updates is not None:
-                b_vals += regb_updates  # self.apply_reduction(regb_updates) todo same as above
-        return w_vals, b_vals   # todo necessary?
+    @staticmethod
+    def __update_l1_reg(layer):
+        if hasattr(layer, 'l1_regularizer') and layer.l1_regularizer != 0.:
+            weight_ones = np.sign(layer.weights)
+            bias_ones = np.sign(layer.biases)
+
+            layer.weights -= layer.l1_regularizer * weight_ones
+            layer.biases -= layer.l1_regularizer * bias_ones
+
+    @staticmethod
+    def __update_l2_reg(layer):
+        if hasattr(layer, 'l2_regularizer') and layer.l2_regularizer != 0.:
+            layer.weights -= layer.l2_regularizer * layer.weights
+            layer.biases -= layer.l2_regularizer * layer.biases
+
+    # todo fixme L1 and L2 regularizers are applied AFTER subtracting dweights and dbiases! Is this correct??
+    def update_reg_values(self, layers: SequentialLayer | Iterable):
+        if isinstance(layers, SequentialLayer):
+            self.update_reg_values(layers.layers)
+        elif isinstance(layers, FullyConnectedLayer):
+            self.update_reg_values({layers.linear})
+        elif isinstance(layers, Iterable):
+            for layer in layers:
+                if isinstance(layer, SequentialLayer):
+                    self.update_reg_values(layer.layers)
+                elif isinstance(layer, FullyConnectedLayer):
+                    self.update_reg_values({layer.linear})
+                elif layer.is_parametrized():
+                    self.__update_l1_reg(layer)
+                    self.__update_l2_reg(layer)
+        else:
+            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are "
+                            f"{SequentialLayer}, {FullyConnectedLayer} or {Iterable}")
 
     def __update_body_momentum(self, layer):
-        if isinstance(layer, SequentialLayer):
-            self.update_body(layer.layers)
-        elif isinstance(layer, FullyConnectedLayer):
-            self.update_body({layer.linear})
-        elif hasattr(layer, 'weight_momentums') and layer.is_parametrized():
+        if hasattr(layer, 'weight_momentums'):
             weight_updates = self.momentum * layer.weight_momentums - self.current_lr * layer.dweights
             layer.weight_momentums = weight_updates
 
@@ -99,16 +117,11 @@ class SGD(Optimizer):
             layer.biases += bias_updates
 
     def __update_body_no_momentum(self, layer):
-        if isinstance(layer, SequentialLayer):
-            self.update_body(layer.layers)
-        elif isinstance(layer, FullyConnectedLayer):
-            self.update_body({layer.linear})
-        elif layer.is_parametrized():
-            weight_updates = - self.current_lr * layer.dweights
-            bias_updates = - self.current_lr * layer.dbiases
+        weight_updates = - self.current_lr * layer.dweights
+        bias_updates = - self.current_lr * layer.dbiases
 
-            layer.weights += weight_updates
-            layer.biases += bias_updates
+        layer.weights += weight_updates
+        layer.biases += bias_updates
 
     def update_body(self, layers: SequentialLayer | Iterable):
         if isinstance(layers, SequentialLayer):
@@ -116,14 +129,19 @@ class SGD(Optimizer):
         elif isinstance(layers, FullyConnectedLayer):
             self.update_body({layers.linear})
         elif isinstance(layers, Iterable):
-            if self.momentum:
-                for layer in layers:
-                    self.__update_body_momentum(layer)
-            else:
-                for layer in layers:
-                    self.__update_body_no_momentum(layer)
+            for layer in layers:
+                if isinstance(layer, SequentialLayer):
+                    self.update_body(layer.layers)
+                elif isinstance(layer, FullyConnectedLayer):
+                    self.update_body({layer.linear})
+                elif layer.is_parametrized():
+                    if self.momentum:
+                        self.__update_body_momentum(layer)
+                    else:
+                        self.__update_body_no_momentum(layer)
         else:
-            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are {SequentialLayer} or {Iterable}")
+            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are"
+                            f"{SequentialLayer}, {FullyConnectedLayer} or {Iterable}")
 
     def after_update(self):
         self.iterations += 1

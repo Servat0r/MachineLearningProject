@@ -2,7 +2,7 @@ from __future__ import annotations
 from core.utils.types import *
 import core.diffs as dfs
 import core.functions as cf
-from .regularization import *
+from .layers import SequentialLayer, FullyConnectedLayer
 
 
 class Loss:
@@ -132,22 +132,54 @@ class RegularizedLoss(Loss):
     """
     A loss with a regularization term.
     """
-    def __init__(self, base_loss: Loss, regularizers: Regularizer | Iterable[Regularizer]):
+    def __init__(self, base_loss: Loss, layers: SequentialLayer | Iterable):
         super(RegularizedLoss, self).__init__()
         self.base_loss = base_loss
-        regularizers = {regularizers} if isinstance(regularizers, Regularizer) else regularizers
-        self.regularizers = regularizers
+        self.layers = layers
+
+    @staticmethod
+    def __l1_regularization_loss(layer) -> np.ndarray:
+        if hasattr(layer, 'l1_regularizer') and layer.l1_regularizer != 0.:
+            abs_weights = np.abs(layer.weights)
+            abs_biases = np.abs(layer.biases)
+            return layer.l1_regularizer * (np.sum(abs_weights) + np.sum(abs_biases))
+        else:
+            return np.zeros(1)
+
+    @staticmethod
+    def __l2_regularization_loss(layer) -> np.ndarray:
+        if hasattr(layer, 'l2_regularizer') and layer.l2_regularizer != 0.:
+            sq_weights = np.square(layer.weights)
+            sq_biases = np.square(layer.biases)
+            return layer.l2_regularizer * (np.sum(sq_weights) + np.sum(sq_biases))
+        else:
+            return np.zeros(1)
+
+    def regularization_loss(self, layers: SequentialLayer | FullyConnectedLayer | Iterable) -> np.ndarray:
+        if isinstance(layers, SequentialLayer):
+            return self.regularization_loss(layers.layers)
+        elif isinstance(layers, FullyConnectedLayer):
+            return self.regularization_loss({layers.linear})
+        elif isinstance(layers, Iterable):
+            result = np.zeros(1)
+            for layer in layers:
+                if isinstance(layer, SequentialLayer):
+                    result += self.regularization_loss(layer)
+                elif isinstance(layer, FullyConnectedLayer):
+                    result += self.regularization_loss({layer.linear})
+                elif layer.is_parametrized():
+                    result += self.__l1_regularization_loss(layer)
+                    result += self.__l2_regularization_loss(layer)
+            return result
+        else:
+            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are "
+                            f"{SequentialLayer}, {FullyConnectedLayer} or {Iterable}")
 
     def forward(self, pred: np.ndarray, truth: np.ndarray,
-                target_shape: tuple = (1,)) -> np.ndarray:
-        loss_fwd = self.base_loss.forward(pred, truth)
-        reg_fwd = np.zeros(target_shape)
-        for regularizer in self.regularizers:
-            regularizer(target_shape, reg_fwd)
-        if isinstance(target_shape, int) or all([len(target_shape) == 1, target_shape[0] == 1]):
-            reg_fwd = reg_fwd.item()
-        loss_fwd += reg_fwd
-        return loss_fwd
+                target_shape: tuple = (1,)) -> tuple[np.ndarray, np.ndarray]:
+        data_loss = self.base_loss.forward(pred, truth)
+        reg_loss = self.regularization_loss(self.layers)
+        return data_loss, reg_loss
 
     def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
         # Backward pass "direct" handling (i.e., by updating gradients of the weights)

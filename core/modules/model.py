@@ -34,7 +34,8 @@ class Model:
         """
         # todo create metrics (accuracy, mse/abs/mee, timing, ram usage)!
         self.optimizer = optimizer
-        self.loss = loss
+        # auto-wrap loss into a regularization one
+        self.loss = RegularizedLoss(loss, layers=self.layers)
         # todo add metrics handling
         self.layers.set_to_train()
 
@@ -65,10 +66,10 @@ class Model:
                     break
                 input_mb, target_mb = mb_data[0], mb_data[1]
                 y_hat = self.layers(input_mb)
-                loss_val = self.loss(y_hat, target_mb)
+                data_loss_val, reg_loss_val = self.loss(y_hat, target_mb)
                 print(f'[Epoch {epoch}, Minibatch {mb}]: loss values over {len(input_mb)} '
-                      f'training examples = {loss_val}')
-                train_mb_losses[mb] = np.mean(loss_val, axis=0).item()
+                      f'training examples: (data = {data_loss_val.item():.8f}, regularization = {reg_loss_val.item():.8f})')
+                train_mb_losses[mb] = np.mean(data_loss_val + reg_loss_val, axis=0).item()
                 # Backward of loss and hidden layers
                 dvals = self.loss.backward(y_hat, target_mb)
                 self.layers.backward(dvals)
@@ -81,10 +82,11 @@ class Model:
                 eval_dataloader.before_epoch()
                 input_eval, target_eval = next(eval_dataloader)
                 y_hat = self.layers(input_eval)
-                loss_val = self.loss(y_hat, target_eval)
-                print(f'[Epoch {epoch}]: loss values over {len(input_eval)} validation examples = {loss_val}')
+                data_loss_val, reg_loss_val = self.loss(y_hat, target_eval)
+                print(f'[Epoch {epoch}]: loss values over {len(input_eval)} '
+                      f'validation examples: (data = {data_loss_val.item():.8f}, regularization = {reg_loss_val.item():.8f})')
                 eval_dataloader.after_epoch()
-                eval_epoch_losses[epoch] = np.mean(loss_val, axis=0)
+                eval_epoch_losses[epoch] = np.mean(data_loss_val + reg_loss_val, axis=0)
 
         train_dataloader.after_cycle()
         if eval_exists:

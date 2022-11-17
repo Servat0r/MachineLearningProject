@@ -311,6 +311,46 @@ def test_fully_connected_minibatch_model(
         # todo we do not record the learning rate (we could create a logger)
 
 
+def test_fully_connected_minibatch_model_with_regularizations(
+        n_epochs=5000, mb_size=1, epoch_shuffle=True, func=arange_square_data,
+        l1_regularizer=0., l2_regularizer=0., *args, **kwargs,
+):
+    # Generate train dataset
+    X, y, train_dataset, accuracy_precision = generate_dataset(func)
+
+    # Generate validation dataset
+    args = () if args is None else args
+    kwargs = {} if args is None else kwargs
+    x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, *args, **kwargs)
+    eval_dataset = ArrayDataset(x_eval, y_eval)
+
+    # Generate dataloaders
+    train_dataloader = DataLoader(train_dataset, batch_size=mb_size, shuffle=epoch_shuffle)
+    eval_dataloader = DataLoader(eval_dataset, batch_size=N_SAMPLES//5)
+    model = cm.Model([
+        cm.FullyConnectedLayer(
+            INPUT_DIM, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            l1_regularizer=l1_regularizer, l2_regularizer=l2_regularizer,
+        ),
+        cm.FullyConnectedLayer(
+            64, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            l1_regularizer=l1_regularizer, l2_regularizer=l2_regularizer,
+        ),
+        cm.LinearLayer(
+            64, OUTPUT_DIM, initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            l1_regularizer=l1_regularizer, l2_regularizer=l2_regularizer,
+        )
+    ])
+    # Use Model class for training and epoch losses recording
+    model.compile(optimizer=optimizer, loss=loss_function)
+    train_epoch_losses, eval_epoch_losses = model.train(train_dataloader, eval_dataloader, n_epochs=n_epochs)
+    for epoch, (epoch_tr_loss, epoch_ev_loss) in enumerate(zip(train_epoch_losses, eval_epoch_losses)):
+        print(f'epoch: {epoch} ' +
+              f'(tr_loss: {epoch_tr_loss.item():.8f}, ' +
+              f'ev_loss: {epoch_ev_loss.item():.8f})')
+        # todo we do not record the learning rate (we could create a logger)
+
+
 if __name__ == '__main__':
     # Uncomment the tests you want to execute
     # todo: test_separated, test_sequential, test_sequential_minibatch,
@@ -325,5 +365,12 @@ if __name__ == '__main__':
     # test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data, use_model=True)
     # test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False, use_model=True)
     # test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data)
-    test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False)
+    # test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False)
+    test_fully_connected_minibatch_model_with_regularizations(
+        n_epochs=100, mb_size=100, func=randn_sqrt_data, l1_regularizer=0., l2_regularizer=0.,
+    )
+    # test_fully_connected_minibatch_model_with_regularizations(
+    #     n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False,
+    #     l1_regularizer=0., l2_regularizer=0.01,
+    # )
     exit(0)

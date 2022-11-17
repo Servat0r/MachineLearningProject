@@ -121,7 +121,8 @@ class LinearLayer(Layer):
 
     def __init__(self, in_features: int, out_features: int,
                  initializer: Initializer, init_args: dict[str, Any] = None,
-                 grad_reduction='mean', frozen=False):
+                 grad_reduction='mean', frozen=False,
+                 l1_regularizer=0., l2_regularizer=0.):
         super(LinearLayer, self).__init__(frozen=frozen)
         self.in_features = in_features
         self.out_features = out_features
@@ -132,9 +133,10 @@ class LinearLayer(Layer):
         self.grad_reduction = grad_reduction
         self.dweights = None
         self.dbiases = None
-        # Will be initialized by Optimizer if momentum is used
         self.weight_momentums = np.zeros_like(self.weights)
         self.bias_momentums = np.zeros_like(self.biases)
+        self.l1_regularizer = l1_regularizer
+        self.l2_regularizer = l2_regularizer
 
     def is_parametrized(self) -> bool:
         return not self.frozen
@@ -286,11 +288,14 @@ class FullyConnectedLayer(Layer):
     def __init__(
             self, in_features: int, out_features: int, activation_layer: ActivationLayer,
             initializer: Initializer = None, init_args: dict[str, Any] = None,
-            grad_reduction='mean', frozen=False,
+            grad_reduction='mean', frozen=False, l1_regularizer=0., l2_regularizer=0.,
     ):
         super(FullyConnectedLayer, self).__init__(frozen=frozen)
         # Initialize linear part
-        self.linear = LinearLayer(in_features, out_features, initializer, init_args, grad_reduction)
+        self.linear = LinearLayer(
+            in_features, out_features, initializer, init_args, grad_reduction,
+            l1_regularizer=l1_regularizer, l2_regularizer=l2_regularizer,
+        )
         self.activation = activation_layer
         self.net = None
 
