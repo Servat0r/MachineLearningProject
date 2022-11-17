@@ -33,14 +33,21 @@ class RandomUniformInitializer(Initializer):
     """
     Random uniform initializer within a specified range [p, q].
     """
-    def __init__(self, low: TReal = 0.0, high: TReal = 1.0):
+    def __init__(self, low: TReal = 0.0, high: TReal = 1.0, zero_bias=False):
         self.low = low
         self.high = high
+        self.zero_bias = zero_bias
 
     def initialize(self, weights_shape: TShape, biases_shape: TShape = None, dtype=np.float64,
                    *args, **kwargs) -> tuple[np.ndarray, Optional[np.ndarray]]:
-        weights = np.random.uniform(self.low, self.high, weights_shape)
-        biases = np.random.uniform(self.low, self.high, biases_shape) if biases_shape is not None else None
+        weights = np.random.uniform(self.low, self.high, weights_shape).astype(dtype=dtype)
+        if biases_shape is not None:
+            if self.zero_bias:
+                biases = np.zeros(biases_shape, dtype=dtype)
+            else:
+                biases = np.random.uniform(self.low, self.high, biases_shape).astype(dtype=dtype)
+        else:
+            biases = None
         return weights, biases
 
 
@@ -48,13 +55,20 @@ class RandomNormalDefaultInitializer(Initializer):
     """
     Random normal (Gaussian) initializer (mean = 0, std = 1).
     """
-    def __init__(self, scale: TReal = 1.0):
+    def __init__(self, scale: TReal = 1.0, zero_bias=False):
         self.scale = scale
+        self.zero_bias = zero_bias
 
     def initialize(self, weights_shape: TShape, biases_shape: TShape = None, dtype=np.float64,
                    *args, **kwargs) -> tuple[np.ndarray, Optional[np.ndarray]]:
         weights = self.scale * np.random.randn(*weights_shape)
-        biases = self.scale * np.random.randn(*biases_shape) if biases_shape is not None else None
+        if biases_shape is not None:
+            if self.zero_bias:
+                biases = np.zeros(biases_shape, dtype=dtype)
+            else:
+                biases = self.scale * np.random.randn(*biases_shape)
+        else:
+            biases = None
         return weights, biases
 
 

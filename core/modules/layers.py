@@ -75,12 +75,12 @@ class WeightedLayer(Layer):
     Base class for layers that include weights and biases.
     """
     def __init__(self, initializer: Initializer, init_args: dict[str, Any] = None,
-                 grad_reduction=WeightedLayerParameters.SUM):
+                 grad_reduction=WeightedLayerParameters.SUM):  # todo change to 'mean' (or 'none')
         super(WeightedLayer, self).__init__()
         self.weights, self.biases = self._initialize_weights(initializer, init_args=init_args)
         self.grad_reduction = grad_reduction
-        self.parameters = WeightedLayerParameters(
-            self.weights, self.biases, grad_reduction=WeightedLayerParameters.SUM,
+        self.parameter = WeightedLayerParameters(
+            self.weights, self.biases, grad_reduction=None,
         )
 
     def get_weights(self, copy=True) -> np.ndarray:
@@ -99,10 +99,10 @@ class WeightedLayer(Layer):
         return self.biases.copy() if copy else self.biases
 
     def get_dweights(self, copy=True) -> np.ndarray:
-        return self.parameters.get_dweights(copy)
+        return self.parameter.get_dweights(copy)
 
     def get_dbiases(self, copy=True) -> np.ndarray | None:
-        return self.parameters.get_dbiases(copy)
+        return self.parameter.get_dbiases(copy)
 
     @abstractmethod
     def _initialize_weights(self, initializer: Initializer,
@@ -110,7 +110,7 @@ class WeightedLayer(Layer):
         pass
 
     def get_parameters(self) -> Set[Parameters]:
-        return {self.parameters}
+        return {self.parameter}
 
 
 class SequentialLayer(Layer):
@@ -214,19 +214,31 @@ class LinearLayer(WeightedLayer):
         Specialized version of backward() when it is needed only to sum up over examples.
         """
         tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
-        self.parameters.dweights[:, :] = np.sum(tinp @ dvals, axis=0)[:, :]
-        self.parameters.dbiases = np.sum(dvals, axis=0)
+        self.parameter.dweights = np.sum(tinp @ dvals, axis=0)
+        dbiases_intm = np.sum(dvals, axis=2, keepdims=True)
+        self.parameter.dbiases = np.sum(dbiases_intm, axis=0)
 
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
             raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.out_features}), got {dvals.shape}")
-        if self.grad_reduction == WeightedLayerParameters.SUM:
-            self.__backward_on_sum(dvals)
+        tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
         # Calculate update to layer's weights and biases
-        dvals2 = np.transpose(dvals, axes=[0, 2, 1])    # (l, n, 1)
+        self.parameter.dweights = tinp @ dvals
+        self.parameter.dbiases = np.sum(dvals, axis=2, keepdims=True)
+        # Apply reductions if requested
+        if self.grad_reduction == WeightedLayerParameters.SUM:
+            self.parameter.dweights = np.sum(self.parameter.dweights, axis=0)
+            self.parameter.dbiases = np.sum(self.parameter.dbiases, axis=0)
+        elif self.grad_reduction == WeightedLayerParameters.MEAN:
+            self.parameter.dweights = np.mean(self.parameter.dweights, axis=0)
+            self.parameter.dbiases = np.mean(self.parameter.dbiases, axis=0)
         # Now calculate values to backpropagate to previous layer
+        return np.dot(dvals, self.weights.T)
+        """
+        dvals2 = np.transpose(dvals, axes=[0, 2, 1])    # (l, n, 1)
         out_dvalues = np.transpose(self.weights @ dvals2, axes=[0, 2, 1])
         return out_dvalues
+        """
 
 
 class ActivationLayer(Layer):
@@ -275,11 +287,11 @@ class FullyConnectedLayer(Layer):
     def __init__(
             self, in_features: int, out_features: int, activation_layer: ActivationLayer = None,
             func: Callable = None, initializer: Initializer = None, init_args: dict[str, Any] = None,
-            regularizers: Regularizer | Iterable[Regularizer] = None,
+            grad_reduction=WeightedLayerParameters.SUM,
     ):
         super(FullyConnectedLayer, self).__init__()
         # Initialize linear part
-        self.linear = LinearLayer(initializer, in_features, out_features, init_args, regularizers)
+        self.linear = LinearLayer(initializer, in_features, out_features, init_args, grad_reduction)
         self.activation = None
         if activation_layer is not None:
             self.activation = activation_layer
@@ -293,6 +305,7 @@ class FullyConnectedLayer(Layer):
         return self.activation.check_backward_input_shape(shape)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        self.input = x
         net = self.linear.forward(x)
         self.output = self.activation.forward(net)
         return self.output

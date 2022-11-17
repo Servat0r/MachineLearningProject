@@ -2,15 +2,23 @@ import math
 import torch
 import torch.nn as tnn
 import numpy as np
+from torch.utils.data import TensorDataset, DataLoader
+
+import nnfs
+from nnfs.datasets import sine_data
+
+nnfs.init()
 
 
-INPUT_DIM = 100
-HIDDEN_LAYER_SIZE = 10
-TRAIN_BATCH_SIZE = 20000
+INPUT_DIM = 1
+HIDDEN_LAYER_SIZE = 64
+TRAIN_BATCH_SIZE = 1000
 EVAL_BATCH_SIZE = 2000
 TRAIN_MB_SIZE = 1000
-N_EPOCHS = 1
+N_EPOCHS = 200
 SEED = 10
+FACTOR = 1.
+NOISE_FACTOR = 1.5
 MB_NUM = math.ceil(TRAIN_BATCH_SIZE / TRAIN_MB_SIZE)
 
 
@@ -20,10 +28,19 @@ class NeuralNetwork(tnn.Module):
         self.flatten = tnn.Flatten()
         self.linear_relu_stack = tnn.Sequential(
             tnn.Linear(input_dim, hidden_layer_dim),
-            tnn.Tanh(),
+            tnn.ReLU(),
+            tnn.Linear(hidden_layer_dim, hidden_layer_dim),
+            tnn.ReLU(),
             tnn.Linear(hidden_layer_dim, 1),
-            tnn.Tanh(),
+            tnn.ReLU(),
         )
+        # self._init_weights()
+
+    @torch.no_grad()
+    def _init_weights(self):
+        for layer in self.linear_relu_stack:
+            if isinstance(layer, tnn.Linear):
+                layer.weight.data.uniform_(-1.0, 1.0)
 
     def forward(self, x):
         # x = self.flatten(x)
@@ -60,46 +77,44 @@ class L1(tnn.Module):
         return self.module(*args, **kwargs)
 
 
-class Perceptron(tnn.Module):
-    def __init__(self):
-        super(Perceptron, self).__init__()
-        self.flatten = tnn.Flatten()
-        self.body = tnn.Sequential(
-            tnn.Linear(3, 1, bias=False, dtype=torch.float64),
-            tnn.Tanh(),
-        )
-
-    def forward(self, x):
-        # x = self.flatten(x)
-        x = torch.from_numpy(x)
-        y_hat = self.body(x)
-        return y_hat
-
+x_train, y_train = sine_data()
+x_train = x_train.reshape(1000, 1, 1)
+y_train = y_train.reshape(1000, 1, 1)
 
 simple_nn = NeuralNetwork()
-l1_simple_nn = L1(simple_nn, weight_decay=0.001).float()
+l1_simple_nn = simple_nn # L1(simple_nn, weight_decay=0.001).float()
 mse_loss = tnn.MSELoss(reduction='mean')
-optimizer = torch.optim.SGD(l1_simple_nn.parameters(), lr=0.1, momentum=0.9)
+# optimizer = torch.optim.SGD(l1_simple_nn.parameters(), lr=0.01, momentum=0.9)
+optimizer = torch.optim.Adam(l1_simple_nn.parameters(), lr=0.005)
 
 train_input_shape = (TRAIN_BATCH_SIZE, 1, INPUT_DIM)
 test_input_shape = (EVAL_BATCH_SIZE, 1, INPUT_DIM)
 
 np.random.seed(SEED)
-# torch.manual_seed(SEED)
+torch.manual_seed(SEED)
 
-x_train = 100. * np.random.randn(TRAIN_BATCH_SIZE, 1, INPUT_DIM)  # 2000 inputs of dimension 100
-noise_shape = (x_train.shape[0], x_train.shape[1])
-
-y_train = np.sin(np.sum(x_train, axis=2)) + np.random.randn(*noise_shape)
-y_train = np.reshape(y_train, (x_train.shape[0], x_train.shape[1], 1))
+# x_train = FACTOR * np.random.randn(TRAIN_BATCH_SIZE, 1, INPUT_DIM)  # 2000 inputs of dimension 100
+# y_train = np.sin(2 * np.pi * np.sum(x_train, axis=2)) + 0 * np.random.randn(TRAIN_BATCH_SIZE, 1)
+# y_train = np.square(x_train)
+# x_train += np.random.randn(TRAIN_BATCH_SIZE, 1, INPUT_DIM)
+# y_train = np.reshape(y_train, (TRAIN_BATCH_SIZE, 1, 1))
 
 x_train, y_train = torch.from_numpy(x_train).float(), torch.from_numpy(y_train).float()
 # y = sin(x1+...+xn) + random (gaussian) noise
 
 x_eval = 100. * np.random.randn(EVAL_BATCH_SIZE, 1, INPUT_DIM)
-y_eval = np.sin(np.sum(x_eval, axis=2))
+# y_eval = np.sin(2 * np.pi * np.sum(x_eval, axis=2)) + 0 * np.random.randn(EVAL_BATCH_SIZE, 1)
+y_eval = np.square(x_eval)
+# x_eval += np.random.randn(EVAL_BATCH_SIZE, 1, INPUT_DIM)
+y_eval = np.reshape(y_eval, (EVAL_BATCH_SIZE, 1, 1))
 
 x_eval, y_eval = torch.from_numpy(x_eval).float(), torch.from_numpy(y_eval).float()
+# x_eval, y_eval = torch.from_numpy(x_eval), torch.from_numpy(y_eval)
+
+
+train_dataset, eval_dataset = TensorDataset(x_train, y_train), TensorDataset(x_eval, y_eval)
+train_dataloader = DataLoader(train_dataset, batch_size=TRAIN_MB_SIZE, shuffle=True)
+eval_dataloader = DataLoader(eval_dataset, batch_size=EVAL_BATCH_SIZE)
 
 
 def main_loop():
@@ -107,17 +122,23 @@ def main_loop():
     epoch_training_mse_losses = torch.zeros(MB_NUM)
 
     total_eval_mse_losses = []
-    print(f"[Before Training]: {TRAIN_BATCH_SIZE} training examples of dimension {x_train.shape[2]}")
+    # print(f"[Before Training]: {TRAIN_BATCH_SIZE} training examples of dimension {x_train.shape[2]}")
     for epoch in range(N_EPOCHS):
+        train_iter, eval_iter = iter(train_dataloader), iter(eval_dataloader)
         for mb in range(MB_NUM):
+            next_x, next_y = next(train_iter)
+            optimizer.zero_grad()
+            y_hat = l1_simple_nn(next_x)
+            mse_losses = mse_loss(y_hat, next_y)
+            """
             start, end = mb * MB_NUM, min((mb + 1) * TRAIN_MB_SIZE, TRAIN_BATCH_SIZE)
             y_hat = l1_simple_nn(x_train[start:end])
             mse_losses = mse_loss(y_hat, y_train[start:end])
             acc = torch.abs(y_hat - y_train[start:end])
+            """
             print(f"[Epoch {epoch}, Minibatch {mb}]:", f"Average MSE Loss over {TRAIN_MB_SIZE} training examples =",
-                  mse_losses.item(), f"Average distance of predicted outputs from real ones =", torch.mean(acc)),
+                  mse_losses.item(), f"Average distance of predicted outputs from real ones =")  #, torch.mean(acc)),
             epoch_training_mse_losses[mb] = mse_losses.item()
-            optimizer.zero_grad()
             mse_losses.backward()
             optimizer.step()
         total_train_mse_losses.append(torch.mean(epoch_training_mse_losses).item())

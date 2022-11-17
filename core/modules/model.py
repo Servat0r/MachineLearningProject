@@ -69,12 +69,14 @@ class Model:
             eval_dataloader.before_cycle()
 
         for epoch in range(n_epochs):
-            train_iter, eval_iter = iter(train_dataloader), iter(eval_dataloader)
+            # train_iter, eval_iter = iter(train_dataloader), iter(eval_dataloader)
+            train_iter = iter(train_dataloader)
             # Callbacks before training epoch
             self.layers.set_to_train()
             train_dataloader.before_epoch()
             train_mb_losses.fill(0.)
             for mb in range(mb_num):
+
                 mb_data = next(train_iter)
                 if mb_data is None:
                     break
@@ -83,9 +85,9 @@ class Model:
                 loss_val = self.loss(y_hat, target_mb)
                 print(f'[Epoch {epoch}, Minibatch {mb}]: loss values over {len(input_mb)} '
                       f'training examples = {loss_val}')
-                train_mb_losses[mb] = loss_val
+                train_mb_losses[mb] = np.mean(loss_val, axis=0)
                 # Backward of loss and hidden layers
-                dvals = self.loss.backward()
+                dvals = self.loss.backward(y_hat, target_mb)
                 self.layers.backward(dvals)
                 # Backward of regularizers
                 for regularizer in self.regularizers:
@@ -94,6 +96,7 @@ class Model:
             train_dataloader.after_epoch()
             train_epoch_losses[epoch] = np.mean(train_mb_losses).item()
             if eval_exists:
+                eval_iter = iter(eval_dataloader)
                 self.layers.set_to_eval()
                 eval_dataloader.before_epoch()
                 input_eval, target_eval = next(eval_iter)
@@ -101,7 +104,7 @@ class Model:
                 loss_val = self.loss(y_hat, target_eval)
                 print(f'[Epoch {epoch}]: loss values over {len(input_eval)} validation examples = {loss_val}')
                 eval_dataloader.after_epoch()
-                eval_epoch_losses[epoch] = loss_val
+                eval_epoch_losses[epoch] = np.mean(loss_val, axis=0)
 
         train_dataloader.after_cycle()
         if eval_exists:

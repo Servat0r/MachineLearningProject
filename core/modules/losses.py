@@ -153,16 +153,22 @@ class MSELoss(Loss):
     def __init__(self, const=0.5):
         super(MSELoss, self).__init__()
         self.const = const
-        self.func = cf.MeanSquareError()
+        self.func = cf.MeanSquareError(coefficient=0.5)
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        self.input = pred
-        self.truth = truth
+        return np.mean((truth - pred)**2, axis=-1)
+        """
         self.func.truth_values = truth
         return self.func(self.input)
+        """
 
-    def backward(self) -> np.ndarray:
+    def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        samples = len(dvals)
+        outputs = len(dvals[0])
+        return -2 * (truth - dvals) / (samples * outputs)
+        """
         return dfs.grad(type(self.func), self.func, self.input)
+        """
 
 
 class RegularizedLoss(Loss):

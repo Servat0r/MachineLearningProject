@@ -218,7 +218,10 @@ def _relu_egrad(x: np.ndarray):
 
 @dfs.set_vjp(relu)
 def _relu_vjp(x: np.ndarray, dvals: np.ndarray):
-    return _relu_egrad(x) * dvals
+    dvals2 = dvals.copy()
+    dvals2[x <= 0] = 0
+    return dvals2
+    # return _relu_egrad(x) * dvals
 
 
 # Softmax

@@ -132,12 +132,8 @@ class L2Regularizer(Regularizer):
     def update_param_grads(self, layer=None):
         parameters = self.parameters if layer is None else list(filter(lambda par: par.layer == layer, self.parameters))
         for parameter in parameters:
-            np.copyto(
-                dst=parameter.regularizer_updates[self.key]['weights'], src=2 * self.l2_lambda * parameter.weights
-            )
-            np.copyto(
-                dst=parameter.regularizer_updates[self.key]['biases'], src=2 * self.l2_lambda * parameter.biases
-            )
+            parameter.regularizer_updates[self.key]['weights'] = -2 * self.l2_lambda * parameter.weights
+            parameter.regularizer_updates[self.key]['biases'] = -2 * self.l2_lambda * parameter.biases
 
     def __call__(self, target_shape: tuple = (1, 1), result_arr: np.ndarray = None) -> np.ndarray:
         result = np.zeros(target_shape) if result_arr is None else result_arr

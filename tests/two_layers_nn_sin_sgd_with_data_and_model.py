@@ -14,14 +14,13 @@ from core.utils import np
 import core.functions as cf
 import core.data as cd
 import core.modules as cm
-from core.modules import WeightedLayerParameters as WLParameters
 
-INPUT_DIM = 100
-HIDDEN_LAYER_SIZE = 10
+INPUT_DIM = 1
+HIDDEN_LAYER_SIZE = 2
 TRAIN_BATCH_SIZE = 20000
 EVAL_BATCH_SIZE = 2000
 TRAIN_MB_SIZE = 1000
-N_EPOCHS = 4
+N_EPOCHS = 100
 SEED = 10
 FACTOR = 100.
 NOISE_FACTOR = 1.5
@@ -52,20 +51,24 @@ class MyTestCase(unittest.TestCase):
         self.model = cm.Model(
             [
                 cm.FullyConnectedLayer(self.input_dim, self.hidden_layer_size, func=cf.tanh,
-                                       initializer=cu.RandomUniformInitializer(-1.0, 1.0)),
+                                       initializer=cu.RandomNormalDefaultInitializer(zero_bias=True)),
+                                       # initializer=cu.RandomUniformInitializer(-1.0, 1.0, zero_bias=True)),
                 cm.FullyConnectedLayer(self.hidden_layer_size, 1, func=cf.tanh,
-                                       initializer=cu.RandomUniformInitializer(-0.8, 0.8))
+                                       initializer=cu.RandomNormalDefaultInitializer(zero_bias=True)),
+                                       # initializer=cu.RandomUniformInitializer(-1.0, 1.0, zero_bias=True))
             ],
-            regularizers={cm.L1Regularizer(l1_lambda=L1_LAMBDA)},
+            # regularizers={cm.L1Regularizer(l1_lambda=L1_LAMBDA)},
         )
 
         x_train = FACTOR * np.random.randn(self.train_batch_size, 1, self.input_dim)  # 2000 inputs of dimension 100
+        # y_train = np.square(x_train)
         y_train = np.sin(np.sum(x_train, axis=2)) + NOISE_FACTOR / FACTOR * np.random.randn(self.train_batch_size, 1)
         x_train += NOISE_FACTOR * np.random.randn(self.train_batch_size, 1, self.input_dim)
         y_train = np.reshape(y_train, (self.train_batch_size, 1, 1))
         # y = sin(x1+...+xn) + random (gaussian) noise
 
         x_eval = FACTOR * np.random.randn(self.eval_batch_size, 1, self.input_dim)
+        # y_eval = np.square(x_eval)
         y_eval = np.sin(np.sum(x_eval, axis=2)) + NOISE_FACTOR / FACTOR * np.random.randn(self.eval_batch_size, 1)
         x_eval += NOISE_FACTOR * np.random.randn(self.eval_batch_size, 1, self.input_dim)
         y_eval = np.reshape(y_eval, (self.eval_batch_size, 1, 1))
@@ -74,7 +77,7 @@ class MyTestCase(unittest.TestCase):
         self.train_dataset = cd.ArrayDataset(x_train, y_train)
         self.eval_dataset = cd.ArrayDataset(x_eval, y_eval)
         self.train_dataloader = cd.DataLoader(
-            self.train_dataset, batch_size=self.train_mb_size, shuffle=False, log_to='train_dataloder_log.json',
+            self.train_dataset, batch_size=self.train_mb_size, shuffle=True, log_to='train_dataloder_log.json',
         )
         self.eval_dataloader = cd.DataLoader(
             self.eval_dataset, batch_size=self.eval_batch_size, shuffle=False, log_to='eval_dataloder_log.json',
