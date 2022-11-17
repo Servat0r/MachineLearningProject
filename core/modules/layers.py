@@ -1,8 +1,6 @@
 # Base layers for a Neural Network
 from __future__ import annotations
 from core.utils import *
-import core.diffs as dfs
-import core.functions as cf
 from .parameters import *
 from .regularization import *
 
@@ -69,50 +67,6 @@ class Layer:
             regularizer.init_new_parameters(self.get_parameters())
 
 
-class WeightedLayer(Layer):
-
-    """
-    Base class for layers that include weights and biases.
-    """
-    def __init__(self, initializer: Initializer, init_args: dict[str, Any] = None,
-                 grad_reduction=WeightedLayerParameters.SUM):  # todo change to 'mean' (or 'none')
-        super(WeightedLayer, self).__init__()
-        self.weights, self.biases = self._initialize_weights(initializer, init_args=init_args)
-        self.grad_reduction = grad_reduction
-        self.parameter = WeightedLayerParameters(
-            self.weights, self.biases, grad_reduction=None,
-        )
-
-    def get_weights(self, copy=True) -> np.ndarray:
-        """
-        Gets the weights of the current level as a matrix, with rows corresponding
-        to neurons.
-        :return: A (multi-dimensional) array containing the weights of the layer.
-        """
-        return self.weights.copy() if copy else self.weights
-
-    def get_biases(self, copy=True) -> np.ndarray | None:
-        """
-        Gets the biases of the current level as an array, if existing.
-        :return: An array containing the biases of the layer, if existing.
-        """
-        return self.biases.copy() if copy else self.biases
-
-    def get_dweights(self, copy=True) -> np.ndarray:
-        return self.parameter.get_dweights(copy)
-
-    def get_dbiases(self, copy=True) -> np.ndarray | None:
-        return self.parameter.get_dbiases(copy)
-
-    @abstractmethod
-    def _initialize_weights(self, initializer: Initializer,
-                            init_args: dict[str, Any] = None) -> tuple[np.ndarray, Optional[np.ndarray]]:
-        pass
-
-    def get_parameters(self) -> Set[Parameters]:
-        return {self.parameter}
-
-
 class SequentialLayer(Layer):
 
     def __retrieve_parameters(self):
@@ -170,7 +124,7 @@ class SequentialLayer(Layer):
             layer.add_regularizers(regularizers)
 
 
-class LinearLayer(WeightedLayer):
+class LinearLayer(Layer):
     """
     A linear layer: accepts inputs of the shape (l, 1, in_features) and returns outputs
     of the shape (l, 1, out_features).
@@ -178,18 +132,40 @@ class LinearLayer(WeightedLayer):
 
     def __init__(self, initializer: Initializer, in_features: int,
                  out_features: int, init_args: dict[str, Any] = None,
-                 grad_reduction=WeightedLayerParameters.SUM):
+                 grad_reduction='mean'):
+        super(LinearLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        super(LinearLayer, self).__init__(
-            initializer, init_args=init_args, grad_reduction=grad_reduction,
-        )
-
-    def _initialize_weights(self, initializer: Initializer, init_args: dict[str, Any] = None):
+        init_args = init_args if init_args is not None else {}
         weights_shape = (self.in_features, self.out_features)
         biases_shape = (1, self.out_features)
-        init_args = init_args if init_args is not None else {}
-        return initializer(weights_shape, biases_shape, **init_args)
+        self.weights, self.biases = initializer(weights_shape, biases_shape, **init_args)
+        self.grad_reduction = grad_reduction
+        self.parameter = WeightedLayerParameters(self.weights, self.biases, grad_reduction=None)
+
+    def get_weights(self, copy=True) -> np.ndarray:
+        """
+        Gets the weights of the current level as a matrix, with rows corresponding
+        to neurons.
+        :return: A (multi-dimensional) array containing the weights of the layer.
+        """
+        return self.weights.copy() if copy else self.weights
+
+    def get_biases(self, copy=True) -> np.ndarray | None:
+        """
+        Gets the biases of the current level as an array, if existing.
+        :return: An array containing the biases of the layer, if existing.
+        """
+        return self.biases.copy() if copy else self.biases
+
+    def get_dweights(self, copy=True) -> np.ndarray:
+        return self.parameter.get_dweights(copy)
+
+    def get_dbiases(self, copy=True) -> np.ndarray | None:
+        return self.parameter.get_dbiases(copy)
+
+    def get_parameters(self) -> Set[Parameters]:
+        return {self.parameter}
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
@@ -206,17 +182,8 @@ class LinearLayer(WeightedLayer):
         if not self.check_input_shape(x.shape):
             raise ValueError(f"Invalid input shape: expected (l > 0, 1, {self.in_features}), got {x.shape}.")
         self.input = x
-        self.output = self.input @ self.weights + (self.biases if self.biases is not None else 0)
+        self.output = self.input @ self.weights + self.biases
         return self.output
-
-    def __backward_on_sum(self, dvals: np.ndarray):
-        """
-        Specialized version of backward() when it is needed only to sum up over examples.
-        """
-        tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
-        self.parameter.dweights = np.sum(tinp @ dvals, axis=0)
-        dbiases_intm = np.sum(dvals, axis=2, keepdims=True)
-        self.parameter.dbiases = np.sum(dbiases_intm, axis=0)
 
     def backward(self, dvals: np.ndarray):
         if not self.check_backward_input_shape(dvals.shape):
@@ -224,21 +191,18 @@ class LinearLayer(WeightedLayer):
         tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
         # Calculate update to layer's weights and biases
         self.parameter.dweights = tinp @ dvals
-        self.parameter.dbiases = np.sum(dvals, axis=2, keepdims=True)
+        self.parameter.dbiases = dvals.copy()
+
         # Apply reductions if requested
-        if self.grad_reduction == WeightedLayerParameters.SUM:
+        if self.grad_reduction == 'sum':
             self.parameter.dweights = np.sum(self.parameter.dweights, axis=0)
             self.parameter.dbiases = np.sum(self.parameter.dbiases, axis=0)
-        elif self.grad_reduction == WeightedLayerParameters.MEAN:
+        elif self.grad_reduction == 'mean':
             self.parameter.dweights = np.mean(self.parameter.dweights, axis=0)
             self.parameter.dbiases = np.mean(self.parameter.dbiases, axis=0)
+
         # Now calculate values to backpropagate to previous layer
         return np.dot(dvals, self.weights.T)
-        """
-        dvals2 = np.transpose(dvals, axes=[0, 2, 1])    # (l, n, 1)
-        out_dvalues = np.transpose(self.weights @ dvals2, axes=[0, 2, 1])
-        return out_dvalues
-        """
 
 
 class ActivationLayer(Layer):
@@ -246,11 +210,6 @@ class ActivationLayer(Layer):
     Represents an activation function layer: accepts an input of the shape (l, 1, n)
     and returns an output of the same shape after having applied an activation function.
     """
-    def __init__(self, func: Callable):
-        super(ActivationLayer, self).__init__()
-        self.func = func
-        self.func_is_type = isinstance(func, type)  # for classes
-
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
             return False
@@ -261,23 +220,70 @@ class ActivationLayer(Layer):
             return False
         return all([len(shape) == 3, shape[0] > 0, shape[1] == 1, shape[2] > 0])
 
+    def get_parameters(self) -> Set[Parameters]:
+        return set()    # we don't have parameters here!
+
+
+class SigmoidLayer(ActivationLayer):
+
     def forward(self, x: np.ndarray) -> np.ndarray:
-        if not self.check_input_shape(x.shape):
-            raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {x.shape}")
         self.input = x
-        self.output = self.func(self.input)
+        self.output = 1.0 / (1.0 + np.exp(-x))
         return self.output
 
     def backward(self, dvals: np.ndarray):
-        if not self.check_backward_input_shape(dvals.shape):
-            raise ValueError(f"Invalid shape: expected (l > 0, 1, n > 0), got {dvals.shape}")
-        if self.func_is_type:
-            return dfs.vjp(type(self.func), self.func, self.input, dvals)
-        else:
-            return dfs.vjp(self.func, self.input, dvals)
+        return dvals * self.output * (1 - self.output)
 
-    def get_parameters(self) -> Set[Parameters]:
-        return set()    # we don't have parameters here!
+
+class TanhLayer(ActivationLayer):
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        self.input = x
+        self.output = np.tanh(x)
+        return self.output
+
+    def backward(self, dvals: np.ndarray):
+        return dvals * (1. - np.square(self.output))
+
+
+class ReLULayer(ActivationLayer):
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        self.input = x
+        self.output = np.maximum(self.input, 0)
+        return self.output
+
+    def backward(self, dvals: np.ndarray):
+        out_dvals = dvals.copy()
+        out_dvals[self.input <= 0] = 0
+        return out_dvals
+
+
+class SoftmaxLayer(ActivationLayer):
+
+    def __init__(self, const_shift=0, max_shift=False):
+        super(SoftmaxLayer, self).__init__()
+        self.const_shift = const_shift  # constant shift for arguments
+        self.max_shift = max_shift      # subtracting the maximum input value from all inputs
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        self.input = x
+        if self.const_shift != 0:
+            x += self.const_shift
+        if self.max_shift:
+            # Get unnormalized probabilities
+            exp_values = np.exp(x - np.max(x, axis=-1, keepdims=True))
+        else:
+            exp_values = np.exp(x)
+        s = np.sum(exp_values, axis=-1, keepdims=True)
+        self.output = exp_values / s
+        return self.output
+
+    # todo check!
+    def backward(self, dvals: np.ndarray):
+        sd = self.output * dvals
+        sd_sum = np.sum(sd, axis=1, keepdims=True)
+        return sd - sd_sum * self.output
 
 
 class FullyConnectedLayer(Layer):
@@ -285,18 +291,14 @@ class FullyConnectedLayer(Layer):
     A fully-connected layer with activation function for all the neurons.
     """
     def __init__(
-            self, in_features: int, out_features: int, activation_layer: ActivationLayer = None,
-            func: Callable = None, initializer: Initializer = None, init_args: dict[str, Any] = None,
-            grad_reduction=WeightedLayerParameters.SUM,
+            self, in_features: int, out_features: int, activation_layer: ActivationLayer,
+            initializer: Initializer = None, init_args: dict[str, Any] = None, grad_reduction='mean',
     ):
         super(FullyConnectedLayer, self).__init__()
         # Initialize linear part
         self.linear = LinearLayer(initializer, in_features, out_features, init_args, grad_reduction)
-        self.activation = None
-        if activation_layer is not None:
-            self.activation = activation_layer
-        else:
-            self.activation = ActivationLayer(func)
+        self.activation = activation_layer
+        self.net = None
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         return self.linear.check_input_shape(shape)
@@ -306,58 +308,24 @@ class FullyConnectedLayer(Layer):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.input = x
-        net = self.linear.forward(x)
-        self.output = self.activation.forward(net)
+        self.net = self.linear.forward(x)
+        self.output = self.activation.forward(self.net)
         return self.output
 
     def backward(self, dvals: np.ndarray):
         dvals = self.activation.backward(dvals)  # net is actually saved as input to the activation layer
         return self.linear.backward(dvals)
 
-    def get_parameters(self) -> Set[Parameters]:
+    def get_parameters(self) -> Set[Parameters]:    # todo check if it does something strange ...
         return self.linear.get_parameters().union(self.activation.get_parameters())
-
-
-class SignLayer(ActivationLayer):
-
-    def __init__(self):
-        super(SignLayer, self).__init__(func=cf.sign)
-
-
-class SigmoidLayer(ActivationLayer):
-
-    def __init__(self):
-        super(SigmoidLayer, self).__init__(func=cf.sigmoid)
-
-
-class TanhLayer(ActivationLayer):
-
-    def __init__(self):
-        super(TanhLayer, self).__init__(func=cf.tanh)
-
-
-class ReLULayer(ActivationLayer):
-
-    def __init__(self):
-        super(ReLULayer, self).__init__(func=cf.relu)
-
-
-class SoftmaxLayer(ActivationLayer):
-
-    def __init__(self, const_shift=0, max_shift=False):
-        func = cf.Softmax(const_shift, max_shift)
-        super(SoftmaxLayer, self).__init__(type(func))
-        self.func = func
 
 
 __all__ = [
     'Layer',
-    'WeightedLayer',
     'SequentialLayer',
     'LinearLayer',
     'ActivationLayer',
     'FullyConnectedLayer',
-    'SignLayer',
     'SigmoidLayer',
     'TanhLayer',
     'ReLULayer',

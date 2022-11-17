@@ -42,7 +42,7 @@ class Loss:
         pass
 
     @abstractmethod
-    def backward(self) -> np.ndarray:
+    def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
         pass
 
     def clear(self):
@@ -51,6 +51,7 @@ class Loss:
         self.output = None
 
 
+# todo ignored
 class CrossEntropyLoss(Loss):
     """
     Categorical Cross Entropy Loss. Note that this class does NOT include a Softmax layer.
@@ -70,32 +71,7 @@ class CrossEntropyLoss(Loss):
         return dfs.grad(type(self.func), self.func, self.input)
 
 
-class NLLoss(Loss):
-    """
-    Negative Log Likelihoods Loss, assuming that the target distribution
-    is of the form [..., 1, ...] (e.g. one-hot encoded labels).
-    """
-    def __init__(self, clip_value=1e-7):
-        super(NLLoss, self).__init__()
-        self.clip_value = clip_value
-        self.func = None
-
-    def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        """
-        It is assumed here that truth has shape 1.
-        """
-        trshape = truth.shape
-        ltrs = len(trshape)
-        # Convert one-hot encoded labels to "regular" ones
-        self.truth = np.argmax(truth, axis=ltrs-1) if ltrs >= 2 else truth
-        self.input = pred
-        self.func = cf.CategoricalCrossEntropy(self.truth, self.clip_value)
-        return self.func(self.input)
-
-    def backward(self) -> np.ndarray:
-        return dfs.grad(type(self.func), self.func, self.input, self.truth, self.clip_value)
-
-
+# todo ignored
 class SoftmaxCrossEntropyLoss(Loss):
     """
     Softmax + CrossEntropy loss. It expects an input of raw, unnormalized values, and applies
@@ -123,54 +99,35 @@ class SoftmaxCrossEntropyLoss(Loss):
         return dfs.vjp(type(self.softmax), self.softmax, self.input, dvals)
 
 
-class SquaredErrorLoss(Loss):
-    """
-    Squared Error Loss. Default .forward(...) method computes the squared error
-    for each pattern SEPARATELY with NO reduction, while .mean(...) and .sum(...)
-    compute respectively the average error over training examples and the sum
-    over them.
-    """
-    def __init__(self, const=0.5):
-        super(SquaredErrorLoss, self).__init__()
-        self.const = const
-        self.func = None
-
-    def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        self.input = pred
-        self.truth = truth
-        self.func = cf.SquareError(self.truth, self.const)
-        return self.func(self.input)
-
-    def backward(self) -> np.ndarray:
-        return dfs.grad(type(self.func), self.func, self.input)
-
-
 class MSELoss(Loss):
     """
     Mean Squared Error Loss over a batch of training examples. Its .forward(...)
     method is equivalent to SquaredErrorLoss.mean(...).
     """
-    def __init__(self, const=0.5):
+    REDUCTIONS = {'none', 'mean', 'sum'}
+
+    def __init__(self, const=0.5, reduction='mean'):
         super(MSELoss, self).__init__()
         self.const = const
-        self.func = cf.MeanSquareError(coefficient=0.5)
+        if reduction is not None and reduction not in self.REDUCTIONS:
+            raise ValueError(f"Unknown reduction type '{reduction}'")
+        else:
+            self.reduction = reduction
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return np.mean((truth - pred)**2, axis=-1)
-        """
-        self.func.truth_values = truth
-        return self.func(self.input)
-        """
+        y = self.const * np.sum((truth - pred)**2, axis=-1)
+        if self.reduction == 'sum':
+            return np.sum(y, axis=0)
+        elif self.reduction == 'mean':
+            return np.mean(y, axis=0)
+        else:
+            return y
 
     def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        samples = len(dvals)
-        outputs = len(dvals[0])
-        return -2 * (truth - dvals) / (samples * outputs)
-        """
-        return dfs.grad(type(self.func), self.func, self.input)
-        """
+        return -2 * self.const * (truth - dvals)
 
 
+# todo ignored
 class RegularizedLoss(Loss):
     """
     A loss with a regularization term.
@@ -192,20 +149,18 @@ class RegularizedLoss(Loss):
         loss_fwd += reg_fwd
         return loss_fwd
 
-    def backward(self) -> np.ndarray:
+    def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
         # Backward pass "direct" handling (i.e., by updating gradients of the weights)
         # without an underlying computational graph is complicated
         # For regularizers like L1, the actual backward pass happens when calling
         # update_param_grads() for each regularizer.
-        return self.base_loss.backward()
+        return self.base_loss.backward(dvals, truth)
 
 
 __all__ = [
     'Loss',
     'CrossEntropyLoss',
-    'NLLoss',
     'SoftmaxCrossEntropyLoss',
-    'SquaredErrorLoss',
     'MSELoss',
     'RegularizedLoss',
 ]

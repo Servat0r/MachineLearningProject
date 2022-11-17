@@ -11,7 +11,6 @@ import math
 
 import core.utils as cu
 from core.utils import np
-import core.functions as cf
 import core.data as cd
 import core.modules as cm
 
@@ -50,14 +49,11 @@ class MyTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.model = cm.Model(
             [
-                cm.FullyConnectedLayer(self.input_dim, self.hidden_layer_size, func=cf.tanh,
+                cm.FullyConnectedLayer(self.input_dim, self.hidden_layer_size, activation_layer=cm.TanhLayer(),
                                        initializer=cu.RandomNormalDefaultInitializer(zero_bias=True)),
-                                       # initializer=cu.RandomUniformInitializer(-1.0, 1.0, zero_bias=True)),
-                cm.FullyConnectedLayer(self.hidden_layer_size, 1, func=cf.tanh,
+                cm.FullyConnectedLayer(self.hidden_layer_size, 1, activation_layer=cm.TanhLayer(),
                                        initializer=cu.RandomNormalDefaultInitializer(zero_bias=True)),
-                                       # initializer=cu.RandomUniformInitializer(-1.0, 1.0, zero_bias=True))
             ],
-            # regularizers={cm.L1Regularizer(l1_lambda=L1_LAMBDA)},
         )
 
         x_train = FACTOR * np.random.randn(self.train_batch_size, 1, self.input_dim)  # 2000 inputs of dimension 100
