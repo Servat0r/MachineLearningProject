@@ -2,7 +2,7 @@ from __future__ import annotations
 from core.utils.types import *
 import core.diffs as dfs
 import core.functions as cf
-from .layers import SequentialLayer, FullyConnectedLayer
+from .layers import SequentialLayer, FullyConnectedLayer, Layer
 
 
 class Loss:
@@ -137,43 +137,23 @@ class RegularizedLoss(Loss):
         self.base_loss = base_loss
         self.layers = layers
 
-    @staticmethod
-    def __l1_regularization_loss(layer) -> np.ndarray:
-        if hasattr(layer, 'l1_regularizer') and layer.l1_regularizer != 0.:
-            abs_weights = np.abs(layer.weights)
-            abs_biases = np.abs(layer.biases)
-            return layer.l1_regularizer * (np.sum(abs_weights) + np.sum(abs_biases))
-        else:
-            return np.zeros(1)
-
-    @staticmethod
-    def __l2_regularization_loss(layer) -> np.ndarray:
-        if hasattr(layer, 'l2_regularizer') and layer.l2_regularizer != 0.:
-            sq_weights = np.square(layer.weights)
-            sq_biases = np.square(layer.biases)
-            return layer.l2_regularizer * (np.sum(sq_weights) + np.sum(sq_biases))
-        else:
-            return np.zeros(1)
-
-    def regularization_loss(self, layers: SequentialLayer | FullyConnectedLayer | Iterable) -> np.ndarray:
+    def regularization_loss(self, layers: Layer | Iterable) -> np.ndarray:
         if isinstance(layers, SequentialLayer):
             return self.regularization_loss(layers.layers)
         elif isinstance(layers, FullyConnectedLayer):
             return self.regularization_loss({layers.linear})
+        elif isinstance(layers, Layer):
+            if layers.is_parametrized() and hasattr(layers, 'regularizer') and layers.regularizer is not None:
+                return layers.regularizer.loss(layers.weights) + layers.regularizer.loss(layers.biases)
+            else:
+                return np.zeros(1)
         elif isinstance(layers, Iterable):
             result = np.zeros(1)
             for layer in layers:
-                if isinstance(layer, SequentialLayer):
-                    result += self.regularization_loss(layer)
-                elif isinstance(layer, FullyConnectedLayer):
-                    result += self.regularization_loss({layer.linear})
-                elif layer.is_parametrized():
-                    result += self.__l1_regularization_loss(layer)
-                    result += self.__l2_regularization_loss(layer)
+                result += self.regularization_loss(layer)
             return result
         else:
-            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are "
-                            f"{SequentialLayer}, {FullyConnectedLayer} or {Iterable}")
+            raise TypeError(f"Invalid type {type(layers)}: allowed ones are {Layer} or {Iterable[Layer]}")
 
     def forward(self, pred: np.ndarray, truth: np.ndarray,
                 target_shape: tuple = (1,)) -> tuple[np.ndarray, np.ndarray]:

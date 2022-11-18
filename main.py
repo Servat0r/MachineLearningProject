@@ -330,15 +330,15 @@ def test_fully_connected_minibatch_model_with_regularizations(
     model = cm.Model([
         cm.FullyConnectedLayer(
             INPUT_DIM, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
-            l1_regularizer=l1_regularizer, l2_regularizer=l2_regularizer,
+            regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
         ),
         cm.FullyConnectedLayer(
             64, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
-            l1_regularizer=l1_regularizer, l2_regularizer=l2_regularizer,
+            regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
         ),
         cm.LinearLayer(
             64, OUTPUT_DIM, initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
-            l1_regularizer=l1_regularizer, l2_regularizer=l2_regularizer,
+            regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
         )
     ])
     # Use Model class for training and epoch losses recording
@@ -367,7 +367,7 @@ if __name__ == '__main__':
     # test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data)
     # test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False)
     test_fully_connected_minibatch_model_with_regularizations(
-        n_epochs=100, mb_size=100, func=randn_sqrt_data, l1_regularizer=0., l2_regularizer=0.,
+        n_epochs=100, mb_size=100, func=randn_sqrt_data, l1_regularizer=0.001, l2_regularizer=0.001,
     )
     # test_fully_connected_minibatch_model_with_regularizations(
     #     n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False,

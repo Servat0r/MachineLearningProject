@@ -1,6 +1,7 @@
 # Base layers for a Neural Network
 from __future__ import annotations
 from core.utils import *
+from core.modules.regularization import *
 
 
 class Layer:
@@ -19,6 +20,10 @@ class Layer:
 
     @abstractmethod
     def is_parametrized(self) -> bool:
+        pass
+
+    @abstractmethod
+    def update_reg_values(self, func: Callable[np.ndarray]):
         pass
 
     @abstractmethod
@@ -83,6 +88,10 @@ class SequentialLayer(Layer):
     def is_parametrized(self) -> bool:
         return any(layer.is_parametrized() for layer in self.layers) and not self.frozen
 
+    def update_reg_values(self, func: Callable[np.ndarray]):
+        for layer in self.layers:
+            layer.update_reg_values(func)
+
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
             return False
@@ -121,9 +130,10 @@ class LinearLayer(Layer):
 
     def __init__(self, in_features: int, out_features: int,
                  initializer: Initializer, init_args: dict[str, Any] = None,
-                 grad_reduction='mean', frozen=False,
-                 l1_regularizer=0., l2_regularizer=0.):
+                 grad_reduction='mean', frozen=False, regularizer: Regularizer = None):
         super(LinearLayer, self).__init__(frozen=frozen)
+
+        # Set Layer "core" parameters
         self.in_features = in_features
         self.out_features = out_features
         init_args = init_args if init_args is not None else {}
@@ -131,15 +141,29 @@ class LinearLayer(Layer):
         biases_shape = (1, self.out_features)
         self.weights, self.biases = initializer(weights_shape, biases_shape, **init_args)
         self.grad_reduction = grad_reduction
+
+        # Set updates for backward
         self.dweights = None
         self.dbiases = None
+
+        # Set updates for momentums
         self.weight_momentums = np.zeros_like(self.weights)
         self.bias_momentums = np.zeros_like(self.biases)
-        self.l1_regularizer = l1_regularizer
-        self.l2_regularizer = l2_regularizer
+
+        # Set regularizer and its updates
+        self.regularizer = regularizer
+        self.weights_reg_updates = None
+        self.biases_reg_updates = None
 
     def is_parametrized(self) -> bool:
         return not self.frozen
+
+    def update_reg_values(self, func: Callable[np.ndarray]):
+        if self.regularizer is not None:
+            w_updates = func(self.weights_reg_updates)
+            b_updates = func(self.biases_reg_updates)
+            self.weights += w_updates
+            self.biases += b_updates
 
     def get_weights(self, copy=True) -> np.ndarray:
         """
@@ -196,10 +220,16 @@ class LinearLayer(Layer):
             self.dweights = np.mean(self.dweights, axis=0)
             self.dbiases = np.mean(self.dbiases, axis=0)
 
+        # Handle regularization
+        if self.regularizer is not None:
+            self.weights_reg_updates = self.regularizer.update(self.weights)
+            self.biases_reg_updates = self.regularizer.update(self.biases)
+
         # Now calculate values to backpropagate to previous layer
         return np.dot(dvals, self.weights.T)
 
 
+# noinspection PyAbstractClass
 class ActivationLayer(Layer):
     """
     Represents an activation function layer: accepts an input of the shape (l, 1, n)
@@ -207,6 +237,9 @@ class ActivationLayer(Layer):
     """
     def is_parametrized(self) -> bool:
         return False
+
+    def update_reg_values(self, func: Callable[np.ndarray]):
+        pass
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         if isinstance(shape, int):
@@ -288,16 +321,17 @@ class FullyConnectedLayer(Layer):
     def __init__(
             self, in_features: int, out_features: int, activation_layer: ActivationLayer,
             initializer: Initializer = None, init_args: dict[str, Any] = None,
-            grad_reduction='mean', frozen=False, l1_regularizer=0., l2_regularizer=0.,
+            grad_reduction='mean', frozen=False, regularizer: Regularizer = None,
     ):
         super(FullyConnectedLayer, self).__init__(frozen=frozen)
         # Initialize linear part
-        self.linear = LinearLayer(
-            in_features, out_features, initializer, init_args, grad_reduction,
-            l1_regularizer=l1_regularizer, l2_regularizer=l2_regularizer,
-        )
+        self.linear = LinearLayer(in_features, out_features, initializer,
+                                  init_args, grad_reduction, regularizer=regularizer)
         self.activation = activation_layer
         self.net = None
+
+    def update_reg_values(self, func: Callable[np.ndarray]):
+        self.linear.update_reg_values(func)
 
     def check_input_shape(self, shape: int | Sequence) -> bool:
         return self.linear.check_input_shape(shape)

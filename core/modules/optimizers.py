@@ -2,7 +2,7 @@
 from __future__ import annotations
 from ..utils import *
 from .schedulers import *
-from .layers import SequentialLayer, FullyConnectedLayer
+from .layers import SequentialLayer, FullyConnectedLayer, Layer
 
 
 # Base class
@@ -71,38 +71,17 @@ class SGD(Optimizer):
             self.current_lr = self.lr_decay_scheduler(self.iterations, self.current_lr)
 
     @staticmethod
-    def __update_l1_reg(layer):
-        if hasattr(layer, 'l1_regularizer') and layer.l1_regularizer != 0.:
-            weight_ones = np.sign(layer.weights)
-            bias_ones = np.sign(layer.biases)
+    def reg_update_func(x: np.ndarray):
+        return -1 * x
 
-            layer.weights -= layer.l1_regularizer * weight_ones
-            layer.biases -= layer.l1_regularizer * bias_ones
-
-    @staticmethod
-    def __update_l2_reg(layer):
-        if hasattr(layer, 'l2_regularizer') and layer.l2_regularizer != 0.:
-            layer.weights -= layer.l2_regularizer * layer.weights
-            layer.biases -= layer.l2_regularizer * layer.biases
-
-    # todo fixme L1 and L2 regularizers are applied AFTER subtracting dweights and dbiases! Is this correct??
-    def update_reg_values(self, layers: SequentialLayer | Iterable):
-        if isinstance(layers, SequentialLayer):
-            self.update_reg_values(layers.layers)
-        elif isinstance(layers, FullyConnectedLayer):
-            self.update_reg_values({layers.linear})
+    def update_reg_values(self, layers: Layer | Iterable):
+        if isinstance(layers, Layer):
+            layers.update_reg_values(func=self.reg_update_func)
         elif isinstance(layers, Iterable):
             for layer in layers:
-                if isinstance(layer, SequentialLayer):
-                    self.update_reg_values(layer.layers)
-                elif isinstance(layer, FullyConnectedLayer):
-                    self.update_reg_values({layer.linear})
-                elif layer.is_parametrized():
-                    self.__update_l1_reg(layer)
-                    self.__update_l2_reg(layer)
+                layer.update_reg_values(func=self.reg_update_func)
         else:
-            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are "
-                            f"{SequentialLayer}, {FullyConnectedLayer} or {Iterable}")
+            raise TypeError(f"Invalid type {type(layers)}: allowed ones are {Layer} or {Iterable[Layer]}")
 
     def __update_body_momentum(self, layer):
         if hasattr(layer, 'weight_momentums'):
@@ -123,25 +102,22 @@ class SGD(Optimizer):
         layer.weights += weight_updates
         layer.biases += bias_updates
 
-    def update_body(self, layers: SequentialLayer | Iterable):
+    def update_body(self, layers: Layer | Iterable):
         if isinstance(layers, SequentialLayer):
             self.update_body(layers.layers)
         elif isinstance(layers, FullyConnectedLayer):
             self.update_body({layers.linear})
+        elif isinstance(layers, Layer):
+            if layers.is_parametrized():
+                if self.momentum:
+                    self.__update_body_momentum(layers)
+                else:
+                    self.__update_body_no_momentum(layers)
         elif isinstance(layers, Iterable):
             for layer in layers:
-                if isinstance(layer, SequentialLayer):
-                    self.update_body(layer.layers)
-                elif isinstance(layer, FullyConnectedLayer):
-                    self.update_body({layer.linear})
-                elif layer.is_parametrized():
-                    if self.momentum:
-                        self.__update_body_momentum(layer)
-                    else:
-                        self.__update_body_no_momentum(layer)
+                self.update_body(layer)
         else:
-            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are"
-                            f"{SequentialLayer}, {FullyConnectedLayer} or {Iterable}")
+            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are {Layer} or {Iterable[Layer]}")
 
     def after_update(self):
         self.iterations += 1
