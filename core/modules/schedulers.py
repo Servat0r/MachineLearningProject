@@ -27,19 +27,19 @@ class LinearDecayScheduler(Scheduler):
 
 class IterBasedDecayScheduler(Scheduler):   # todo I don't remember the actual name
 
-    def __init__(self, decay: float):
+    def __init__(self, decay: float, start_value: float):
         self.decay = decay
+        self.start_value = start_value
 
     def __call__(self, iteration: int, current_value: float):
-        return 1. / (1. + self.decay * iteration)
+        return self.start_value / (1. + self.decay * iteration)
 
 
 class ExponentialDecayScheduler(Scheduler):
 
-    def __init__(self, start_value: float, alpha: float, beta: float):
+    def __init__(self, start_value: float, alpha: float):
         self.start_value = start_value
         self.alpha = alpha
-        self.beta = beta
 
     def __call__(self, iteration: int, current_value: float):
         return self.start_value * np.exp(-1.0 * self.alpha * iteration)  # todo is float64 -> float conversion implicit?

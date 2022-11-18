@@ -16,7 +16,8 @@ np.random.seed(SEED)
 # Create dataset
 # ---------------------- ARANGE-BASED GENERATORS ----------------------------------
 def arange_sine_data(samples=1000, input_dim=1, output_dim=1, start=0):
-    X = np.arange(start=start, stop=samples * input_dim).reshape((samples, 1, input_dim)) / samples
+    stop = samples * input_dim + start
+    X = np.arange(start=start, stop=stop).reshape((samples, 1, input_dim)) / stop
     y = np.sin(np.sum(X, axis=-1))
     z = np.zeros((samples, output_dim))
     for i in range(samples):
@@ -27,7 +28,8 @@ def arange_sine_data(samples=1000, input_dim=1, output_dim=1, start=0):
 
 
 def arange_square_data(samples=1000, input_dim=1, output_dim=1, start=0):
-    X = np.arange(start=start, stop=samples * input_dim).reshape((samples, 1, input_dim)) / samples
+    stop = samples * input_dim + start
+    X = np.arange(start=start, stop=stop).reshape((samples, 1, input_dim)) / stop
     y = np.square(np.sum(X, axis=-1))
     z = np.zeros((samples, output_dim))
     for i in range(samples):
@@ -38,7 +40,8 @@ def arange_square_data(samples=1000, input_dim=1, output_dim=1, start=0):
 
 
 def arange_sqrt_data(samples=1000, input_dim=1, output_dim=1, start=0):
-    X = np.arange(start=start, stop=samples * input_dim).reshape((samples, 1, input_dim)) / samples
+    stop = samples * input_dim + start
+    X = np.arange(start=start, stop=stop).reshape((samples, 1, input_dim)) / stop
     y = np.sqrt(np.abs(np.sum(X, axis=-1)))
     z = np.zeros((samples, output_dim))
     for i in range(samples):
@@ -303,12 +306,13 @@ def test_fully_connected_minibatch_model(
     ])
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
-    train_epoch_losses, eval_epoch_losses = model.train(train_dataloader, eval_dataloader, n_epochs=n_epochs)
-    for epoch, (epoch_tr_loss, epoch_ev_loss) in enumerate(zip(train_epoch_losses, eval_epoch_losses)):
+    train_epoch_losses, eval_epoch_losses, optimizer_state = model.train(train_dataloader, eval_dataloader, n_epochs=n_epochs)
+    for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
+            enumerate(zip(train_epoch_losses, eval_epoch_losses, optimizer_state)):
         print(f'epoch: {epoch} ' +
               f'(tr_loss: {epoch_tr_loss.item():.8f}, ' +
-              f'ev_loss: {epoch_ev_loss.item():.8f})')
-        # todo we do not record the learning rate (we could create a logger)
+              f'ev_loss: {epoch_ev_loss.item():.8f}), ' +
+              f'optim_state: {optim_state}')
 
 
 def test_fully_connected_minibatch_model_with_regularizations(
@@ -343,12 +347,60 @@ def test_fully_connected_minibatch_model_with_regularizations(
     ])
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
-    train_epoch_losses, eval_epoch_losses = model.train(train_dataloader, eval_dataloader, n_epochs=n_epochs)
-    for epoch, (epoch_tr_loss, epoch_ev_loss) in enumerate(zip(train_epoch_losses, eval_epoch_losses)):
+    train_epoch_losses, eval_epoch_losses, optimizer_state = model.train(train_dataloader, eval_dataloader, n_epochs=n_epochs)
+    for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
+            enumerate(zip(train_epoch_losses, eval_epoch_losses, optimizer_state)):
         print(f'epoch: {epoch} ' +
               f'(tr_loss: {epoch_tr_loss.item():.8f}, ' +
-              f'ev_loss: {epoch_ev_loss.item():.8f})')
-        # todo we do not record the learning rate (we could create a logger)
+              f'ev_loss: {epoch_ev_loss.item():.8f}), ' +
+              f'optim_state: {optim_state}')
+
+
+def test_fc_minibatch_model_with_regularizations_lrscheduler(
+        n_epochs=5000, mb_size=1, epoch_shuffle=True, func=arange_square_data, lr=0.005, momentum=0.,
+        lr_scheduler: cm.Scheduler = None, l1_regularizer=0., l2_regularizer=0., *args, **kwargs,
+):
+    # Generate train dataset
+    X, y, train_dataset, accuracy_precision = generate_dataset(func)
+
+    # Generate validation dataset
+    args = () if args is None else args
+    kwargs = {} if args is None else kwargs
+    x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, *args, **kwargs)
+    eval_dataset = ArrayDataset(x_eval, y_eval)
+
+    # Generate dataloaders
+    train_dataloader = DataLoader(train_dataset, batch_size=mb_size, shuffle=epoch_shuffle)
+    eval_dataloader = DataLoader(eval_dataset, batch_size=N_SAMPLES//5)
+    model = cm.Model([
+        cm.FullyConnectedLayer(
+            INPUT_DIM, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
+        ),
+        cm.FullyConnectedLayer(
+            64, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
+        ),
+        cm.LinearLayer(
+            64, OUTPUT_DIM, initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
+        )
+    ])
+    # Shadow optimizer in order to use custom lr and scheduler
+    optimizer = cm.SGD(lr=lr, lr_decay_scheduler=lr_scheduler, momentum=momentum)
+
+    # Use Model class for training and epoch losses recording
+    model.compile(optimizer=optimizer, loss=loss_function)
+    train_epoch_losses, eval_epoch_losses, optimizer_state = \
+        model.train(train_dataloader, eval_dataloader, n_epochs=n_epochs)
+
+    # Print results
+    for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
+            enumerate(zip(train_epoch_losses, eval_epoch_losses, optimizer_state)):
+        print(f'epoch: {epoch} ' +
+              f'(tr_loss: {epoch_tr_loss.item():.8f}, ' +
+              f'ev_loss: {epoch_ev_loss.item():.8f}), ' +
+              f'optim_state: {optim_state}')
 
 
 if __name__ == '__main__':
@@ -357,20 +409,60 @@ if __name__ == '__main__':
     # test_sequential_minibatch_dataset(..., use_model=False) are ALL based
     # on the SAME layers, so you shall run at most ONE of them (for now)
 
-    # test_separated()
-    # test_sequential()
-    # test_sequential_minibatch(n_epochs=100, mb_size=100)
-    # test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data)
-    # test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False)
-    # test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data, use_model=True)
-    # test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False, use_model=True)
-    # test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data)
-    # test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False)
+    """
+    test_separated()
+    test_sequential()
+    test_sequential_minibatch(n_epochs=100, mb_size=100)
+    test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data)
+    test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False)
+    test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data, use_model=True)
+    test_sequential_minibatch_dataset(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False, use_model=True)
+    test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data)
+    test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False)
     test_fully_connected_minibatch_model_with_regularizations(
         n_epochs=100, mb_size=100, func=randn_sqrt_data, l1_regularizer=0.001, l2_regularizer=0.001,
     )
-    # test_fully_connected_minibatch_model_with_regularizations(
-    #     n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False,
-    #     l1_regularizer=0., l2_regularizer=0.01,
-    # )
+    test_fully_connected_minibatch_model_with_regularizations(
+        n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False,
+        l1_regularizer=0., l2_regularizer=0.01,
+    )
+    test_fc_minibatch_model_with_regularizations_lrscheduler(
+        n_epochs=100, mb_size=50, func=randn_sqrt_data, lr=0.01, momentum=0.,
+        # max_iter = n_epochs * mb_size
+        # lr_scheduler=cm.LinearDecayScheduler(start_value=0.01, end_value=0.005, max_iter=100*(N_SAMPLES//50)),
+        # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
+        lr_scheduler=cm.ExponentialDecayScheduler(start_value=0.01, alpha=0.001),
+        l1_regularizer=0.001, l2_regularizer=0.001,
+    )
+    test_fc_minibatch_model_with_regularizations_lrscheduler(
+        n_epochs=100, mb_size=50, func=randn_sqrt_data, lr=0.01, momentum=0., epoch_shuffle=False,
+        # max_iter = n_epochs * mb_size
+        # lr_scheduler=cm.LinearDecayScheduler(start_value=0.01, end_value=0.005, max_iter=100*(N_SAMPLES//50)),
+        # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
+        lr_scheduler=cm.ExponentialDecayScheduler(start_value=0.01, alpha=0.001),
+        l1_regularizer=0.001, l2_regularizer=0.001,
+    )
+    """
+    test_fc_minibatch_model_with_regularizations_lrscheduler(
+        n_epochs=100, mb_size=50, func=arange_sine_data, lr=0.01, momentum=0.9,
+        # max_iter = n_epochs * mb_size
+        # lr_scheduler=cm.LinearDecayScheduler(start_value=0.01, end_value=0.005, max_iter=100*(N_SAMPLES//50)),
+        # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
+        lr_scheduler=cm.ExponentialDecayScheduler(start_value=0.01, alpha=0.001),
+        l1_regularizer=0.00001, l2_regularizer=0.00001,
+        # arange_sine_data extra args for validation set
+        start=N_SAMPLES,
+    )
+    """
+    test_fc_minibatch_model_with_regularizations_lrscheduler(
+        n_epochs=100, mb_size=50, func=arange_sine_data, lr=0.01, momentum=0., epoch_shuffle=False,
+        # max_iter = n_epochs * mb_size
+        # lr_scheduler=cm.LinearDecayScheduler(start_value=0.01, end_value=0.005, max_iter=100*(N_SAMPLES//50)),
+        # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
+        lr_scheduler=cm.ExponentialDecayScheduler(start_value=0.01, alpha=0.001),
+        l1_regularizer=0.001, l2_regularizer=0.001,
+        # arange_sine_data extra args for validation set
+        start=N_SAMPLES,
+    )
+    """
     exit(0)

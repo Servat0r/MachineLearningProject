@@ -42,10 +42,12 @@ class Model:
     def train(
             self, train_dataloader: DataLoader, eval_dataloader: DataLoader = None, n_epochs: int = 1,
             train_epoch_losses: np.ndarray = None, eval_epoch_losses: np.ndarray = None,
+            optimizer_state: list = None,
     ):
         eval_exists = eval_dataloader is not None
         train_epoch_losses = train_epoch_losses if train_epoch_losses is not None else np.zeros(n_epochs)
         eval_epoch_losses = eval_epoch_losses if eval_epoch_losses is not None else np.zeros(n_epochs)
+        optimizer_state = optimizer_state if optimizer_state is not None else []
         mb_num = train_dataloader.get_batch_num()
         train_mb_losses = np.zeros(mb_num)
 
@@ -67,8 +69,14 @@ class Model:
                 input_mb, target_mb = mb_data[0], mb_data[1]
                 y_hat = self.layers(input_mb)
                 data_loss_val, reg_loss_val = self.loss(y_hat, target_mb)
-                print(f'[Epoch {epoch}, Minibatch {mb}]: loss values over {len(input_mb)} '
-                      f'training examples: (data = {data_loss_val.item():.8f}, regularization = {reg_loss_val.item():.8f})')
+                optim_log_dict = self.optimizer.to_log_dict()
+                print(
+                    f'[Epoch {epoch}, Minibatch {mb}]{{',
+                    f'\tloss values: (data = {data_loss_val.item():.8f}, regularization = {reg_loss_val.item():.8f})',
+                    f'\toptimizer state: {optim_log_dict}',
+                    f'}}',
+                    sep='\n',
+                )
                 train_mb_losses[mb] = np.mean(data_loss_val + reg_loss_val, axis=0).item()
                 # Backward of loss and hidden layers
                 dvals = self.loss.backward(y_hat, target_mb)
@@ -83,15 +91,22 @@ class Model:
                 input_eval, target_eval = next(eval_dataloader)
                 y_hat = self.layers(input_eval)
                 data_loss_val, reg_loss_val = self.loss(y_hat, target_eval)
-                print(f'[Epoch {epoch}]: loss values over {len(input_eval)} '
-                      f'validation examples: (data = {data_loss_val.item():.8f}, regularization = {reg_loss_val.item():.8f})')
+                optim_log_dict = self.optimizer.to_log_dict()
+                print(
+                    f'[Epoch {epoch}]{{',
+                    f'\tloss values: (data = {data_loss_val.item():.8f}, regularization = {reg_loss_val.item():.8f})',
+                    f'\toptimizer state: {optim_log_dict}',
+                    f'}}',
+                    sep='\n',
+                )
                 eval_dataloader.after_epoch()
                 eval_epoch_losses[epoch] = np.mean(data_loss_val + reg_loss_val, axis=0)
+                optimizer_state.append(optim_log_dict)
 
         train_dataloader.after_cycle()
         if eval_exists:
             eval_dataloader.after_cycle()
-        return train_epoch_losses, eval_epoch_losses
+        return train_epoch_losses, eval_epoch_losses, optimizer_state
 
     def reset(self):
         """

@@ -55,6 +55,10 @@ class Optimizer:
         self.iterations = 0
         return iters
 
+    @abstractmethod
+    def to_log_dict(self) -> TDesc:
+        pass
+
 
 # SGD Optimizer with optional momentum (todo add Nesterov momentum?)
 class SGD(Optimizer):
@@ -121,6 +125,11 @@ class SGD(Optimizer):
 
     def after_update(self):
         self.iterations += 1
+
+    def to_log_dict(self) -> TDesc:
+        return {
+            'lr': self.current_lr,
+        }
 
 
 __all__ = [
