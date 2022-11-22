@@ -1,6 +1,5 @@
 from __future__ import annotations
 from core.utils.types import *
-import core.diffs as dfs
 import core.functions as cf
 from .layers import SequentialLayer, FullyConnectedLayer, Layer
 
@@ -51,52 +50,23 @@ class Loss:
         self.output = None
 
 
-# todo ignored
-class CrossEntropyLoss(Loss):
+class CrossEntropyLoss(Loss):   # todo need to check with a classification problem
     """
     Categorical Cross Entropy Loss. Note that this class does NOT include a Softmax layer.
     """
     def __init__(self, clip_value: TReal = 1e-7):
         super(CrossEntropyLoss, self).__init__()
         self.clip_value = clip_value
-        self.func = None
+        self.func = cf.CategoricalCrossEntropy(self.clip_value)
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.input = pred
         self.truth = truth
-        self.func = cf.CategoricalCrossEntropy(self.truth, self.clip_value)
-        return self.func(self.input)
+        return self.func(self.input, self.truth)
 
-    def backward(self) -> np.ndarray:
-        return dfs.grad(type(self.func), self.func, self.input)
-
-
-# todo ignored
-class SoftmaxCrossEntropyLoss(Loss):
-    """
-    Softmax + CrossEntropy loss. It expects an input of raw, unnormalized values, and applies
-    CrossEntropyLoss to the target distribution and normalized inputs through Softmax.
-    """
-    def __init__(self, const_shift=0, max_shift=False, clip_value=1e-7):
-        super(SoftmaxCrossEntropyLoss, self).__init__()
-        self.const_shift = const_shift
-        self.max_shift = max_shift
-        self.clip_value = clip_value
-        self.net = None
-        self.softmax = cf.Softmax(const_shift, max_shift)
-        self.cross_entropy = None
-
-    def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        self.input = pred
-        self.net = self.softmax(pred)
+    def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
         self.truth = truth
-        self.cross_entropy = cf.CategoricalCrossEntropy(self.truth, self.clip_value)
-        return self.cross_entropy(self.net)
-
-    def backward(self) -> np.ndarray:
-        dvals: np.ndarray = dfs.grad(type(self.cross_entropy), self.cross_entropy, self.net)
-        # noinspection PyArgumentList
-        return dfs.vjp(type(self.softmax), self.softmax, self.input, dvals)
+        return self.func.grad(dvals, self.truth)
 
 
 class MSELoss(Loss):
@@ -127,7 +97,6 @@ class MSELoss(Loss):
         return -2 * self.const * (truth - dvals)
 
 
-# todo ignored
 class RegularizedLoss(Loss):
     """
     A loss with a regularization term.
@@ -143,8 +112,13 @@ class RegularizedLoss(Loss):
         elif isinstance(layers, FullyConnectedLayer):
             return self.regularization_loss({layers.linear})
         elif isinstance(layers, Layer):
-            if layers.is_parametrized() and hasattr(layers, 'regularizer') and layers.regularizer is not None:
-                return layers.regularizer.loss(layers.weights) + layers.regularizer.loss(layers.biases)
+            if layers.is_parametrized() and hasattr(layers, 'weights_regularizer') and \
+                    hasattr(layers, 'biases_regularizer'):
+                if (layers.weights_regularizer is not None) and (layers.biases_regularizer is not None):
+                    return layers.weights_regularizer.loss(layers.weights) + \
+                           layers.biases_regularizer.loss(layers.biases)
+                else:
+                    return np.zeros(1)
             else:
                 return np.zeros(1)
         elif isinstance(layers, Iterable):
@@ -165,14 +139,13 @@ class RegularizedLoss(Loss):
         # Backward pass "direct" handling (i.e., by updating gradients of the weights)
         # without an underlying computational graph is complicated
         # For regularizers like L1, the actual backward pass happens when calling
-        # update_param_grads() for each regularizer.
+        # backward() on the previous layers.
         return self.base_loss.backward(dvals, truth)
 
 
 __all__ = [
     'Loss',
     'CrossEntropyLoss',
-    'SoftmaxCrossEntropyLoss',
     'MSELoss',
     'RegularizedLoss',
 ]

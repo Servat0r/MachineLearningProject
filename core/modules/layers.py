@@ -130,7 +130,10 @@ class LinearLayer(Layer):
 
     def __init__(self, in_features: int, out_features: int,
                  initializer: Initializer, init_args: dict[str, Any] = None,
-                 grad_reduction='mean', frozen=False, regularizer: Regularizer = None):
+                 grad_reduction='mean', frozen=False,
+                 weights_regularizer: Regularizer = None,
+                 biases_regularizer: Regularizer = None,
+                 ):
         super(LinearLayer, self).__init__(frozen=frozen)
 
         # Set Layer "core" parameters
@@ -151,7 +154,8 @@ class LinearLayer(Layer):
         self.bias_momentums = np.zeros_like(self.biases)
 
         # Set regularizer and its updates
-        self.regularizer = regularizer
+        self.weights_regularizer = weights_regularizer
+        self.biases_regularizer = biases_regularizer
         self.weights_reg_updates = None
         self.biases_reg_updates = None
 
@@ -159,10 +163,11 @@ class LinearLayer(Layer):
         return not self.frozen
 
     def update_reg_values(self, func: Callable[np.ndarray]):
-        if self.regularizer is not None:
+        if self.weights_regularizer is not None:
             w_updates = func(self.weights_reg_updates)
-            b_updates = func(self.biases_reg_updates)
             self.weights += w_updates
+        if self.biases_regularizer is not None:
+            b_updates = func(self.biases_reg_updates)
             self.biases += b_updates
 
     def get_weights(self, copy=True) -> np.ndarray:
@@ -221,9 +226,11 @@ class LinearLayer(Layer):
             self.dbiases = np.mean(self.dbiases, axis=0)
 
         # Handle regularization
-        if self.regularizer is not None:
-            self.weights_reg_updates = self.regularizer.update(self.weights)
-            self.biases_reg_updates = self.regularizer.update(self.biases)
+        if self.weights_regularizer is not None:
+            self.weights_reg_updates = self.weights_regularizer.update(self.weights)
+
+        if self.biases_regularizer is not None:
+            self.biases_reg_updates = self.biases_regularizer.update(self.biases)
 
         # Now calculate values to backpropagate to previous layer
         return np.dot(dvals, self.weights.T)
@@ -321,12 +328,16 @@ class FullyConnectedLayer(Layer):
     def __init__(
             self, in_features: int, out_features: int, activation_layer: ActivationLayer,
             initializer: Initializer = None, init_args: dict[str, Any] = None,
-            grad_reduction='mean', frozen=False, regularizer: Regularizer = None,
+            grad_reduction='mean', frozen=False,
+            weights_regularizer: Regularizer = None,
+            biases_regularizer: Regularizer = None,
     ):
         super(FullyConnectedLayer, self).__init__(frozen=frozen)
         # Initialize linear part
-        self.linear = LinearLayer(in_features, out_features, initializer,
-                                  init_args, grad_reduction, regularizer=regularizer)
+        self.linear = LinearLayer(
+            in_features, out_features, initializer, init_args, grad_reduction,
+            weights_regularizer=weights_regularizer, biases_regularizer=biases_regularizer
+        )
         self.activation = activation_layer
         self.net = None
 
