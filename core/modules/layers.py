@@ -116,9 +116,6 @@ class SequentialLayer(Layer):
             layer = self.layers[len(self) - 1 - i]
             current_dvals = layer.backward(current_dvals)
         # Handle regularizers from underlying layers
-        # todo In this implementation there is no control if the regularizer are also in
-        # todo OTHER models; a safer (yet more costly) way should be that of maintaining
-        # todo an index of layers for each parameter and filter by them
         return current_dvals
 
 
@@ -357,7 +354,7 @@ class FullyConnectedLayer(Layer):
         return self.output
 
     def backward(self, dvals: np.ndarray):
-        dvals = self.activation.backward(dvals)  # net is actually saved as input to the activation layer
+        dvals = self.activation.backward(dvals)
         return self.linear.backward(dvals)
 
     def is_parametrized(self) -> bool:
