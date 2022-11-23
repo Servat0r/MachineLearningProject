@@ -7,6 +7,10 @@ from core.modules.regularization import *
 class Layer:
 
     def __init__(self, frozen=False):
+        """
+        :param frozen: If True, sets this layer to 'frozen',
+        i.e. weights/biases will NOT be updated during training.
+        """
         self.__is_training = False
         self.input = None
         self.output = None
@@ -20,10 +24,18 @@ class Layer:
 
     @abstractmethod
     def is_parametrized(self) -> bool:
+        """
+        Returns True iff layers contains any parameter (weights, biases) and is NOT frozen.
+        """
         pass
 
     @abstractmethod
     def update_reg_values(self, func: Callable[np.ndarray]):
+        """
+        Applies the given function to the regularization updates in the layer
+        (self.weights_regularizers, self.biases_regularizers) such that the
+        optimizer can use them (e.g., by inverting sign for SGD).
+        """
         pass
 
     @abstractmethod
@@ -40,7 +52,7 @@ class Layer:
     def check_backward_input_shape(self, shape: int | Sequence) -> bool:
         """
         Checks shape of the "backward inputs" of the layer. Generally, they shall be of the shape
-        (l, n, 1), with l = batch size, n = backward input size.
+        (l, 1, n), with l = batch size, n = backward input size.
         :param shape: Shape to check.
         :return: True if shape has valid form, False otherwise.
         """
@@ -74,6 +86,10 @@ class Layer:
 
 
 class SequentialLayer(Layer):
+    """
+    A 'container' layer (inspired by torch.nn.Sequential) that maintains a list
+    of layers to which layer methods will be applied.
+    """
 
     def __init__(self, layers: Sequence[Layer], frozen=False):
         super(SequentialLayer, self).__init__(frozen=frozen)
@@ -115,7 +131,6 @@ class SequentialLayer(Layer):
         for i in range(len(self)):
             layer = self.layers[len(self) - 1 - i]
             current_dvals = layer.backward(current_dvals)
-        # Handle regularizers from underlying layers
         return current_dvals
 
 
@@ -124,13 +139,23 @@ class LinearLayer(Layer):
     A linear layer: accepts inputs of the shape (l, 1, in_features) and returns outputs
     of the shape (l, 1, out_features).
     """
-
     def __init__(self, in_features: int, out_features: int,
                  initializer: Initializer, init_args: dict[str, Any] = None,
                  grad_reduction='mean', frozen=False,
                  weights_regularizer: Regularizer = None,
                  biases_regularizer: Regularizer = None,
                  ):
+        """
+        :param in_features: Input dimension.
+        :param out_features: Output dimension.
+        :param initializer: Initializer to use for weights and biases initialization.
+        :param init_args: Extra arguments to pass to the initializer.
+        :param grad_reduction: Reduction to apply to the gradients of a batch of
+        examples. Can be either 'none' (no reduction, if one wants to apply a 'custom'
+        one), 'sum' (sum over all the gradients), 'mean' (average over all the gradients).
+        :param weights_regularizer: Regularizer to apply to layer weights.
+        :param biases_regularizer: Regularizer to apply to layer biases.
+        """
         super(LinearLayer, self).__init__(frozen=frozen)
 
         # Set Layer "core" parameters
@@ -280,15 +305,27 @@ class TanhLayer(ActivationLayer):
 
 class ReLULayer(ActivationLayer):
 
+    def default_subgrad_func(self, dvals: np.ndarray):
+        """
+        Default subgradient for ReLU: for each input component,
+        1 iff it is > 0, else 0; this is then multiplied by the
+        dvals input to get out_dvals.
+        """
+        out_dvals = dvals.copy()
+        out_dvals[self.input <= 0] = 0
+        return out_dvals
+
+    def __init__(self, frozen=False, subgrad_func: Callable = None):
+        super(ReLULayer, self).__init__(frozen=frozen)
+        self.subgrad_func = self.default_subgrad_func if subgrad_func is None else subgrad_func
+
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.input = x
         self.output = np.maximum(self.input, 0)
         return self.output
 
     def backward(self, dvals: np.ndarray):
-        out_dvals = dvals.copy()
-        out_dvals[self.input <= 0] = 0
-        return out_dvals
+        return self.subgrad_func(dvals)
 
 
 class SoftmaxLayer(ActivationLayer):

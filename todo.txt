@@ -1,11 +1,80 @@
-3. Write down the PyTorch package for comparisons with PyTorch;
-5. Check MSELoss (should be incomplete);
-6. Refactor (weights, dweights) and (biases, dbiases) in Weighted/Linear/FullyConnectedLayer into a Parameter object
-for using Optimizers;
-7. Write Optimizers code (SGD, Momentum, Adam, Nesterov)!
-8. Add regularization to losses, either as weight_decay param or by adding separately Regularization objects (pass
-to Optimizers or Losses?);
-9. Add MEELoss;
-10. Write Conjugate Gradient - based Optimizer (joint with CM);
-11. Add Dataset, Dataloader and any other utility for data loading/analysis/preprocessing (if necessary)/...
-12. Write tests!
+CONTENT OF THE REPO:
+    1. Report (write in LaTeX and then convert in PDF)
+    2. Datasets:
+        - all MONK datasets;
+        - ML-CUP training (whole portion of the dataset for which we have labels)
+        - ML-CUP test (blind test set)
+        - ML-CUP test internal (i.e., the portion of ML-CUP training that we use as internal test set)
+        - ML-CUP "dev set" (i.e., the complementary of ML-CUP test internal divided into several datasets
+            for doing hold-out, k-fold etc.)
+    3. Short Abstract for ML-CUP (as described in slides ML-22-PRJ-v.0.11.pdf)
+
+EXTRA PARTS (beyond standard MLP with backprop, as described in slides) that we could (easily) implement:
+    1. Nesterov momentum (I'll need it for CM)
+    2. L1, L1L2 regularization (L1 is also for CM, I've already implemented it)
+    3. [maybe] also R-Prop or Adam as optimizers
+    4. compare different strategies for learning rate (I've implemented some of them in schedulers.py)
+
+EXPERIMENTAL PART:
+    1. All 3 MONK problems with performance and learning curves
+    2. For the MONK problems, we must use a network with 2-4 units: in the slides it is said that 1-of-k
+    encoding leads to 17 units, so we need to solve this
+    3. Use different styles for plotting curves in each graph (they will print them out in black-and-white)
+
+
+IMPLEMENTATION:
+
+    1. Add Input Layer (output is equal to input, for loading data and being consistent for how NNs have been presented
+    in the course) (add also Linear Activation Layer?)
+
+    2. Check CrossEntropy Loss and Softmax with (even) a small dataset to see what happens when training/validating
+    (e.g. MNIST or MONKs)
+
+    3. Add metrics (MEE, accuracy, Root MSE, time)
+
+    4. Refactor tests in main.py to tests package (should be Integration Tests)
+
+    5. Write a converter from our model to a PyTorch or Keras one (or both) for making comparisons and tests
+
+    6. Add Fan-in initialization (basically, extend RandomUniformInitializer or directly pass np.sqrt(#units) to it)
+
+    7. Write down Dataset for MONK benchmarks and for ML CUP
+
+    8. Add methods to save and load models (this is for model selection, after training on multiple models we would be able
+    to save the best one, both for MONK benchmarks and for ML CUP)
+
+    9. Write any utility for preprocessing data (e.g. for normalizing them or any other necessary transformation);
+    in particular, this applies to MONK and ML-CUP datasets
+
+    10. Add logging facilities: for each epoch (and maybe also for each minibatch), we want to monitor:
+        - training data and regularization loss (average over minibatches for epochs);
+        - validation data and regularization loss (as above);
+        - all other metrics passed in model.compile(...), e.g. MEE, Root MSE, time
+    In particular, it is better if we maintain a 'logbook' with all these metric values for each mb / epoch and we
+    expose it to loggers and callbacks e.g. for Early Stopping (see below) s.t. they can use the whole recorded values
+
+    Logging and callbacks can be integrated in Model.train() method, together with parameters like train_epoch_losses,
+    eval_epoch_losses, optimizer_state that by now are used to print out model training info
+
+    11. Add Callbacks for stopping criterions:
+        - standard stop (no improvement in training) [with regularization];
+        - EarlyStopping;
+        - any other stopping criterion in the slides;
+    OR adapt the sklearn ones (in this case, we
+    shall conform to keras and sklearn interfaces and by now we are not compliant with it).
+
+    12. Add "data split and train" routines:
+        - Hold-out: start from a bunch of data and create three dataset (train, validation, test), then train and evaluate
+        the resulting model;
+        - k-fold CV: start from a bunch of data and create k different datasets, then at each time merge k-1 of them to use
+        for training and use the remaining for validation, cycling on the k datasets for validation; [k = 5, 10 w.r.t. LOO]
+        - (if we have time) double k-fold CV (see slides on validation);
+
+    13. Add "hyperparameter tuning" routines:
+        - Grid-Search: start from a set of possible hyperparameters, then train and evaluate the models for each combination;
+        - Nested Grid Search: start with a coarse-grained grid search, then refine it on good parameters
+        - others (maybe) that we have seen in the course;
+    NOTE: For 12) and 13), these should be "parameters", i.e. we want to select one from 12) and one from 13) into a bigger
+    algorithm that performs all the trainings and evaluations and selects the best model;
+
+    14. Checkout course lectures if there is something missing
