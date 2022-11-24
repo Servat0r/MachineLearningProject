@@ -50,41 +50,6 @@ class Layer:
         return self.forward(x)
 
 
-class Sequential(Layer):
-    """
-    A 'container' layer (inspired by torch.nn.Sequential) that maintains a list
-    of layers to which layer methods will be applied.
-    """
-
-    def __init__(self, layers: Sequence[Layer], frozen=False):
-        super(Sequential, self).__init__(frozen=frozen)
-        self.layers = layers
-
-    def __len__(self):
-        return len(self.layers)
-
-    def __getitem__(self, item):
-        return self.layers[item]
-
-    def is_parametrized(self) -> bool:
-        return any(layer.is_parametrized() for layer in self.layers) and not self.frozen
-
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        self.input = x
-        current_output = x
-        for layer in self.layers:
-            current_output = layer.forward(current_output)
-        self.output = current_output
-        return self.output
-
-    def backward(self, dvals: np.ndarray):
-        current_dvals = dvals
-        for i in range(len(self)):
-            layer = self.layers[len(self) - 1 - i]
-            current_dvals = layer.backward(current_dvals)
-        return current_dvals
-
-
 class Input(Layer):
 
     def __init__(self, frozen=False):
@@ -323,7 +288,6 @@ class Dense(Layer):
 __all__ = [
     'Layer',
     'Input',
-    'Sequential',
     'Linear',
     'Activation',
     'Dense',

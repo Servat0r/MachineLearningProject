@@ -2,7 +2,7 @@
 from __future__ import annotations
 from ..utils import *
 from .schedulers import *
-from .layers import Sequential, Dense, Linear, Layer
+from .layers import Dense, Linear, Layer
 
 
 # Base class
@@ -10,8 +10,14 @@ class Optimizer:
 
     def __init__(self):
         self.iterations = 0
+        self.epoch = 0
 
-    @abstractmethod
+    def before_epoch(self):
+        pass
+
+    def after_epoch(self):
+        pass
+
     def before_update(self):
         """
         Callback before any parameters updates.
@@ -27,38 +33,30 @@ class Optimizer:
         self.update_reg_values(layers)
         self.after_update()
 
-    @abstractmethod
     def after_update(self):
         """
         Callback after any parameters updates.
         """
         pass
 
-    @abstractmethod
     def update_reg_values(self, layers):
         """
         Subroutine for handling regularization terms in updating.
         """
         pass
 
-    @abstractmethod
     def update_body(self, layers):
         """
         To be executed at the heart of update(), between before_update() and after_update().
         """
         pass
 
-    def get_num_iterations(self) -> int:
-        return self.iterations
-
-    def reset_iterations(self, dump=True) -> int | None:
-        iters = self.iterations if dump else None
-        self.iterations = 0
-        return iters
-
-    @abstractmethod
     def to_log_dict(self) -> TDesc:
         pass
+
+    def reset(self):
+        self.epoch = 0
+        self.iterations = 0
 
 
 # SGD Optimizer with optional momentum (todo add Nesterov momentum?)
@@ -71,14 +69,19 @@ class SGD(Optimizer):
         self.lr_decay_scheduler = lr_decay_scheduler
         self.momentum = momentum
 
-    def before_update(self):
+    def before_epoch(self):
         if self.lr_decay_scheduler is not None:
-            self.current_lr = self.lr_decay_scheduler(self.iterations, self.current_lr)
+            self.current_lr = self.lr_decay_scheduler(self.epoch, self.current_lr)
 
-    def update_reg_values(self, layers: Layer | Iterable):
-        if isinstance(layers, Sequential):
-            self.update_reg_values(layers.layers)
-        elif isinstance(layers, Dense):
+    def after_epoch(self):
+        self.iterations = 0
+        self.epoch += 1
+
+    def after_update(self):
+        self.iterations += 1
+
+    def update_reg_values(self, layers: Layer | Iterable[Layer]):
+        if isinstance(layers, Dense):
             self.update_reg_values(layers.linear)
         elif isinstance(layers, Layer):
             if isinstance(layers, Linear) and layers.is_parametrized():
@@ -112,9 +115,7 @@ class SGD(Optimizer):
         layer.biases += bias_updates
 
     def update_body(self, layers: Layer | Iterable):
-        if isinstance(layers, Sequential):
-            self.update_body(layers.layers)
-        elif isinstance(layers, Dense):
+        if isinstance(layers, Dense):
             self.update_body(layers.linear)
         elif isinstance(layers, Layer):
             if isinstance(layers, Linear) and layers.is_parametrized():
@@ -127,9 +128,6 @@ class SGD(Optimizer):
                 self.update_body(layer)
         else:
             raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are {Layer} or {Iterable[Layer]}")
-
-    def after_update(self):
-        self.iterations += 1
 
     def to_log_dict(self) -> TDesc:
         return {

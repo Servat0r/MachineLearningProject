@@ -1,7 +1,7 @@
 from __future__ import annotations
 from core.utils.types import *
 import core.functions as cf
-from .layers import Sequential, Dense, Layer
+from .layers import Dense, Layer, Linear
 
 
 class Loss:
@@ -101,26 +101,22 @@ class RegularizedLoss(Loss):
     """
     A loss with a regularization term.
     """
-    def __init__(self, base_loss: Loss, layers: Sequential | Iterable):
+    def __init__(self, base_loss: Loss, layers: Iterable[Layer]):
         super(RegularizedLoss, self).__init__()
         self.base_loss = base_loss
         self.layers = layers
 
-    def regularization_loss(self, layers: Layer | Iterable) -> np.ndarray:
-        if isinstance(layers, Sequential):
-            return self.regularization_loss(layers.layers)
-        elif isinstance(layers, Dense):
-            return self.regularization_loss({layers.linear})
+    def regularization_loss(self, layers: Layer | Iterable[Layer]) -> np.ndarray:
+        if isinstance(layers, Dense):
+            return self.regularization_loss(layers.linear)
         elif isinstance(layers, Layer):
-            if layers.is_parametrized() and hasattr(layers, 'weights_regularizer') and \
-                    hasattr(layers, 'biases_regularizer'):
-                if (layers.weights_regularizer is not None) and (layers.biases_regularizer is not None):
-                    return layers.weights_regularizer.loss(layers.weights) + \
-                           layers.biases_regularizer.loss(layers.biases)
-                else:
-                    return np.zeros(1)
-            else:
-                return np.zeros(1)
+            result = np.zeros(1)
+            if isinstance(layers, Linear) and layers.is_parametrized():
+                if layers.weights_regularizer is not None:
+                    result += layers.weights_regularizer.loss(layers.weights)
+                if layers.biases_regularizer is not None:
+                    result += layers.biases_regularizer.loss(layers.biases)
+            return result
         elif isinstance(layers, Iterable):
             result = np.zeros(1)
             for layer in layers:

@@ -12,10 +12,11 @@ class Model:
     Base class for a Neural Network
     """
     def __init__(self, layers: Layer | Sequence[Layer]):
-        self.layers = layers if isinstance(layers, Sequential) else Sequential(layers)
+        self.layers: Sequence[Layer] = [layers] if isinstance(layers, Layer) else list(layers)
         self.optimizer = None
         self.loss = None
         self.metrics = None
+        self.length = len(self.layers)
 
     @staticmethod
     @abstractmethod
@@ -26,6 +27,20 @@ class Model:
     @abstractmethod
     def save(fpath: str) -> Model:
         pass
+
+    def forward(self, x: np.ndarray):
+        current_output = x
+        for i in range(self.length):
+            layer = self.layers[i]
+            current_output = layer.forward(current_output)
+        return current_output
+
+    def backward(self, dvals: np.ndarray):
+        current_dvals = dvals
+        for i in range(self.length):
+            layer = self.layers[self.length - 1 - i]
+            current_dvals = layer.backward(current_dvals)
+        return current_dvals
 
     # todo maybe we can handle automatic creation of dataloder based on n_epochs
     def compile(self, optimizer: Optimizer, loss: Loss, metrics=None):
@@ -58,6 +73,7 @@ class Model:
         for epoch in range(n_epochs):
             # Callbacks before training epoch
             train_dataloader.before_epoch()
+            self.optimizer.before_epoch()
             train_mb_losses.fill(0.)
             for mb in range(mb_num):
 
@@ -65,7 +81,7 @@ class Model:
                 if mb_data is None:
                     break
                 input_mb, target_mb = mb_data[0], mb_data[1]
-                y_hat = self.layers(input_mb)
+                y_hat = self.forward(input_mb)
                 data_loss_val, reg_loss_val = self.loss(y_hat, target_mb)
                 optim_log_dict = self.optimizer.to_log_dict()
                 print(
@@ -78,15 +94,16 @@ class Model:
                 train_mb_losses[mb] = np.mean(data_loss_val + reg_loss_val, axis=0).item()
                 # Backward of loss and hidden layers
                 dvals = self.loss.backward(y_hat, target_mb)
-                self.layers.backward(dvals)
+                self.backward(dvals)
                 self.optimizer.update(self.layers)
             train_dataloader.after_epoch()
+            self.optimizer.after_epoch()
             train_epoch_losses[epoch] = np.mean(train_mb_losses).item()
 
             if eval_exists:
                 eval_dataloader.before_epoch()
                 input_eval, target_eval = next(eval_dataloader)
-                y_hat = self.layers(input_eval)
+                y_hat = self.forward(input_eval)
                 data_loss_val, reg_loss_val = self.loss(y_hat, target_eval)
                 optim_log_dict = self.optimizer.to_log_dict()
                 print(
