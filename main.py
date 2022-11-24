@@ -92,13 +92,13 @@ def randn_sqrt_data(samples=1000, input_dim=1, output_dim=1, normalize=True):
 
 
 # ---------------------- SAMPLE NN (WITHOUT model) --------------------------------------
-dense1 = cm.LinearLayer(INPUT_DIM, 64, cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean')
-activation1 = cm.ReLULayer()
-dense2 = cm.LinearLayer(64, 64, cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean')
-activation2 = cm.ReLULayer()
-dense3 = cm.LinearLayer(64, OUTPUT_DIM, cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean')
+dense1 = cm.Linear(INPUT_DIM, 64, cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean')
+activation1 = cm.ReLU()
+dense2 = cm.Linear(64, 64, cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean')
+activation2 = cm.ReLU()
+dense3 = cm.Linear(64, OUTPUT_DIM, cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean')
 # we should need a 'linear activation'
-sequential = cm.SequentialLayer([dense1, activation1, dense2, activation2, dense3])
+sequential = cm.Sequential([dense1, activation1, dense2, activation2, dense3])
 # ---------------------- SAMPLE MODEL ---------------------------------------------------
 model = cm.Model(sequential)
 
@@ -296,13 +296,14 @@ def test_fully_connected_minibatch_model(
     train_dataloader = DataLoader(train_dataset, batch_size=mb_size, shuffle=epoch_shuffle)
     eval_dataloader = DataLoader(eval_dataset, batch_size=N_SAMPLES//5)
     model = cm.Model([
-        cm.FullyConnectedLayer(
-            INPUT_DIM, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
-        ),
-        cm.FullyConnectedLayer(
-            64, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
-        ),
-        cm.LinearLayer(64, OUTPUT_DIM, initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',)
+        cm.Dense(
+            INPUT_DIM, 64, cm.ReLU(), weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
+            grad_reduction='mean'),
+        cm.Dense(
+            64, 64, cm.ReLU(), weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
+            grad_reduction='mean'),
+        cm.Linear(64, OUTPUT_DIM, weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
+                  grad_reduction='mean')
     ])
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
@@ -333,18 +334,24 @@ def test_fully_connected_minibatch_model_with_regularizations(
     train_dataloader = DataLoader(train_dataset, batch_size=mb_size, shuffle=epoch_shuffle)
     eval_dataloader = DataLoader(eval_dataset, batch_size=N_SAMPLES//5)
     model = cm.Model([
-        cm.FullyConnectedLayer(
-            INPUT_DIM, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+        cm.Dense(
+            INPUT_DIM, 64, cm.ReLU(),
+            weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             weights_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
             biases_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
         ),
-        cm.FullyConnectedLayer(
-            64, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+        cm.Dense(
+            64, 64, cm.ReLU(),
+            weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             weights_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
             biases_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
         ),
-        cm.LinearLayer(
-            64, OUTPUT_DIM, initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+        cm.Linear(
+            64, OUTPUT_DIM,
+            weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             weights_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
             biases_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
         )
@@ -378,18 +385,24 @@ def test_fc_minibatch_model_with_regularizations_lrscheduler(
     train_dataloader = DataLoader(train_dataset, batch_size=mb_size, shuffle=epoch_shuffle)
     eval_dataloader = DataLoader(eval_dataset, batch_size=N_SAMPLES//5)
     model = cm.Model([
-        cm.FullyConnectedLayer(
-            INPUT_DIM, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+        cm.Dense(
+            INPUT_DIM, 64, cm.ReLU(),
+            weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             weights_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
             biases_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
         ),
-        cm.FullyConnectedLayer(
-            64, 64, cm.ReLULayer(), initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+        cm.Dense(
+            64, 64, cm.ReLU(),
+            weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             weights_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
             biases_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
         ),
-        cm.LinearLayer(
-            64, OUTPUT_DIM, initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+        cm.Linear(
+            64, OUTPUT_DIM,
+            weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0), grad_reduction='mean',
+            # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             weights_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
             biases_regularizer=cm.L1L2Regularizer(l1_lambda=l1_regularizer, l2_lambda=l2_regularizer),
         )
@@ -429,9 +442,11 @@ if __name__ == '__main__':
     )
     test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data)
     test_fully_connected_minibatch_model(n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False)
+    """
     test_fully_connected_minibatch_model_with_regularizations(
-        n_epochs=100, mb_size=100, func=randn_sqrt_data, l1_regularizer=0.001, l2_regularizer=0.001,
+        n_epochs=100, mb_size=100, func=arange_sine_data, l1_regularizer=0.001, l2_regularizer=0.001,
     )
+    """
     test_fully_connected_minibatch_model_with_regularizations(
         n_epochs=100, mb_size=100, func=randn_sqrt_data, epoch_shuffle=False,
         l1_regularizer=0., l2_regularizer=0.01,
@@ -452,7 +467,6 @@ if __name__ == '__main__':
         lr_scheduler=cm.ExponentialDecayScheduler(start_value=0.01, alpha=0.001),
         l1_regularizer=0.001, l2_regularizer=0.001,
     )
-    """
     test_fc_minibatch_model_with_regularizations_lrscheduler(
         n_epochs=100, mb_size=50, func=arange_sine_data, lr=0.01, momentum=0.9,
         # max_iter = n_epochs * mb_size
@@ -463,7 +477,6 @@ if __name__ == '__main__':
         # arange_sine_data extra args for validation set
         start=N_SAMPLES,
     )
-    """
     test_fc_minibatch_model_with_regularizations_lrscheduler(
         n_epochs=100, mb_size=50, func=arange_sine_data, lr=0.01, momentum=0., epoch_shuffle=False,
         # max_iter = n_epochs * mb_size

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from core.utils.types import *
 import core.functions as cf
-from .layers import SequentialLayer, FullyConnectedLayer, Layer
+from .layers import Sequential, Dense, Layer
 
 
 class Loss:
@@ -101,15 +101,15 @@ class RegularizedLoss(Loss):
     """
     A loss with a regularization term.
     """
-    def __init__(self, base_loss: Loss, layers: SequentialLayer | Iterable):
+    def __init__(self, base_loss: Loss, layers: Sequential | Iterable):
         super(RegularizedLoss, self).__init__()
         self.base_loss = base_loss
         self.layers = layers
 
     def regularization_loss(self, layers: Layer | Iterable) -> np.ndarray:
-        if isinstance(layers, SequentialLayer):
+        if isinstance(layers, Sequential):
             return self.regularization_loss(layers.layers)
-        elif isinstance(layers, FullyConnectedLayer):
+        elif isinstance(layers, Dense):
             return self.regularization_loss({layers.linear})
         elif isinstance(layers, Layer):
             if layers.is_parametrized() and hasattr(layers, 'weights_regularizer') and \

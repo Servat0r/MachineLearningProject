@@ -12,7 +12,7 @@ class Model:
     Base class for a Neural Network
     """
     def __init__(self, layers: Layer | Sequence[Layer]):
-        self.layers = layers if isinstance(layers, SequentialLayer) else SequentialLayer(layers)
+        self.layers = layers if isinstance(layers, Sequential) else Sequential(layers)
         self.optimizer = None
         self.loss = None
         self.metrics = None
@@ -37,7 +37,6 @@ class Model:
         # auto-wrap loss into a regularization one
         self.loss = RegularizedLoss(loss, layers=self.layers)
         # todo add metrics handling
-        self.layers.set_to_train()
 
     def train(
             self, train_dataloader: DataLoader, eval_dataloader: DataLoader = None, n_epochs: int = 1,
@@ -58,7 +57,6 @@ class Model:
 
         for epoch in range(n_epochs):
             # Callbacks before training epoch
-            self.layers.set_to_train()
             train_dataloader.before_epoch()
             train_mb_losses.fill(0.)
             for mb in range(mb_num):
@@ -86,7 +84,6 @@ class Model:
             train_epoch_losses[epoch] = np.mean(train_mb_losses).item()
 
             if eval_exists:
-                self.layers.set_to_eval()
                 eval_dataloader.before_epoch()
                 input_eval, target_eval = next(eval_dataloader)
                 y_hat = self.layers(input_eval)
@@ -112,7 +109,6 @@ class Model:
         """
         Resets the model for a fresh usage.
         """
-        self.layers.set_to_eval()
         self.optimizer = None
         self.loss = None
         self.metrics = None

@@ -2,7 +2,7 @@
 from __future__ import annotations
 from ..utils import *
 from .schedulers import *
-from .layers import SequentialLayer, FullyConnectedLayer, Layer
+from .layers import Sequential, Dense, Linear, Layer
 
 
 # Base class
@@ -39,6 +39,7 @@ class Optimizer:
         """
         Subroutine for handling regularization terms in updating.
         """
+        pass
 
     @abstractmethod
     def update_body(self, layers):
@@ -74,16 +75,20 @@ class SGD(Optimizer):
         if self.lr_decay_scheduler is not None:
             self.current_lr = self.lr_decay_scheduler(self.iterations, self.current_lr)
 
-    @staticmethod
-    def reg_update_func(x: np.ndarray):
-        return -1 * x
-
     def update_reg_values(self, layers: Layer | Iterable):
-        if isinstance(layers, Layer):
-            layers.update_reg_values(func=self.reg_update_func)
+        if isinstance(layers, Sequential):
+            self.update_reg_values(layers.layers)
+        elif isinstance(layers, Dense):
+            self.update_reg_values(layers.linear)
+        elif isinstance(layers, Layer):
+            if isinstance(layers, Linear) and layers.is_parametrized():
+                if layers.weights_regularizer is not None:
+                    layers.weights -= layers.weights_reg_updates
+                if layers.biases_regularizer is not None:
+                    layers.biases -= layers.biases_reg_updates
         elif isinstance(layers, Iterable):
             for layer in layers:
-                layer.update_reg_values(func=self.reg_update_func)
+                self.update_reg_values(layer)
         else:
             raise TypeError(f"Invalid type {type(layers)}: allowed ones are {Layer} or {Iterable[Layer]}")
 
@@ -107,12 +112,12 @@ class SGD(Optimizer):
         layer.biases += bias_updates
 
     def update_body(self, layers: Layer | Iterable):
-        if isinstance(layers, SequentialLayer):
+        if isinstance(layers, Sequential):
             self.update_body(layers.layers)
-        elif isinstance(layers, FullyConnectedLayer):
-            self.update_body({layers.linear})
+        elif isinstance(layers, Dense):
+            self.update_body(layers.linear)
         elif isinstance(layers, Layer):
-            if layers.is_parametrized():
+            if isinstance(layers, Linear) and layers.is_parametrized():
                 if self.momentum:
                     self.__update_body_momentum(layers)
                 else:
