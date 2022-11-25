@@ -7,19 +7,19 @@ import core.modules as cm
 
 def __generate_layers(weigths_regularizer, biases_regularizer, low=-1.0, high=1.0):
     dense1 = cm.Dense(
-            INPUT_DIM, 64, cm.Tanh(),
+            INPUT_DIM, HIDDEN_SIZE, cm.Tanh(),
             weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
             # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             weights_regularizer=weigths_regularizer, biases_regularizer=biases_regularizer,
         )
     dense2 = cm.Dense(
-        64, 64, cm.Tanh(),
+        HIDDEN_SIZE, HIDDEN_SIZE, cm.Tanh(),
         weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
         # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
         weights_regularizer=weigths_regularizer, biases_regularizer=biases_regularizer,
     )
     linear3 = cm.Linear(
-        64, OUTPUT_DIM,
+        HIDDEN_SIZE, OUTPUT_DIM,
         weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
         # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
         weights_regularizer=weigths_regularizer, biases_regularizer=biases_regularizer,

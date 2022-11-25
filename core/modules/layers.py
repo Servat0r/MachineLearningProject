@@ -23,7 +23,7 @@ class Layer:
         self.frozen = False
 
     @abstractmethod
-    def is_parametrized(self) -> bool:
+    def is_trainable(self) -> bool:
         """
         Returns True iff layers contains any parameter (weights, biases) and is NOT frozen.
         """
@@ -63,7 +63,7 @@ class Input(Layer):
     def backward(self, dvals: np.ndarray):
         return dvals
 
-    def is_parametrized(self) -> bool:
+    def is_trainable(self) -> bool:
         return False
 
 
@@ -113,7 +113,7 @@ class Linear(Layer):
         self.weights_reg_updates = None
         self.biases_reg_updates = None
 
-    def is_parametrized(self) -> bool:
+    def is_trainable(self) -> bool:
         return not self.frozen
 
     def get_weights(self, copy=True) -> np.ndarray:
@@ -184,7 +184,7 @@ class Activation(Layer):
     Represents an activation function layer: accepts an input of the shape (l, 1, n)
     and returns an output of the same shape after having applied an activation function.
     """
-    def is_parametrized(self) -> bool:
+    def is_trainable(self) -> bool:
         return False
 
 
@@ -281,8 +281,8 @@ class Dense(Layer):
         dvals = self.activation.backward(dvals)
         return self.linear.backward(dvals)
 
-    def is_parametrized(self) -> bool:
-        return self.linear.is_parametrized() and not self.frozen
+    def is_trainable(self) -> bool:
+        return self.linear.is_trainable() and not self.frozen
 
 
 __all__ = [

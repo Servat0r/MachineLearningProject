@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from sklearn.decomposition import PCA
 
-DATASET_PATH = "C:/Users/Michele/Documents/MLCUP.csv"
+DATASET_PATH = "../ML-CUP22-TS.csv"  # "C:/Users/Michele/Documents/MLCUP.csv"
 
 dataset = pd.read_csv(DATASET_PATH)
 

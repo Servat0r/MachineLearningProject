@@ -84,7 +84,7 @@ class SGD(Optimizer):
         if isinstance(layers, Dense):
             self.update_reg_values(layers.linear)
         elif isinstance(layers, Layer):
-            if isinstance(layers, Linear) and layers.is_parametrized():
+            if isinstance(layers, Linear) and layers.is_trainable():
                 if layers.weights_regularizer is not None:
                     layers.weights -= layers.weights_reg_updates
                 if layers.biases_regularizer is not None:
@@ -118,7 +118,7 @@ class SGD(Optimizer):
         if isinstance(layers, Dense):
             self.update_body(layers.linear)
         elif isinstance(layers, Layer):
-            if isinstance(layers, Linear) and layers.is_parametrized():
+            if isinstance(layers, Linear) and layers.is_trainable():
                 if self.momentum:
                     self.__update_body_momentum(layers)
                 else:

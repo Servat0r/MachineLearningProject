@@ -3,7 +3,8 @@ from core.data import ArrayDataset
 import matplotlib.pyplot as plt
 
 
-INPUT_DIM = 10
+INPUT_DIM = 8
+HIDDEN_SIZE = 4
 OUTPUT_DIM = 2
 N_SAMPLES = 1000
 SEED = 20

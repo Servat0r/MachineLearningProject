@@ -111,7 +111,7 @@ class RegularizedLoss(Loss):
             return self.regularization_loss(layers.linear)
         elif isinstance(layers, Layer):
             result = np.zeros(1)
-            if isinstance(layers, Linear) and layers.is_parametrized():
+            if isinstance(layers, Linear) and layers.is_trainable():
                 if layers.weights_regularizer is not None:
                     result += layers.weights_regularizer.loss(layers.weights)
                 if layers.biases_regularizer is not None:

@@ -23,28 +23,19 @@ EXPERIMENTAL PART:
 
 
 IMPLEMENTATION:
-
+DONE:
     1. Add Input Layer (output is equal to input, for loading data and being consistent for how NNs have been presented
-    in the course) (add also Linear Activation Layer?)
+    in the course)
 
-    2. Check CrossEntropy Loss and Softmax with (even) a small dataset to see what happens when training/validating
-    (e.g. MNIST or MONKs)
+    4. Refactor tests in main.py to tests package [(partially) DONE]
+
+PRIORITY:
+    14. Checkout course lectures if there is something missing
 
     3. Add metrics (MEE, accuracy, Root MSE, time)
 
-    4. Refactor tests in main.py to tests package (should be Integration Tests)
-
-    5. Write a converter from our model to a PyTorch or Keras one (or both) for making comparisons and tests
-
-    6. Add Fan-in initialization (basically, extend RandomUniformInitializer or directly pass np.sqrt(#units) to it)
-
-    7. Write down Dataset for MONK benchmarks and for ML CUP
-
-    8. Add methods to save and load models (this is for model selection, after training on multiple models we would be able
-    to save the best one, both for MONK benchmarks and for ML CUP)
-
-    9. Write any utility for preprocessing data (e.g. for normalizing them or any other necessary transformation);
-    in particular, this applies to MONK and ML-CUP datasets
+    5. Add logic for converting OUR Layers/Losses/Optimizers/Models etc. into keras oneS for 'auto-testing' of the
+    produced models
 
     10. Add logging facilities: for each epoch (and maybe also for each minibatch), we want to monitor:
         - training data and regularization loss (average over minibatches for epochs);
@@ -63,6 +54,22 @@ IMPLEMENTATION:
     OR adapt the sklearn ones (in this case, we
     shall conform to keras and sklearn interfaces and by now we are not compliant with it).
 
+UNDONE:
+    1b. (add also Linear Activation Layer?)
+
+    2. Check CrossEntropy Loss and Softmax with (even) a small dataset to see what happens when training/validating
+    (e.g. MNIST or MONKs)
+
+    6. Add Fan-in initialization (basically, extend RandomUniformInitializer or directly pass np.sqrt(#units) to it)
+
+    7. Write down Dataset for MONK benchmarks and for ML CUP
+
+    8. Add methods to save and load models (this is for model selection, after training on multiple models we would be able
+    to save the best one, both for MONK benchmarks and for ML CUP)
+
+    9. Write any utility for preprocessing data (e.g. for normalizing them or any other necessary transformation);
+    in particular, this applies to MONK and ML-CUP datasets
+
     12. Add "data split and train" routines:
         - Hold-out: start from a bunch of data and create three dataset (train, validation, test), then train and evaluate
         the resulting model;
@@ -76,5 +83,3 @@ IMPLEMENTATION:
         - others (maybe) that we have seen in the course;
     NOTE: For 12) and 13), these should be "parameters", i.e. we want to select one from 12) and one from 13) into a bigger
     algorithm that performs all the trainings and evaluations and selects the best model;
-
-    14. Checkout course lectures if there is something missing

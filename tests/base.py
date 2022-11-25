@@ -7,18 +7,18 @@ import core.modules as cm
 
 def __generate_layers(low=-1.0, high=1.0):
     dense1 = cm.Linear(
-        INPUT_DIM, 64,
+        INPUT_DIM, HIDDEN_SIZE,
         weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
         # biases_initializer=cu.RandomUniformInitializer(-0.2, 0.2),
     )
     activation1 = cm.Tanh()
     dense2 = cm.Linear(
-        64, 64, weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
+        HIDDEN_SIZE, HIDDEN_SIZE, weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
         # biases_initializer=cu.RandomUniformInitializer(-0.2, 0.2),
     )
     activation2 = cm.Tanh()
     dense3 = cm.Linear(
-        64, OUTPUT_DIM, weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
+        HIDDEN_SIZE, OUTPUT_DIM, weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
         # biases_initializer=cu.RandomUniformInitializer(-0.2, 0.2),
     )
     return dense1, activation1, dense2, activation2, dense3
@@ -100,12 +100,12 @@ def test_fully_connected_minibatch_model(
     eval_dataloader = DataLoader(eval_dataset, batch_size=N_SAMPLES//5)
     model = cm.Model([
         cm.Dense(
-            INPUT_DIM, 64, cm.ReLU(), weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
+            INPUT_DIM, HIDDEN_SIZE, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             grad_reduction='mean'),
         cm.Dense(
-            64, 64, cm.ReLU(), weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
+            HIDDEN_SIZE, HIDDEN_SIZE, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             grad_reduction='mean'),
-        cm.Linear(64, OUTPUT_DIM, weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
+        cm.Linear(HIDDEN_SIZE, OUTPUT_DIM, weights_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
                   grad_reduction='mean')
     ])
     # Use Model class for training and epoch losses recording
