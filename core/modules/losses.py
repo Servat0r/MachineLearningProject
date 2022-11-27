@@ -8,11 +8,6 @@ class Loss:
     """
     Loss "Layer", representing the endpoint of the NN as a graph for computing gradients.
     """
-    def __init__(self):
-        self.input = None
-        self.truth = None
-        self.output = None
-
     def __call__(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         """
         Default call, returns raw values from forward pass.
@@ -44,11 +39,6 @@ class Loss:
     def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
         pass
 
-    def clear(self):
-        self.input = None
-        self.truth = None
-        self.output = None
-
 
 class CrossEntropyLoss(Loss):   # todo need to check with a classification problem
     """
@@ -60,13 +50,10 @@ class CrossEntropyLoss(Loss):   # todo need to check with a classification probl
         self.func = cf.CategoricalCrossEntropy(self.clip_value)
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        self.input = pred
-        self.truth = truth
-        return self.func(self.input, self.truth)
+        return self.func(pred, truth)
 
     def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        self.truth = truth
-        return self.func.grad(dvals, self.truth)
+        return self.func.grad(dvals, truth)
 
 
 class MSELoss(Loss):
@@ -101,10 +88,13 @@ class RegularizedLoss(Loss):
     """
     A loss with a regularization term.
     """
-    def __init__(self, base_loss: Loss, layers: Iterable[Layer]):
+    def __init__(self, base_loss: Loss):
         super(RegularizedLoss, self).__init__()
         self.base_loss = base_loss
-        self.layers = layers
+
+    def __call__(self, pred: np.ndarray, truth: np.ndarray,
+                 layers: Iterable[Layer] = None) -> tuple[np.ndarray, np.ndarray]:
+        return self.forward(pred, truth, layers)
 
     def regularization_loss(self, layers: Layer | Iterable[Layer]) -> np.ndarray:
         if isinstance(layers, Dense):
@@ -126,9 +116,9 @@ class RegularizedLoss(Loss):
             raise TypeError(f"Invalid type {type(layers)}: allowed ones are {Layer} or {Iterable[Layer]}")
 
     def forward(self, pred: np.ndarray, truth: np.ndarray,
-                target_shape: tuple = (1,)) -> tuple[np.ndarray, np.ndarray]:
+                layers: Iterable[Layer] = None) -> tuple[np.ndarray, np.ndarray]:
         data_loss = self.base_loss.forward(pred, truth)
-        reg_loss = self.regularization_loss(self.layers)
+        reg_loss = self.regularization_loss(layers)
         return data_loss, reg_loss
 
     def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:

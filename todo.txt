@@ -30,6 +30,7 @@ DONE:
     4. Refactor tests in main.py to tests package [(partially) DONE]
 
 PRIORITY:
+
     14. Checkout course lectures if there is something missing
 
     3. Add metrics (MEE, accuracy, Root MSE, time)

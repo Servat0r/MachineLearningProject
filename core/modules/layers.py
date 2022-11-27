@@ -13,18 +13,29 @@ class Layer:
         i.e. weights/biases will NOT be updated during training.
         """
         self.frozen = frozen
+        self.__is_training = None
         self.input = None
         self.output = None
 
     def _init_unpickled_params(self):
         self.input = None
         self.output = None
+        self.__is_training = None
 
     def freeze_layer(self):
         self.frozen = True
 
     def unfreeze_layer(self):
         self.frozen = False
+
+    def set_to_train(self):
+        self.__is_training = True
+
+    def set_to_eval(self):
+        self.__is_training = False
+
+    def is_training(self):
+        return self.is_trainable() and self.__is_training
 
     @abstractmethod
     def is_trainable(self) -> bool:
@@ -57,7 +68,9 @@ class Layer:
                 raise TypeError(f"Wrong type {type(param_val)} for {param_name} when parsing param dict")
 
     def __getstate__(self):
-        return {'frozen': self.frozen}
+        return {
+            'frozen': self.frozen,
+        }
 
     def __setstate__(self, state):
         frozen = state.pop('frozen', False)
@@ -223,25 +236,27 @@ class Linear(Layer):
 
     # noinspection PyAttributeOutsideInit
     def backward(self, dvals: np.ndarray):
-        tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
-        # Calculate update to layer's weights and biases
-        self.dweights = tinp @ dvals
-        self.dbiases = dvals.copy()
+        # We don't want to compute updates if we are not training the model!
+        if self.is_training():
+            tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
+            # Calculate update to layer's weights and biases
+            self.dweights = tinp @ dvals
+            self.dbiases = dvals.copy()
 
-        # Apply reductions if requested
-        if self.grad_reduction == 'sum':
-            self.dweights = np.sum(self.dweights, axis=0)
-            self.dbiases = np.sum(self.dbiases, axis=0)
-        elif self.grad_reduction == 'mean':
-            self.dweights = np.mean(self.dweights, axis=0)
-            self.dbiases = np.mean(self.dbiases, axis=0)
+            # Apply reductions if requested
+            if self.grad_reduction == 'sum':
+                self.dweights = np.sum(self.dweights, axis=0)
+                self.dbiases = np.sum(self.dbiases, axis=0)
+            elif self.grad_reduction == 'mean':
+                self.dweights = np.mean(self.dweights, axis=0)
+                self.dbiases = np.mean(self.dbiases, axis=0)
 
-        # Handle regularization
-        if self.weights_regularizer is not None:
-            self.weights_reg_updates = self.weights_regularizer.update(self.weights)
+            # Handle regularization
+            if self.weights_regularizer is not None:
+                self.weights_reg_updates = self.weights_regularizer.update(self.weights)
 
-        if self.biases_regularizer is not None:
-            self.biases_reg_updates = self.biases_regularizer.update(self.biases)
+            if self.biases_regularizer is not None:
+                self.biases_reg_updates = self.biases_regularizer.update(self.biases)
 
         # Now calculate values to backpropagate to previous layer
         return np.dot(dvals, self.weights.T)
@@ -361,6 +376,29 @@ class Dense(Layer):
         )
         self.activation = activation_layer
         self.net = None
+
+    # Methods below (set_to_train, ..., unfreeze_layer) ensure that training and freeze state
+    # is maintained consistently with the underlying linear and activation layer
+
+    def set_to_train(self):
+        self.linear.set_to_train()
+        self.activation.set_to_train()
+        super(Dense, self).set_to_train()
+
+    def set_to_eval(self):
+        self.linear.set_to_eval()
+        self.activation.set_to_eval()
+        super(Dense, self).set_to_eval()
+
+    def freeze_layer(self):
+        self.linear.freeze_layer()
+        self.activation.freeze_layer()
+        super(Dense, self).freeze_layer()
+
+    def unfreeze_layer(self):
+        self.linear.unfreeze_layer()
+        self.activation.unfreeze_layer()
+        super(Dense, self).unfreeze_layer()
 
     def _init_unpickled_params(self):
         super(Dense, self)._init_unpickled_params()

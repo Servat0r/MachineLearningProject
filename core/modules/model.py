@@ -41,9 +41,32 @@ class Model:
             model = pickle.load(fp)
         return model
 
-    def save(self, fpath: str):
+    def save(self, fpath: str, include_compile_objs=True):
+        # Detach optimizer, loss and metrics if not requested
+        loss, optim, metrics = None, None, None
+        if not include_compile_objs:
+            optim = self.optimizer
+            loss = self.loss
+            metrics = self.metrics
+            self.optimizer = None
+            self.loss = None
+            self.metrics = None
+        # Serialize model
         with open(fpath, 'wb') as fp:
             pickle.dump(self, fp)
+        # Re-attach optimizer and loss if they were detached
+        if not include_compile_objs:
+            self.loss = loss
+            self.optimizer = optim
+            self.metrics = metrics
+
+    def set_to_train(self):
+        for layer in self.layers:
+            layer.set_to_train()
+
+    def set_to_eval(self):
+        for layer in self.layers:
+            layer.set_to_eval()
 
     def forward(self, x: np.ndarray):
         current_output = x
@@ -66,13 +89,13 @@ class Model:
         # todo create metrics (accuracy, mse/abs/mee, timing, ram usage)!
         self.optimizer = optimizer
         # auto-wrap loss into a regularization one
-        self.loss = RegularizedLoss(loss, layers=self.layers)
+        self.loss = RegularizedLoss(loss)
         # todo add metrics handling
 
     def train(
             self, train_dataloader: DataLoader, eval_dataloader: DataLoader = None, n_epochs: int = 1,
             train_epoch_losses: np.ndarray = None, eval_epoch_losses: np.ndarray = None,
-            optimizer_state: list = None,
+            optimizer_state: list = None, verbose=0,
     ):
         eval_exists = eval_dataloader is not None
         train_epoch_losses = train_epoch_losses if train_epoch_losses is not None else np.zeros(n_epochs)
@@ -87,6 +110,8 @@ class Model:
             eval_dataloader.before_cycle()
 
         for epoch in range(n_epochs):
+            # First, set model to train mode
+            self.set_to_train()
             # Callbacks before training epoch
             train_dataloader.before_epoch()
             self.optimizer.before_epoch()
@@ -98,15 +123,20 @@ class Model:
                     break
                 input_mb, target_mb = mb_data[0], mb_data[1]
                 y_hat = self.forward(input_mb)
-                data_loss_val, reg_loss_val = self.loss(y_hat, target_mb)
+                if isinstance(self.loss, RegularizedLoss):
+                    data_loss_val, reg_loss_val = self.loss(y_hat, target_mb, layers=self.layers)
+                else:
+                    data_loss_val, reg_loss_val = self.loss(y_hat, target_mb)
                 optim_log_dict = self.optimizer.to_log_dict()
-                print(
-                    f'[Epoch {epoch}, Minibatch {mb}]{{',
-                    f'\tloss values: (data = {data_loss_val.item():.8f}, regularization = {reg_loss_val.item():.8f})',
-                    f'\toptimizer state: {optim_log_dict}',
-                    f'}}',
-                    sep='\n',
-                )
+                if verbose > 1:
+                    print(
+                        f'[Epoch {epoch}, Minibatch {mb}]{{',
+                        f'\tloss values: (data = {data_loss_val.item():.8f}, '
+                        f'regularization = {reg_loss_val.item():.8f})',
+                        f'\toptimizer state: {optim_log_dict}',
+                        f'}}',
+                        sep='\n',
+                    )
                 train_mb_losses[mb] = np.mean(data_loss_val + reg_loss_val, axis=0).item()
                 # Backward of loss and hidden layers
                 dvals = self.loss.backward(y_hat, target_mb)
@@ -115,20 +145,36 @@ class Model:
             train_dataloader.after_epoch()
             self.optimizer.after_epoch()
             train_epoch_losses[epoch] = np.mean(train_mb_losses).item()
-
-            if eval_exists:
-                eval_dataloader.before_epoch()
-                input_eval, target_eval = next(eval_dataloader)
-                y_hat = self.forward(input_eval)
-                data_loss_val, reg_loss_val = self.loss(y_hat, target_eval)
+            if verbose == 1:
                 optim_log_dict = self.optimizer.to_log_dict()
                 print(
                     f'[Epoch {epoch}]{{',
-                    f'\tloss values: (data = {data_loss_val.item():.8f}, regularization = {reg_loss_val.item():.8f})',
+                    f'\tloss value: {train_epoch_losses[epoch]:.8f}',
                     f'\toptimizer state: {optim_log_dict}',
                     f'}}',
                     sep='\n',
                 )
+
+            if eval_exists:
+                # First, set model to eval mode
+                self.set_to_eval()
+                eval_dataloader.before_epoch()
+                input_eval, target_eval = next(eval_dataloader)
+                y_hat = self.forward(input_eval)
+                if isinstance(self.loss, RegularizedLoss):
+                    data_loss_val, reg_loss_val = self.loss(y_hat, target_eval, layers=self.layers)
+                else:
+                    data_loss_val, reg_loss_val = self.loss(y_hat, target_eval)
+                optim_log_dict = self.optimizer.to_log_dict()
+                if verbose > 0:
+                    print(
+                        f'[Epoch {epoch}]{{',
+                        f'\tloss values: (data = {data_loss_val.item():.8f}, '
+                        f'regularization = {reg_loss_val.item():.8f})',
+                        f'\toptimizer state: {optim_log_dict}',
+                        f'}}',
+                        sep='\n',
+                    )
                 eval_dataloader.after_epoch()
                 eval_epoch_losses[epoch] = np.mean(data_loss_val + reg_loss_val, axis=0)
                 optimizer_state.append(optim_log_dict)
@@ -138,8 +184,9 @@ class Model:
             eval_dataloader.after_cycle()
         return train_epoch_losses, eval_epoch_losses, optimizer_state
 
-    # Utility for more clariness when using model for predictions
+    # Utility method for more clariness when using model for predictions
     def predict(self, x: np.ndarray):
+        self.set_to_eval()
         return self.forward(x)
 
     def reset(self):
