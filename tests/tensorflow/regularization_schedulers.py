@@ -9,6 +9,27 @@ layers = tf.keras.layers
 tf.keras.utils.set_random_seed(SEED)
 
 
+def __generate_model(initializer, l1_regularizer, l2_regularizer, mb_size):
+    model = tf.keras.Sequential()
+    model.add(layers.Input(shape=(1, INPUT_DIM), batch_size=mb_size))
+    model.add(layers.Dense(
+        HIDDEN_SIZE, activation='tanh', kernel_initializer=initializer,
+        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
+        bias_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
+    ))
+    model.add(layers.Dense(
+        HIDDEN_SIZE, activation='tanh', kernel_initializer=initializer,
+        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
+        bias_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
+    ))
+    model.add(layers.Dense(
+        OUTPUT_DIM, activation='linear', kernel_initializer=initializer,
+        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
+        bias_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
+    ))
+    return model
+
+
 def keras_test_fully_connected_minibatch_model_with_regularizations(
         n_epochs=5000, mb_size=1, epoch_shuffle=True, func=arange_square_data,
         l1_regularizer=0., l2_regularizer=0., lr=0.001, start_plot_epoch=0, *args, **kwargs,
@@ -21,23 +42,8 @@ def keras_test_fully_connected_minibatch_model_with_regularizations(
     kwargs = {} if args is None else kwargs
     x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, *args, **kwargs)
 
-    model = tf.keras.Sequential()
-    model.add(layers.Input(shape=(1, INPUT_DIM), batch_size=mb_size))
-    model.add(layers.Dense(
-        HIDDEN_SIZE, activation='tanh', kernel_initializer='random_uniform',
-        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
-        bias_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
-    ))
-    model.add(layers.Dense(
-        HIDDEN_SIZE, activation='tanh', kernel_initializer='random_uniform',
-        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
-        bias_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
-    ))
-    model.add(layers.Dense(
-        OUTPUT_DIM, activation='linear', kernel_initializer='random_uniform',
-        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
-        bias_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
-    ))
+    initializer = tf.keras.initializers.RandomUniform(-0.7, 0.7)
+    model = __generate_model(initializer, l1_regularizer, l2_regularizer, mb_size)
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr)
     loss_function = tf.keras.losses.MeanSquaredError()
     # Use Model class for training and epoch losses recording
@@ -57,26 +63,11 @@ def keras_test_fully_connected_minibatch_model_with_regularizations_lrscheduler(
     x, y, train_dataset, accuracy_precision = generate_dataset(func)
 
     # Generate validation dataset
+    initializer = tf.keras.initializers.RandomUniform(-0.7, 0.7)
     args = () if args is None else args
     kwargs = {} if args is None else kwargs
     x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, *args, **kwargs)
-    model = tf.keras.Sequential()
-    model.add(layers.Input(shape=(1, INPUT_DIM), batch_size=mb_size))
-    model.add(layers.Dense(
-        HIDDEN_SIZE, activation='tanh', kernel_initializer='random_uniform',
-        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
-        bias_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer)
-    ))
-    model.add(layers.Dense(
-        HIDDEN_SIZE, activation='tanh', kernel_initializer='random_uniform',
-        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
-        bias_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer)
-    ))
-    model.add(layers.Dense(
-        OUTPUT_DIM, activation='linear', kernel_initializer='random_uniform',
-        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer),
-        bias_regularizer=tf.keras.regularizers.L1L2(l1=l1_regularizer, l2=l2_regularizer)
-    ))
+    model = __generate_model(initializer, l1_regularizer, l2_regularizer, mb_size)
     # Shadow optimizer in order to use custom lr and scheduler
     loss_function = tf.keras.losses.MeanSquaredError()
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum=momentum)
@@ -134,6 +125,6 @@ def keras_test_fc_minibatch_model_regularization_lrschedulers(*test_nums: int):
 
 
 if __name__ == '__main__':
-    keras_test_fc_minibatch_model_regularization(-1)
+    keras_test_fc_minibatch_model_regularization(0, 1)
     keras_test_fc_minibatch_model_regularization_lrschedulers(0, 1)
     exit(0)

@@ -22,7 +22,7 @@ def fc_minibatch_model_regularization(*test_nums: int):
     if 0 in test_nums:
         test_fully_connected_minibatch_model_with_regularizations(
             n_epochs=250, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
-            start_plot_epoch=0, lr=1e-4,
+            start_plot_epoch=0, lr=1e-4, epoch_shuffle=True,
         )
     if 1 in test_nums:
         test_fully_connected_minibatch_model_with_regularizations(
@@ -91,7 +91,7 @@ def fc_minibatch_model_regularization_lrdecay(*test_nums: int):
 
 if __name__ == '__main__':
     # base_tests(-1)
-    # fc_minibatch_model_tests(0, 1)
-    # fc_minibatch_model_regularization(0, 1)
-    fc_minibatch_model_regularization_lrdecay(3)
+    # fc_minibatch_model_tests(1)
+    fc_minibatch_model_regularization(0, 1)
+    # fc_minibatch_model_regularization_lrdecay(3)
     exit(0)
