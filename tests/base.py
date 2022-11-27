@@ -82,7 +82,7 @@ def test_separated(func=arange_square_data, lr=0.001):
 
 
 def test_fully_connected_minibatch_model(
-        n_epochs=5000, mb_size=1, epoch_shuffle=True, func=arange_square_data, lr=0.001, *args, **kwargs,
+        n_epochs=5000, mb_size=1, epoch_shuffle=True, func=arange_square_data, lr=0.001, func_args: dict = None,
 ):
     loss_function = cm.MSELoss(reduction='mean')
     optimizer = cm.SGD(lr=lr)
@@ -90,9 +90,8 @@ def test_fully_connected_minibatch_model(
     x, y, train_dataset, accuracy_precision = generate_dataset(func)
 
     # Generate validation dataset
-    args = () if args is None else args
-    kwargs = {} if args is None else kwargs
-    x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, *args, **kwargs)
+    func_args = {} if func_args is None else func_args
+    x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, **func_args)
     eval_dataset = ArrayDataset(x_eval, y_eval)
 
     # Generate dataloaders

@@ -8,36 +8,45 @@ def base_tests(*test_nums: int):
 
 def fc_minibatch_model_tests(*test_nums: int):
     if 0 in test_nums:
-        test_fully_connected_minibatch_model(n_epochs=250, mb_size=10, func=arange_square_data)
+        test_fully_connected_minibatch_model(
+            n_epochs=250, mb_size=10, func=arange_square_data, epoch_shuffle=True, func_args={'start': EVAL_START},
+        )
     if 1 in test_nums:
-        test_fully_connected_minibatch_model(n_epochs=250, mb_size=10, func=arange_square_data, epoch_shuffle=False)
+        test_fully_connected_minibatch_model(
+            n_epochs=250, mb_size=10, func=arange_square_data, epoch_shuffle=False, func_args={'start': EVAL_START},
+        )
 
     if 2 in test_nums:
-        test_fully_connected_minibatch_model(n_epochs=250, mb_size=10, func=randn_sqrt_data)
+        test_fully_connected_minibatch_model(
+            n_epochs=250, mb_size=10, func=randn_sqrt_data, epoch_shuffle=True, func_args={},
+        )
     if 3 in test_nums:
-        test_fully_connected_minibatch_model(n_epochs=250, mb_size=10, func=randn_sqrt_data, epoch_shuffle=False)
+        test_fully_connected_minibatch_model(
+            n_epochs=250, mb_size=10, func=randn_sqrt_data, epoch_shuffle=False, func_args={},
+        )
 
 
 def fc_minibatch_model_regularization(*test_nums: int):
     if 0 in test_nums:
         test_fully_connected_minibatch_model_with_regularizations(
             n_epochs=250, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
-            start_plot_epoch=0, lr=1e-4, epoch_shuffle=True,
+            start_plot_epoch=0, lr=1e-4, epoch_shuffle=True, func_args={'start': EVAL_START},
         )
     if 1 in test_nums:
         test_fully_connected_minibatch_model_with_regularizations(
             n_epochs=250, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
-            start_plot_epoch=0, lr=1e-4, epoch_shuffle=False,
+            start_plot_epoch=0, lr=1e-4, epoch_shuffle=False, func_args={'start': EVAL_START},
         )
 
     if 2 in test_nums:
         test_fully_connected_minibatch_model_with_regularizations(
-            n_epochs=20, mb_size=10, func=randn_sqrt_data, l1_regularizer=1e-5, l2_regularizer=1e-6,
+            n_epochs=20, mb_size=10, func=randn_sqrt_data, l1_regularizer=1e-5,
+            l2_regularizer=1e-6, func_args={},
         )
     if 3 in test_nums:
         test_fully_connected_minibatch_model_with_regularizations(
             n_epochs=20, mb_size=10, func=randn_sqrt_data, epoch_shuffle=False,
-            l1_regularizer=1e-5, l2_regularizer=1e-6,
+            l1_regularizer=1e-5, l2_regularizer=1e-6, func_args={},
         )
 
 
@@ -72,7 +81,7 @@ def fc_minibatch_model_regularization_lrdecay(*test_nums: int):
             # lr_scheduler=cm.ExponentialDecayScheduler(start_value=1e-3, alpha=1e-3),
             l1_regularizer=1e-6, l2_regularizer=1e-7,
             # arange_sine_data extra args for validation set
-            start=N_SAMPLES,
+            func_args={'start': EVAL_START},
         )
     if 3 in test_nums:
         test_fc_minibatch_model_with_regularizations_lrscheduler(
@@ -85,13 +94,13 @@ def fc_minibatch_model_regularization_lrdecay(*test_nums: int):
             # lr_scheduler=cm.ExponentialDecayScheduler(start_value=1e-3, alpha=1e-3),
             l1_regularizer=1e-6, l2_regularizer=1e-7,
             # arange_sine_data extra args for validation set
-            start=N_SAMPLES,
+            func_args={'start': EVAL_START},
         )
 
 
 if __name__ == '__main__':
-    # base_tests(-1)
-    # fc_minibatch_model_tests(1)
-    fc_minibatch_model_regularization(0, 1)
-    # fc_minibatch_model_regularization_lrdecay(3)
+    # sbase_tests(0)
+    fc_minibatch_model_tests(0, 1, 2, 3)
+    fc_minibatch_model_regularization(0, 1, 2, 3)
+    fc_minibatch_model_regularization_lrdecay(0, 1, 2, 3)
     exit(0)

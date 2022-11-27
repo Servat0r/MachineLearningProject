@@ -29,15 +29,14 @@ def __generate_layers(weigths_regularizer, biases_regularizer, low=-1.0, high=1.
 
 def test_fully_connected_minibatch_model_with_regularizations(
         n_epochs=5000, mb_size=1, epoch_shuffle=True, func=arange_square_data,
-        l1_regularizer=0., l2_regularizer=0., lr=0.001, start_plot_epoch=0, *args, **kwargs,
+        l1_regularizer=0., l2_regularizer=0., lr=0.001, start_plot_epoch=0, func_args: dict = None,
 ):
     # Generate train dataset
     x, y, train_dataset, accuracy_precision = generate_dataset(func)
 
     # Generate validation dataset
-    args = () if args is None else args
-    kwargs = {} if args is None else kwargs
-    x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, *args, **kwargs)
+    func_args = {} if func_args is None else func_args
+    x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, **func_args)
     eval_dataset = ArrayDataset(x_eval, y_eval)
 
     # Generate dataloaders
@@ -68,15 +67,14 @@ def test_fully_connected_minibatch_model_with_regularizations(
 def test_fc_minibatch_model_with_regularizations_lrscheduler(
         n_epochs=5000, mb_size=1, epoch_shuffle=True, func=arange_square_data, lr=0.001, momentum=0.,
         lr_scheduler: cm.Scheduler = None, l1_regularizer=0., l2_regularizer=0., start_plot_epoch=0,
-        *args, **kwargs,
+        func_args: dict = None,
 ):
     # Generate train dataset
     x, y, train_dataset, accuracy_precision = generate_dataset(func)
 
     # Generate validation dataset
-    args = () if args is None else args
-    kwargs = {} if args is None else kwargs
-    x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, *args, **kwargs)
+    func_args = {} if func_args is None else func_args
+    x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, **func_args)
     eval_dataset = ArrayDataset(x_eval, y_eval)
 
     # Generate dataloaders

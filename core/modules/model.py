@@ -1,5 +1,7 @@
 # Model class: main class for building a complete Neural Network
 from __future__ import annotations
+import pickle
+
 from ..utils import *
 from .layers import *
 from .losses import *
@@ -18,15 +20,30 @@ class Model:
         self.metrics = None
         self.length = len(self.layers)
 
-    @staticmethod
-    @abstractmethod
-    def load(fpath: str) -> Model:
-        pass
+    def get_parameters(self) -> list[dict]:
+        return [layer.get_parameters() for layer in self.layers]
+
+    def set_parameters(self, params: list):
+        for layer, param_dict in zip(self.layers, params):
+            layer.set_parameters(param_dict)
+
+    def save_parameters(self, fpath: str):
+        with open(fpath, 'wb') as fp:
+            pickle.dump(self.get_parameters(), fp)
+
+    def load_parameters(self, fpath: str):
+        with open(fpath, 'rb') as fp:
+            self.set_parameters(pickle.load(fp))
 
     @staticmethod
-    @abstractmethod
-    def save(fpath: str) -> Model:
-        pass
+    def load(fpath: str) -> Model:
+        with open(fpath, 'rb') as fp:
+            model = pickle.load(fp)
+        return model
+
+    def save(self, fpath: str):
+        with open(fpath, 'wb') as fp:
+            pickle.dump(self, fp)
 
     def forward(self, x: np.ndarray):
         current_output = x
@@ -42,7 +59,6 @@ class Model:
             current_dvals = layer.backward(current_dvals)
         return current_dvals
 
-    # todo maybe we can handle automatic creation of dataloder based on n_epochs
     def compile(self, optimizer: Optimizer, loss: Loss, metrics=None):
         """
         Configures the model for training.
@@ -121,6 +137,10 @@ class Model:
         if eval_exists:
             eval_dataloader.after_cycle()
         return train_epoch_losses, eval_epoch_losses, optimizer_state
+
+    # Utility for more clariness when using model for predictions
+    def predict(self, x: np.ndarray):
+        return self.forward(x)
 
     def reset(self):
         """

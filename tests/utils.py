@@ -8,13 +8,16 @@ HIDDEN_SIZE = 4
 OUTPUT_DIM = 2
 N_SAMPLES = 1000
 SEED = 20
+# Default start values for train and eval in arange_* functions.
+TRAIN_START = 0
+EVAL_START = N_SAMPLES * INPUT_DIM
 
 np.random.seed(SEED)
 
 
 # Create dataset
 # ---------------------- ARANGE-BASED GENERATORS ----------------------------------
-def arange_sine_data(samples=1000, input_dim=1, output_dim=1, start=0):
+def arange_sine_data(samples=1000, input_dim=1, output_dim=1, start=TRAIN_START):
     stop = samples * input_dim + start
     x = np.arange(start=start, stop=stop).reshape((samples, 1, input_dim)) / stop
     y = np.sin(np.sum(x, axis=-1))
@@ -26,7 +29,7 @@ def arange_sine_data(samples=1000, input_dim=1, output_dim=1, start=0):
     return x, z
 
 
-def arange_square_data(samples=1000, input_dim=1, output_dim=1, start=0):
+def arange_square_data(samples=1000, input_dim=1, output_dim=1, start=TRAIN_START):
     stop = samples * input_dim + start
     x = np.arange(start=start, stop=stop).reshape((samples, 1, input_dim)) / stop
     y = np.square(np.sum(x, axis=-1))
@@ -38,7 +41,7 @@ def arange_square_data(samples=1000, input_dim=1, output_dim=1, start=0):
     return x, z
 
 
-def arange_sqrt_data(samples=1000, input_dim=1, output_dim=1, start=0):
+def arange_sqrt_data(samples=1000, input_dim=1, output_dim=1, start=TRAIN_START):
     stop = samples * input_dim + start
     x = np.arange(start=start, stop=stop).reshape((samples, 1, input_dim)) / stop
     y = np.sqrt(np.abs(np.sum(x, axis=-1)))
