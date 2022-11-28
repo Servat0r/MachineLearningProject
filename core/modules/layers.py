@@ -20,7 +20,6 @@ class Layer:
     def _init_unpickled_params(self):
         self.input = None
         self.output = None
-        self.__is_training = None
 
     def freeze_layer(self):
         self.frozen = True
@@ -70,6 +69,7 @@ class Layer:
     def __getstate__(self):
         return {
             'frozen': self.frozen,
+            '__is_training': self.__is_training,
         }
 
     def __setstate__(self, state):
@@ -152,16 +152,12 @@ class Linear(Layer):
         self.weights = weights_initializer(weights_shape, dtype=dtype)
         self.biases = biases_initializer(biases_shape, dtype=dtype)
         self.grad_reduction = grad_reduction
+        self.dtype = dtype
 
         # Set regularizer and its updates
         self.weights_regularizer = weights_regularizer
         self.biases_regularizer = biases_regularizer
 
-        # Set unpickled params
-        self._init_unpickled_params()
-
-    def _init_unpickled_params(self):
-        super(Linear, self)._init_unpickled_params()
         # Set updates for backward
         self.dweights = None
         self.dbiases = None
@@ -170,6 +166,18 @@ class Linear(Layer):
         self.bias_momentums = np.zeros_like(self.biases)
         self.weights_reg_updates = None
         self.biases_reg_updates = None
+
+    def _init_unpickled_params(self):
+        super(Linear, self)._init_unpickled_params()
+        if not self.is_training():
+            # Set updates for backward
+            self.dweights = None
+            self.dbiases = None
+            # Set updates for momentums
+            self.weight_momentums = np.zeros_like(self.weights)
+            self.bias_momentums = np.zeros_like(self.biases)
+            self.weights_reg_updates = None
+            self.biases_reg_updates = None
 
     def is_trainable(self) -> bool:
         return not self.frozen
@@ -200,9 +208,19 @@ class Linear(Layer):
             'in_features': self.in_features,
             'out_features': self.out_features,
             'grad_reduction': self.grad_reduction,
+            'dtype': self.dtype,
             'weights_regularizer': self.weights_regularizer,    # todo getstate?
             'biases_regularizer': self.biases_regularizer,      # todo getstate?
         })
+        if self.is_training():
+            state.update({
+                'dweights': self.dweights,
+                'dbiases': self.dbiases,
+                'weight_momentums': self.weight_momentums,
+                'bias_momentums': self.bias_momentums,
+                'weights_reg_updates': self.weights_reg_updates,
+                'biases_reg_updates': self.biases_reg_updates,
+            })
         return state
 
     def __setstate__(self, state):
@@ -402,7 +420,8 @@ class Dense(Layer):
 
     def _init_unpickled_params(self):
         super(Dense, self)._init_unpickled_params()
-        self.net = None
+        if not self.is_training():
+            self.net = None
 
     def __getstate__(self):
         state = super(Dense, self).__getstate__()
@@ -410,6 +429,10 @@ class Dense(Layer):
             'linear': self.linear,
             'activation': self.activation,
         })
+        if self.is_training():
+            state.update({
+                'net': self.net,
+            })
         return state
 
     def __setstate__(self, state):

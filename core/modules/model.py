@@ -19,6 +19,8 @@ class Model:
         self.loss = None
         self.metrics = None
         self.length = len(self.layers)
+        self.history = None  # will be filled during training
+        self.__is_training = None
 
     def get_parameters(self) -> list[dict]:
         return [layer.get_parameters() for layer in self.layers]
@@ -41,9 +43,9 @@ class Model:
             model = pickle.load(fp)
         return model
 
-    def save(self, fpath: str, include_compile_objs=True):
+    def save(self, fpath: str, include_compile_objs=True, include_history=True):
         # Detach optimizer, loss and metrics if not requested
-        loss, optim, metrics = None, None, None
+        loss, optim, metrics, history = None, None, None, None
         if not include_compile_objs:
             optim = self.optimizer
             loss = self.loss
@@ -51,6 +53,9 @@ class Model:
             self.optimizer = None
             self.loss = None
             self.metrics = None
+        if not include_history:
+            history = self.history
+            self.history = None
         # Serialize model
         with open(fpath, 'wb') as fp:
             pickle.dump(self, fp)
@@ -59,14 +64,31 @@ class Model:
             self.loss = loss
             self.optimizer = optim
             self.metrics = metrics
+        if not include_history:
+            self.history = history
 
-    def set_to_train(self):
+    def set_to_train(self, overwrite_history=False):
+        self.__is_training = True
         for layer in self.layers:
             layer.set_to_train()
+        if overwrite_history:
+            history = self.history
+            self.history = ...  # todo new history object
+            return history
+        return None
 
-    def set_to_eval(self):
+    def set_to_eval(self, detach_history=False):
+        self.__is_training = False
         for layer in self.layers:
             layer.set_to_eval()
+        if detach_history:
+            history = self.history
+            self.history = None
+            return history
+        return None
+
+    def is_training(self):
+        return self.__is_training
 
     def forward(self, x: np.ndarray):
         current_output = x
@@ -103,6 +125,9 @@ class Model:
         optimizer_state = optimizer_state if optimizer_state is not None else []
         mb_num = train_dataloader.get_batch_num()
         train_mb_losses = np.zeros(mb_num)
+
+        # Initialize history
+        self.history = ...  # todo new history object
 
         # Callbacks before training cycle
         train_dataloader.before_cycle()
@@ -155,9 +180,9 @@ class Model:
                     sep='\n',
                 )
 
+            # Set model to eval mode (useful e.g. for ModelCheckpoint callback independently from validation)
+            self.set_to_eval()
             if eval_exists:
-                # First, set model to eval mode
-                self.set_to_eval()
                 eval_dataloader.before_epoch()
                 input_eval, target_eval = next(eval_dataloader)
                 y_hat = self.forward(input_eval)

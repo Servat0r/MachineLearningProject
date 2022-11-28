@@ -8,6 +8,15 @@ class Loss:
     """
     Loss "Layer", representing the endpoint of the NN as a graph for computing gradients.
     """
+    REDUCTIONS = {'none', 'mean', 'sum'}
+
+    def __init__(self, reduction='mean', dtype=np.float64):
+        self.dtype = dtype
+        if reduction is not None and reduction not in self.REDUCTIONS:
+            raise ValueError(f"Unknown reduction type '{reduction}'")
+        else:
+            self.reduction = reduction
+
     def __call__(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         """
         Default call, returns raw values from forward pass.
@@ -17,20 +26,6 @@ class Loss:
         """
         return self.forward(pred, truth)
 
-    def mean(self, pred: np.ndarray, truth: np.ndarray):
-        """
-        Calculate the average loss over a batch of predicted values and ground truth values.
-        :param pred: Predicted values.
-        :param truth: Ground truth values.
-        :return:
-        """
-        sample_losses = self(pred, truth)
-        return np.mean(sample_losses)
-
-    def sum(self, pred: np.ndarray, truth: np.ndarray):
-        sample_losses = self(pred, truth)
-        return np.sum(sample_losses)
-
     @abstractmethod
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         pass
@@ -38,22 +33,34 @@ class Loss:
     @abstractmethod
     def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
         pass
+
+    def reduce(self, y: np.ndarray):
+        """
+        Applies given reduction to the raw loss output.
+        """
+        if self.reduction == 'mean':
+            return np.mean(y, axis=0, dtype=self.dtype)
+        elif self.reduction == 'sum':
+            return np.sum(y, axis=0, dtype=self.dtype)
+        else:
+            return y.astype(self.dtype)
 
 
 class CrossEntropyLoss(Loss):   # todo need to check with a classification problem
     """
     Categorical Cross Entropy Loss. Note that this class does NOT include a Softmax layer.
     """
-    def __init__(self, clip_value: TReal = 1e-7):
-        super(CrossEntropyLoss, self).__init__()
+    def __init__(self, clip_value: TReal = 1e-7, reduction='mean', dtype=np.float64):
+        super(CrossEntropyLoss, self).__init__(reduction=reduction, dtype=dtype)
         self.clip_value = clip_value
         self.func = cf.CategoricalCrossEntropy(self.clip_value)
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return self.func(pred, truth)
+        y = self.func(pred, truth).astype(self.dtype)
+        return self.reduce(y)
 
     def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return self.func.grad(dvals, truth)
+        return self.func.grad(dvals, truth).astype(self.dtype)
 
 
 class MSELoss(Loss):
@@ -61,27 +68,18 @@ class MSELoss(Loss):
     Mean Squared Error Loss over a batch of training examples. Its .forward(...)
     method is equivalent to SquaredErrorLoss.mean(...).
     """
-    REDUCTIONS = {'none', 'mean', 'sum'}
 
-    def __init__(self, const=0.5, reduction='mean'):
-        super(MSELoss, self).__init__()
+    def __init__(self, const=0.5, reduction='mean', dtype=np.float64):
+        super(MSELoss, self).__init__(reduction=reduction, dtype=dtype)
         self.const = const
-        if reduction is not None and reduction not in self.REDUCTIONS:
-            raise ValueError(f"Unknown reduction type '{reduction}'")
-        else:
-            self.reduction = reduction
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         y = self.const * np.sum((truth - pred)**2, axis=-1)
-        if self.reduction == 'sum':
-            return np.sum(y, axis=0)
-        elif self.reduction == 'mean':
-            return np.mean(y, axis=0)
-        else:
-            return y
+        return self.reduce(y)
 
     def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return -2 * self.const * (truth - dvals)
+        result = -2 * self.const * (truth - dvals)
+        return result.astype(result)
 
 
 class RegularizedLoss(Loss):
@@ -89,7 +87,7 @@ class RegularizedLoss(Loss):
     A loss with a regularization term.
     """
     def __init__(self, base_loss: Loss):
-        super(RegularizedLoss, self).__init__()
+        super(RegularizedLoss, self).__init__(dtype=base_loss.dtype)
         self.base_loss = base_loss
 
     def __call__(self, pred: np.ndarray, truth: np.ndarray,
@@ -106,12 +104,12 @@ class RegularizedLoss(Loss):
                     result += layers.weights_regularizer.loss(layers.weights)
                 if layers.biases_regularizer is not None:
                     result += layers.biases_regularizer.loss(layers.biases)
-            return result
+            return result.astype(self.dtype)
         elif isinstance(layers, Iterable):
             result = np.zeros(1)
             for layer in layers:
                 result += self.regularization_loss(layer)
-            return result
+            return result.astype(self.dtype)
         else:
             raise TypeError(f"Invalid type {type(layers)}: allowed ones are {Layer} or {Iterable[Layer]}")
 
