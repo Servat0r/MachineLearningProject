@@ -109,8 +109,11 @@ def test_fully_connected_minibatch_model(
     ])
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
-    train_epoch_losses, eval_epoch_losses, optimizer_state = model.train(train_dataloader, eval_dataloader,
-                                                                         n_epochs=n_epochs)
+    train_epoch_losses, eval_epoch_losses, optimizer_state = np.empty(n_epochs), np.empty(n_epochs), []
+    model.train(
+        train_dataloader, eval_dataloader, n_epochs=n_epochs, train_epoch_losses=train_epoch_losses,
+        eval_epoch_losses=eval_epoch_losses, optimizer_state=optimizer_state,
+    )
     for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
             enumerate(zip(train_epoch_losses, eval_epoch_losses, optimizer_state)):
         print(f'epoch: {epoch} ' +

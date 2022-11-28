@@ -6,6 +6,7 @@ from ..utils import *
 from .layers import *
 from .losses import *
 from .optimizers import *
+from ..metrics import *
 from ..data import *
 
 
@@ -67,15 +68,10 @@ class Model:
         if not include_history:
             self.history = history
 
-    def set_to_train(self, overwrite_history=False):
+    def set_to_train(self):
         self.__is_training = True
         for layer in self.layers:
             layer.set_to_train()
-        if overwrite_history:
-            history = self.history
-            self.history = ...  # todo new history object
-            return history
-        return None
 
     def set_to_eval(self, detach_history=False):
         self.__is_training = False
@@ -104,7 +100,7 @@ class Model:
             current_dvals = layer.backward(current_dvals)
         return current_dvals
 
-    def compile(self, optimizer: Optimizer, loss: Loss, metrics=None):
+    def compile(self, optimizer: Optimizer, loss: Loss, metrics: Metric | Sequence[Metric] = None):
         """
         Configures the model for training.
         """
@@ -112,6 +108,8 @@ class Model:
         self.optimizer = optimizer
         # auto-wrap loss into a regularization one
         self.loss = RegularizedLoss(loss)
+        metrics = [metrics] if isinstance(metrics, Metric) else metrics
+        self.metrics = metrics if metrics is not None else []  # this ensures "None-safety" for the training loop
         # todo add metrics handling
 
     def train(
@@ -120,14 +118,19 @@ class Model:
             optimizer_state: list = None, verbose=0,
     ):
         eval_exists = eval_dataloader is not None
-        train_epoch_losses = train_epoch_losses if train_epoch_losses is not None else np.zeros(n_epochs)
-        eval_epoch_losses = eval_epoch_losses if eval_epoch_losses is not None else np.zeros(n_epochs)
+        train_epoch_losses = train_epoch_losses if train_epoch_losses is not None else np.empty(n_epochs)
+        eval_epoch_losses = eval_epoch_losses if eval_epoch_losses is not None else np.empty(n_epochs)
         optimizer_state = optimizer_state if optimizer_state is not None else []
         mb_num = train_dataloader.get_batch_num()
         train_mb_losses = np.zeros(mb_num)
 
         # Initialize history
-        self.history = ...  # todo new history object
+        self.history = History(n_epochs=n_epochs)
+        self.history.before_training_cycle(self)
+
+        # Metrics logs (to be passed to self.history)
+        metric_logs = {metric.get_name(): None for metric in self.metrics}
+        metric_logs['loss'] = None
 
         # Callbacks before training cycle
         train_dataloader.before_cycle()
@@ -152,6 +155,8 @@ class Model:
                     data_loss_val, reg_loss_val = self.loss(y_hat, target_mb, layers=self.layers)
                 else:
                     data_loss_val, reg_loss_val = self.loss(y_hat, target_mb)
+                for metric in self.metrics:
+                    metric.update(y_hat, target_mb)
                 optim_log_dict = self.optimizer.to_log_dict()
                 if verbose > 1:
                     print(
@@ -162,7 +167,7 @@ class Model:
                         f'}}',
                         sep='\n',
                     )
-                train_mb_losses[mb] = np.mean(data_loss_val + reg_loss_val, axis=0).item()
+                train_mb_losses[mb] = np.mean(data_loss_val + reg_loss_val, axis=0).item()  # todo why this?
                 # Backward of loss and hidden layers
                 dvals = self.loss.backward(y_hat, target_mb)
                 self.backward(dvals)
@@ -170,6 +175,11 @@ class Model:
             train_dataloader.after_epoch()
             self.optimizer.after_epoch()
             train_epoch_losses[epoch] = np.mean(train_mb_losses).item()
+            metric_logs['loss'] = train_epoch_losses[epoch]
+            for metric in self.metrics:
+                metric_logs[metric.get_name()] = metric.result()  # result at epoch level
+                metric.reset()  # todo should we modify this for allowing multi-epochs metrics?
+            self.history.after_training_epoch(self, epoch, logs=metric_logs)
             if verbose == 1:
                 optim_log_dict = self.optimizer.to_log_dict()
                 print(

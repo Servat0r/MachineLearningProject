@@ -71,15 +71,13 @@ class MSELoss(Loss):
 
     def __init__(self, const=0.5, reduction='mean', dtype=np.float64):
         super(MSELoss, self).__init__(reduction=reduction, dtype=dtype)
-        self.const = const
+        self.func = cf.SquaredError(const=const)
 
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        y = self.const * np.sum((truth - pred)**2, axis=-1)
-        return self.reduce(y)
+        return self.reduce(self.func(pred, truth))
 
     def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        result = -2 * self.const * (truth - dvals)
-        return result.astype(result)
+        return self.func.grad(dvals, truth).astype(self.dtype)
 
 
 class RegularizedLoss(Loss):

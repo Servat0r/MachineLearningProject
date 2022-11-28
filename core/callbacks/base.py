@@ -1,9 +1,8 @@
 # General callbacks API (metrics are a subset of callbacks)
 from __future__ import annotations
-from core.utils.types import *
 
 
-class Callback(Callable):
+class Callback:
 
     def before_training_cycle(self, model, logs=None):
         pass

@@ -42,7 +42,7 @@ class ModelBackup(Callback):
 
     def __save_model(self, model):
         is_training = model.is_training()
-        model.set_to_train(overwrite_history=False)
+        model.set_to_train()
         # For saving also updating status (todo modify model for saving momentums)
         model.save(self.fpath, include_compile_objs=True, include_history=True)
         if not is_training:
