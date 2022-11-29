@@ -1,16 +1,26 @@
 # CSV Logger implemented as a callback
 from __future__ import annotations
-from core.utils.types import *
 from .base import *
+from core.utils.types import *
 
 
 class BaseCSVLogger(Callback):
 
-    def __init__(self, fpath: str = 'log.csv', overwrite=True, sep=','):
+    __float_types = {float, np.float, np.float_, np.float32, np.float64}  # Set will eliminate aliases
+
+    def is_float(self, val):
+        return any([isinstance(val, tp) for tp in self.__float_types])
+
+    def fmt_float(self, val):
+        tp = type(val)
+        return tp(round(val, self.round_val)) if self.round_val is not None else val
+
+    def __init__(self, fpath: str = 'log.csv', overwrite=True, sep=',', round_val: int = None):
         self.fpath = fpath
         self.fp = None
         self.overwrite = overwrite
         self.sep = sep
+        self.round_val = round_val
 
     def open(self):
         self.close()
@@ -33,8 +43,8 @@ class BaseCSVLogger(Callback):
 
 class TrainingCSVLogger(BaseCSVLogger):
 
-    def __init__(self, fpath: str = 'train_log.csv', overwrite=True, sep=',', include_mb=False):
-        super(TrainingCSVLogger, self).__init__(fpath, overwrite, sep)
+    def __init__(self, fpath: str = 'train_log.csv', overwrite=True, sep=',', include_mb=False, round_val: int = None):
+        super(TrainingCSVLogger, self).__init__(fpath, overwrite, sep, round_val=round_val)
         self.include_mb = include_mb
 
     def before_training_cycle(self, model, logs=None):
@@ -53,10 +63,15 @@ class TrainingCSVLogger(BaseCSVLogger):
         print(f'CSV logging for training cycle ended')
 
     def after_training_epoch(self, model, epoch, logs=None):
+        values = []
+        for val in logs.values():
+            if self.round_val is not None and self.is_float(val):
+                val = self.fmt_float(val)
+            values.append(val)
         if self.include_mb:
-            print(epoch, 0, 0, *logs.values(), sep=self.sep, file=self.fp)
+            print(epoch, 0, 0, *values, sep=self.sep, file=self.fp)
         else:
-            print(epoch, *logs.values(), sep=self.sep, file=self.fp)
+            print(epoch, *values, sep=self.sep, file=self.fp)
 
     def after_training_batch(self, model, epoch, batch, logs=None):
         if self.include_mb:

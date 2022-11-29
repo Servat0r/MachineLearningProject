@@ -1,6 +1,8 @@
 from core.utils import np
 from core.data import ArrayDataset
 import matplotlib.pyplot as plt
+import core.utils as cu
+import core.modules as cm
 
 
 INPUT_DIM = 8
@@ -106,12 +108,55 @@ def generate_dataset(func, samples=N_SAMPLES, input_dim=INPUT_DIM, output_dim=OU
     return x, y, train_dataset, accuracy_precision
 
 
-def plot_losses(start_epoch, train_epoch_losses, eval_epoch_losses=None):
+def plot_losses(start_epoch, train_epoch_losses, eval_epoch_losses=None, other_metric_logs: dict = None):
     # plot training and validation losses
     epochs = np.arange(start_epoch, len(train_epoch_losses))
-    plt.plot(epochs, train_epoch_losses[start_epoch:])
+    plt.plot(epochs, train_epoch_losses[start_epoch:], label='loss')
     if eval_epoch_losses is not None:
-        plt.plot(epochs, eval_epoch_losses[start_epoch:])
+        plt.plot(epochs, eval_epoch_losses[start_epoch:], label='val_loss')
+    for metric_name, metric_vals in other_metric_logs.items():
+        plt.plot(epochs, metric_vals[start_epoch:], label=metric_name)
+    plt.legend()
     plt.xlabel('Epochs')
     plt.ylabel('Train / Eval Losses')
     plt.show()
+
+
+def plot_history(start_epoch, eval_epoch_losses=None, history=None):
+    n_epochs = len(history)
+    if start_epoch >= n_epochs:
+        raise ValueError(
+            f"Starting epoch is higher than the actual number of epochs for which history has valid data:"
+            f" expected < {n_epochs}, got {start_epoch}"
+        )
+    epochs = np.arange(start_epoch, n_epochs)
+    if eval_epoch_losses is not None:
+        plt.plot(epochs, eval_epoch_losses[start_epoch:], label='val_loss')
+    for metric_name, metric_vals in history.items():
+        plt.plot(epochs, metric_vals[start_epoch:], label=metric_name)
+    plt.legend()
+    plt.xlabel('Epochs')
+    plt.ylabel('Metrics')
+    plt.show()
+
+
+def generate_layers(low=-0.5, high=0.5, weights_regularizer=None, biases_regularizer=None, grad_reduction='mean'):
+    dense1 = cm.Dense(
+            INPUT_DIM, HIDDEN_SIZE, cm.Tanh(),
+            weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction=grad_reduction,
+            # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
+            weights_regularizer=weights_regularizer, biases_regularizer=biases_regularizer,
+        )
+    dense2 = cm.Dense(
+        HIDDEN_SIZE, HIDDEN_SIZE, cm.Tanh(),
+        weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction=grad_reduction,
+        # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
+        weights_regularizer=weights_regularizer, biases_regularizer=biases_regularizer,
+    )
+    linear3 = cm.Linear(
+        HIDDEN_SIZE, OUTPUT_DIM,
+        weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction=grad_reduction,
+        # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
+        weights_regularizer=weights_regularizer, biases_regularizer=biases_regularizer,
+    )
+    return [dense1, dense2, linear3]

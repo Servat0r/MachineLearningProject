@@ -14,6 +14,10 @@ class History(Callback):
         self.epoch = 0
         self.n_epochs = n_epochs
 
+    def __len__(self):
+        # Conveniently define length as the number of epochs for which there exists valid data in the history
+        return self.epoch
+
     def keys(self):
         return self.logbook.keys()
 
@@ -48,7 +52,7 @@ class History(Callback):
             if isinstance(val, np.ndarray):
                 val = val.item()
             v[epoch] = val.item() if isinstance(val, np.ndarray) else val
-        self.epoch = epoch
+        self.epoch = epoch + 1
         model.history = self
 
     def after_training_cycle(self, model, logs=None):

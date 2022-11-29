@@ -1,31 +1,11 @@
 from __future__ import annotations
 from .utils import *
-import core.utils as cu
 from core.data import DataLoader
 import core.modules as cm
 
 
-def __generate_layers(low=-0.7, high=0.7):
-    linear1 = cm.Linear(
-        INPUT_DIM, HIDDEN_SIZE,
-        weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
-        # biases_initializer=cu.RandomUniformInitializer(-0.2, 0.2),
-    )
-    activation1 = cm.Tanh()
-    linear2 = cm.Linear(
-        HIDDEN_SIZE, HIDDEN_SIZE, weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
-        # biases_initializer=cu.RandomUniformInitializer(-0.2, 0.2),
-    )
-    activation2 = cm.Tanh()
-    linear3 = cm.Linear(
-        HIDDEN_SIZE, OUTPUT_DIM, weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction='mean',
-        # biases_initializer=cu.RandomUniformInitializer(-0.2, 0.2),
-    )
-    return linear1, activation1, linear2, activation2, linear3
-
-
 def test_separated(func=arange_square_data, lr=0.001):
-    linear1, activation1, linear2, activation2, linear3 = __generate_layers()
+    linear1, activation1, linear2, activation2, linear3 = generate_layers()
     loss_function = cm.MSELoss(reduction='mean')
     optimizer = cm.SGD(lr=lr)
 
@@ -97,16 +77,7 @@ def test_fully_connected_minibatch_model(
     # Generate dataloaders
     train_dataloader = DataLoader(train_dataset, batch_size=mb_size, shuffle=epoch_shuffle)
     eval_dataloader = DataLoader(eval_dataset, batch_size=N_SAMPLES//5)
-    model = cm.Model([
-        cm.Dense(
-            INPUT_DIM, HIDDEN_SIZE, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-0.7, 0.7),
-            grad_reduction='mean'),
-        cm.Dense(
-            HIDDEN_SIZE, HIDDEN_SIZE, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-0.7, 0.7),
-            grad_reduction='mean'),
-        cm.Linear(HIDDEN_SIZE, OUTPUT_DIM, weights_initializer=cu.RandomUniformInitializer(-0.7, 0.7),
-                  grad_reduction='mean')
-    ])
+    model = cm.Model(generate_layers(low=-0.7, high=0.7))
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
     train_epoch_losses, eval_epoch_losses, optimizer_state = np.empty(n_epochs), np.empty(n_epochs), []

@@ -131,7 +131,7 @@ def root_mean_squared_error(pred: np.ndarray, truth: np.ndarray, dtype=np.float6
     of all squared 2-norms of the examples.
     """
     norms = np.sum(np.square(pred - truth), axis=-1)
-    return np.mean(norms, dtype=dtype)
+    return np.sqrt(np.mean(norms, dtype=dtype))
 
 
 __all__ = [
