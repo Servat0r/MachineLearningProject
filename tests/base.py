@@ -80,7 +80,7 @@ def test_fully_connected_minibatch_model(
     model = cm.Model(generate_layers(low=-0.7, high=0.7))
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
-    train_epoch_losses, eval_epoch_losses, optimizer_state = np.empty(n_epochs), np.empty(n_epochs), []
+    train_epoch_losses, eval_epoch_losses, optimizer_state = np.zeros(n_epochs), np.zeros(n_epochs), []
     model.train(
         train_dataloader, eval_dataloader, n_epochs=n_epochs, train_epoch_losses=train_epoch_losses,
         eval_epoch_losses=eval_epoch_losses, optimizer_state=optimizer_state,

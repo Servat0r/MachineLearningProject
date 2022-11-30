@@ -6,7 +6,15 @@ from core.utils.types import *
 class Metric(Callable):
 
     def __init__(self, dtype=np.float64):
+        self.name = self.default_name()
         self.dtype = dtype
+
+    # Callbacks for metrics that need to maintain state over time
+    def before_batch(self):
+        pass
+
+    def after_batch(self):
+        pass
 
     def update(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         """
@@ -24,7 +32,10 @@ class Metric(Callable):
         return str(type(self).__name__)
 
     def get_name(self):
-        return self.default_name()
+        return self.name
+
+    def set_name(self, name: str):
+        self.name = name
 
     def __call__(self, batch_num: int = None):
         return self.result(batch_num)
@@ -46,20 +57,17 @@ class FunctionMetric(Metric):
         # list of array losses (todo we can convert to array by using np.c_ every time or knowing dataset size)
 
     def update(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        vals = self.func(pred, truth).astype(self.dtype)
+        vals = self.func(pred, truth)
+        vals = self.batch_reduction(vals).astype(self.dtype)
         self.values.append(vals)
-        return self.batch_reduction(vals).astype(self.dtype)
+        return vals
 
     def result(self, batch_num: int = None):
         if batch_num is not None:   # result over a batch
-            vals = self.values[batch_num]
-            return self.batch_reduction(vals).astype(self.dtype)
+            return self.values[batch_num]
         else:   # result over all batches
-            all_vals = np.column_stack(self.values)
-            return self.whole_reduction(all_vals).astype(self.dtype)
-
-    def get_name(self):
-        return f"{type(self).__name__}<{self.func}>"
+            result = self.whole_reduction(np.array(self.values, dtype=self.dtype))
+            return result.astype(self.dtype)
 
     def reset(self):
         del self.values

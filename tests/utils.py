@@ -130,9 +130,13 @@ def plot_history(start_epoch, eval_epoch_losses=None, history=None):
             f" expected < {n_epochs}, got {start_epoch}"
         )
     epochs = np.arange(start_epoch, n_epochs)
+    """
     if eval_epoch_losses is not None:
         plt.plot(epochs, eval_epoch_losses[start_epoch:], label='val_loss')
+    """
     for metric_name, metric_vals in history.items():
+        # if metric_name.startswith('Val_'):
+        #     continue
         plt.plot(epochs, metric_vals[start_epoch:], label=metric_name)
     plt.legend()
     plt.xlabel('Epochs')

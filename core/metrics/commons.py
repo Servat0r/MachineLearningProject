@@ -1,5 +1,6 @@
 # Commons metrics, wrapped around commons functions
 from __future__ import annotations
+import time
 from core.utils.types import *
 from core.functions import *
 from .base import *
@@ -15,9 +16,6 @@ class Accuracy(FunctionMetric):
         )
         self.func = lambda pred, truth: accuracy(pred, truth, dtype=dtype)
 
-    def get_name(self):
-        return self.default_name()
-
 
 class CategoricalAccuracy(FunctionMetric):
     """
@@ -29,9 +27,6 @@ class CategoricalAccuracy(FunctionMetric):
         )
         self.func = lambda pred, truth: categorical_accuracy(pred, truth, dtype=dtype)
 
-    def get_name(self):
-        return self.default_name()
-
 
 class BinaryAccuracy(FunctionMetric):
 
@@ -41,9 +36,6 @@ class BinaryAccuracy(FunctionMetric):
         )
         self.func = lambda pred, truth: binary_accuracy(pred, truth, threshold, dtype)
 
-    def get_name(self):
-        return self.default_name()
-
 
 class MeanSquaredError(FunctionMetric):
 
@@ -51,9 +43,7 @@ class MeanSquaredError(FunctionMetric):
         super(MeanSquaredError, self).__init__(
             func=SquaredError(const=const), batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype
         )
-
-    def get_name(self):
-        return self.default_name()
+        self.name = 'MSE'
 
 
 class MeanEuclideanError(FunctionMetric):
@@ -63,9 +53,7 @@ class MeanEuclideanError(FunctionMetric):
             func=mean_euclidean_error, batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype,
         )
         self.func = lambda pred, truth: mean_euclidean_error(pred, truth, reduce=False, dtype=dtype)
-
-    def get_name(self):
-        return self.default_name()
+        self.name = 'MEE'
 
 
 class RootMeanSquaredError(FunctionMetric):
@@ -75,15 +63,39 @@ class RootMeanSquaredError(FunctionMetric):
             func=root_mean_squared_error, whole_reduction=np.mean, dtype=dtype,
         )
         self.func = lambda pred, truth: root_mean_squared_error(pred, truth, dtype=dtype)
-
-    def get_name(self):
-        return self.default_name()
+        self.name = 'RMSE'
 
 
 # Utility aliases of mse, mee, rmse
 MSE = MeanSquaredError
 MEE = MeanEuclideanError
 RMSE = RootMeanSquaredError
+
+
+class Timing(FunctionMetric):
+
+    PRECISIONS = {'s', 'ns'}  # 's' -> perf_counter(), 'ns' -> perf_counter_ns()
+
+    def get_time(self):
+        return time.perf_counter() if self.precision == 's' else time.perf_counter_ns()
+
+    def set_time(self):
+        self.start_time = self.get_time()
+
+    def time_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return np.sum([self.get_time() - self.start_time], dtype=self.dtype)
+        # return np.array(self.get_time() - self.start_time, dtype=self.dtype)
+
+    def __init__(self, precision=None, dtype=np.float64):
+        precision = 's' if precision is None else precision
+        if precision not in self.PRECISIONS:
+            raise ValueError(f"Invalid precision value '{precision}': expected one of 's', 'ns'")
+        self.precision = precision
+        self.start_time = None
+        super(Timing, self).__init__(func=self.time_fun, whole_reduction=np.sum, dtype=dtype)
+
+    def before_batch(self):
+        self.set_time()
 
 
 __all__ = [
@@ -94,4 +106,5 @@ __all__ = [
     'MeanEuclideanError',
     'RootMeanSquaredError',
     'MSE', 'MEE', 'RMSE',
+    'Timing',
 ]
