@@ -162,7 +162,7 @@ def plot_history(start_epoch, eval_epoch_losses=None, history=None):
     for metric_name, metric_vals in history.items():
         # if metric_name.startswith('Val_'):
         #     continue
-        plt.plot(epochs, metric_vals[start_epoch:], label=metric_name)
+        plt.plot(epochs, metric_vals[start_epoch:n_epochs], label=metric_name)
     plt.legend()
     plt.xlabel('Epochs')
     plt.ylabel('Metrics')

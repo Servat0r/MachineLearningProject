@@ -168,6 +168,16 @@ def fc_mb_model_checkpoint_backup(*test_nums: int):
         )
 
 
+def fc_early_stopping(*test_nums: int):
+    if 0 in test_nums:
+        test_early_stopping(
+            n_epochs=1000, mb_size=10, func=arange_square_data, epoch_shuffle=True,
+            l1_regularizer=0., l2_regularizer=0., lr=1e-4, func_args={'start': EVAL_START},
+            metrics=[cmt.MEE(), cmt.RMSE()], round_val=8, min_delta=0., mode='min',
+            monitor='Val_MEE', patience=20,
+        )
+
+
 if __name__ == '__main__':
     # sbase_tests(0)
     # fc_minibatch_model_tests(0, 1, 2, 3)
@@ -175,5 +185,6 @@ if __name__ == '__main__':
     # fc_minibatch_model_regularization_lrdecay(0, 1, 2, 3)
     # fc_minibatch_model_regularization_metrics(0, 1, 2, 3)
     # fc_minibatch_model_regularization_metrics_logging(0)  #, 1, 2, 3)
-    fc_mb_model_checkpoint_backup(0)
+    # fc_mb_model_checkpoint_backup(0)
+    fc_early_stopping(0)
     exit(0)
