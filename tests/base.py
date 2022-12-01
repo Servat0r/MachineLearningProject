@@ -2,6 +2,7 @@ from __future__ import annotations
 from .utils import *
 from core.data import DataLoader
 import core.modules as cm
+from core.callbacks import OptimizerMonitor
 
 
 def test_separated(func=arange_square_data, lr=0.001):
@@ -80,11 +81,12 @@ def test_fully_connected_minibatch_model(
     model = cm.Model(generate_layers(low=-0.7, high=0.7))
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
-    train_epoch_losses, eval_epoch_losses, optimizer_state = np.zeros(n_epochs), np.zeros(n_epochs), []
-    model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, train_epoch_losses=train_epoch_losses,
-        eval_epoch_losses=eval_epoch_losses, optimizer_state=optimizer_state,
+    optimizer_state = []
+    optim_monitor = OptimizerMonitor(optimizer_state)
+    history = model.train(
+        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[optim_monitor],
     )
+    train_epoch_losses, eval_epoch_losses = history['loss'], history['Val_loss']
     for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
             enumerate(zip(train_epoch_losses, eval_epoch_losses, optimizer_state)):
         print(f'epoch: {epoch} ' +

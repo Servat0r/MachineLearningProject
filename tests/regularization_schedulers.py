@@ -2,6 +2,7 @@ from __future__ import annotations
 from tests.utils import *
 from core.data import DataLoader
 import core.modules as cm
+from core.callbacks import OptimizerMonitor
 
 
 def test_fully_connected_minibatch_model_with_regularizations(
@@ -30,18 +31,18 @@ def test_fully_connected_minibatch_model_with_regularizations(
     loss_function = cm.MSELoss(reduction='mean')
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
-    train_epoch_losses, eval_epoch_losses, optimizer_state = np.zeros(n_epochs), np.zeros(n_epochs), []
-    model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, train_epoch_losses=train_epoch_losses,
-        eval_epoch_losses=eval_epoch_losses, optimizer_state=optimizer_state,
+    optimizer_state = []
+    optim_monitor = OptimizerMonitor(optimizer_state)
+    history = model.train(
+        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[optim_monitor],
     )
+    train_epoch_losses, eval_epoch_losses = history['loss'], history['Val_loss']
     for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
             enumerate(zip(train_epoch_losses, eval_epoch_losses, optimizer_state)):
         print(f'epoch: {epoch} ' +
               f'(tr_loss: {epoch_tr_loss.item():.8f}, ' +
               f'ev_loss: {epoch_ev_loss.item():.8f}), ' +
               f'optim_state: {optim_state}')
-
     plot_losses(start_plot_epoch, train_epoch_losses, eval_epoch_losses)
 
 
@@ -74,12 +75,12 @@ def test_fc_minibatch_model_with_regularizations_lrscheduler(
 
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
-    train_epoch_losses, eval_epoch_losses, optimizer_state = np.zeros(n_epochs), np.zeros(n_epochs), []
-    model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, train_epoch_losses=train_epoch_losses,
-        eval_epoch_losses=eval_epoch_losses, optimizer_state=optimizer_state,
+    optimizer_state = []
+    optim_monitor = OptimizerMonitor(optimizer_state)
+    history = model.train(
+        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[optim_monitor],
     )
-
+    train_epoch_losses, eval_epoch_losses = history['loss'], history['Val_loss']
     # Print results
     for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
             enumerate(zip(train_epoch_losses, eval_epoch_losses, optimizer_state)):
@@ -87,5 +88,4 @@ def test_fc_minibatch_model_with_regularizations_lrscheduler(
               f'(tr_loss: {epoch_tr_loss.item():.8f}, ' +
               f'ev_loss: {epoch_ev_loss.item():.8f}), ' +
               f'optim_state: {optim_state}')
-
     plot_losses(start_plot_epoch, train_epoch_losses, eval_epoch_losses)

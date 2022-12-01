@@ -142,16 +142,100 @@ class Model:
         if self.__has_validation_set:
             self._compile_validation_metrics(metric)
 
-    # TODO Adjust the logs since they are AWFUL!
+    def __train_epoch_loop(self, train_dataloader, epoch, metric_logs, callbacks, train_mb_losses, mb_num):
+        # First, clean all old values for metric_logs and set model to train mode
+        metric_logs['training'] = {k: None for k in metric_logs['training']}
+        metric_logs['validation'] = {k: None for k in metric_logs['validation']}
+        self.set_to_train()
+
+        # Callbacks before training epoch
+        train_dataloader.before_epoch()
+        self.optimizer.before_epoch()
+        for callback in callbacks:
+            callback.before_training_epoch(self, epoch, logs=metric_logs)  # todo check if it is okay in general!
+        train_mb_losses.fill(0.)
+
+        # Minibatch-training loop
+        for mb in range(mb_num):
+            self.__train_mb_loop(train_dataloader, epoch, mb, metric_logs, callbacks, train_mb_losses)
+
+        # Create and update metric logs for the elapsed epoch
+        metric_logs['training']['loss'] = np.mean(train_mb_losses).item()
+        for metric in self.train_metrics:
+            result = metric.result()  # result at epoch level
+            metric_logs['training'][metric.get_name()] = result
+            metric.reset()  # todo should we modify this for allowing multi-epochs metrics?
+        # Callbacks after training epoch
+        train_dataloader.after_epoch()
+        self.optimizer.after_epoch()
+        self.history.after_training_epoch(self, epoch, logs=metric_logs['training'])
+        for callback in callbacks:
+            callback.after_training_epoch(self, epoch, logs=metric_logs['training'])
+
+    def __train_mb_loop(self, train_dataloader, epoch, mb, metric_logs, callbacks, train_mb_losses):
+        mb_data = next(train_dataloader)
+        input_mb, target_mb = mb_data[0], mb_data[1]
+        # Callbacks before training batch
+        for callback in callbacks:
+            callback.before_training_batch(self, epoch, mb, logs=metric_logs['training'])
+        # (Training) metrics 'callback'
+        for metric in self.train_metrics:
+            metric.before_batch()
+        y_hat = self.forward(input_mb)
+        if isinstance(self.loss, RegularizedLoss):
+            data_loss_val, reg_loss_val = self.loss(y_hat, target_mb, layers=self.layers)
+        else:
+            data_loss_val, reg_loss_val = self.loss(y_hat, target_mb)
+        # statement below is for not having any problem if loss reduction is None/'none'
+        train_mb_losses[mb] = np.mean(data_loss_val + reg_loss_val, axis=0).item()
+        metric_logs['training']['loss'] = train_mb_losses[mb]
+        # Backward of loss and hidden layers
+        dvals = self.loss.backward(y_hat, target_mb)
+        self.backward(dvals)
+        self.optimizer.update(self.layers)
+        # Add output value to logs
+        for metric in self.train_metrics:
+            # Add metric reduction over current minibatch to logs
+            metric_logs['training'][metric.get_name()] = metric.update(y_hat, target_mb)
+            metric.after_batch()
+        # Callbacks after training batch
+        for callback in callbacks:
+            callback.after_training_batch(self, epoch, mb, logs=metric_logs['training'])
+
+    def __val_epoch_loop(self, epoch, metric_logs, callbacks, eval_dataloader=None):
+        eval_exists = eval_dataloader is not None
+        # Set model to eval mode (useful e.g. for ModelCheckpoint callback independently from validation)
+        self.set_to_eval()
+        if eval_exists:
+            # Callbacks before validation 'epoch'
+            eval_dataloader.before_epoch()
+            input_eval, target_eval = next(eval_dataloader)
+            for callback in callbacks:
+                callback.before_evaluate(self, epoch, logs=metric_logs['validation'])  # todo check this also!
+            # Validation metrics 'callback'
+            for val_metric in self.validation_metrics:
+                val_metric.before_batch()
+            y_hat = self.forward(input_eval)
+            if isinstance(self.loss, RegularizedLoss):
+                data_loss_val, reg_loss_val = self.loss(y_hat, target_eval, layers=self.layers)
+            else:
+                data_loss_val, reg_loss_val = self.loss(y_hat, target_eval)
+            eval_dataloader.after_epoch()
+            metric_logs['validation']['Val_loss'] = np.mean(data_loss_val + reg_loss_val, axis=0)
+            for val_metric in self.validation_metrics:
+                metric_logs['validation'][val_metric.get_name()] = val_metric.update(y_hat, target_eval)
+                val_metric.after_batch()
+            # Callbacks after validation
+            for callback in callbacks:
+                callback.after_evaluate(self, epoch, logs=metric_logs['validation'])
+            # Now update history with validation data
+            self.history.after_evaluate(self, epoch, logs=metric_logs['validation'])
+
     def train(
-            self, train_dataloader: DataLoader, eval_dataloader: DataLoader = None, n_epochs: int = 1,
-            train_epoch_losses: np.ndarray = None, eval_epoch_losses: np.ndarray = None,
-            optimizer_state: list = None, verbose=0, callbacks: Callback | Sequence[Callback] = None,
+            self, train_dataloader: DataLoader, eval_dataloader: DataLoader = None,
+            n_epochs: int = 1, callbacks: Callback | Sequence[Callback] = None,
     ):
         eval_exists = eval_dataloader is not None
-        train_epoch_losses = train_epoch_losses if train_epoch_losses is not None else np.zeros(n_epochs)
-        eval_epoch_losses = eval_epoch_losses if eval_epoch_losses is not None else np.zeros(n_epochs)
-        optimizer_state = optimizer_state if optimizer_state is not None else []
         callbacks = [] if callbacks is None else callbacks
         mb_num = train_dataloader.get_batch_num()
         train_mb_losses = np.zeros(mb_num)
@@ -166,13 +250,16 @@ class Model:
         self.history.before_training_cycle(self)
 
         # Metrics logs (to be passed to self.history)
-        metric_logs = {'loss': None}
-        metric_logs.update({metric.get_name(): None for metric in self.train_metrics})
+        metric_logs = {
+            'training': {'loss': None},
+            'validation': {},
+        }
+        metric_logs['training'].update({metric.get_name(): None for metric in self.train_metrics})
 
         # Add validation metrics
         if self.__has_validation_set:
-            metric_logs['Val_loss'] = None
-            metric_logs.update({val_metric.get_name(): None for val_metric in self.validation_metrics})
+            metric_logs['validation']['Val_loss'] = None
+            metric_logs['validation'].update({val_metric.get_name(): None for val_metric in self.validation_metrics})
 
         # Callbacks before training cycle
         train_dataloader.before_cycle()
@@ -182,90 +269,8 @@ class Model:
             callback.before_training_cycle(self, logs=metric_logs)
 
         for epoch in range(n_epochs):
-            # First, set model to train mode
-            self.set_to_train()
-            # Callbacks before training epoch
-            train_dataloader.before_epoch()
-            self.optimizer.before_epoch()
-            for callback in callbacks:
-                callback.before_training_epoch(self, epoch, logs=None)  # todo check if it is okay in general!
-            train_mb_losses.fill(0.)
-            # logs for callbacks
-            logs = {}
-            for mb in range(mb_num):
-                mb_data = next(train_dataloader)
-                if mb_data is None:
-                    break
-                input_mb, target_mb = mb_data[0], mb_data[1]
-                # Callbacks before training batch
-                for callback in callbacks:
-                    callback.before_training_batch(self, epoch, mb, logs=logs)
-                # (Training) metrics 'callback'
-                for metric in self.train_metrics:
-                    metric.before_batch()
-                y_hat = self.forward(input_mb)
-                if isinstance(self.loss, RegularizedLoss):
-                    data_loss_val, reg_loss_val = self.loss(y_hat, target_mb, layers=self.layers)
-                else:
-                    data_loss_val, reg_loss_val = self.loss(y_hat, target_mb)
-                optim_log_dict = self.optimizer.to_log_dict()
-                train_mb_losses[mb] = np.mean(data_loss_val + reg_loss_val, axis=0).item()  # todo why this?
-                logs['loss'] = train_mb_losses[mb]
-                # Backward of loss and hidden layers
-                dvals = self.loss.backward(y_hat, target_mb)
-                self.backward(dvals)
-                self.optimizer.update(self.layers)
-                # Add output value to logs
-                for metric in self.train_metrics:
-                    # Add metric reduction over current minibatch to logs
-                    logs[metric.get_name()] = metric.update(y_hat, target_mb)
-                    metric.after_batch()
-                # Callbacks after training batch
-                for callback in callbacks:
-                    callback.after_training_batch(self, epoch, mb, logs=logs)
-            # Create and update metric logs for the elapsed epoch
-            train_epoch_losses[epoch] = np.mean(train_mb_losses).item()
-            logs['loss'] = train_epoch_losses[epoch]
-            for metric in self.train_metrics:
-                result = metric.result()  # result at epoch level
-                logs[metric.get_name()] = result
-                metric.reset()  # todo should we modify this for allowing multi-epochs metrics?
-            # Callbacks after training epoch
-            train_dataloader.after_epoch()
-            self.optimizer.after_epoch()
-            self.history.after_training_epoch(self, epoch, logs=logs)
-            for callback in callbacks:
-                callback.after_training_epoch(self, epoch, logs=logs)
-            optim_log_dict = self.optimizer.to_log_dict()
-            # Set model to eval mode (useful e.g. for ModelCheckpoint callback independently from validation)
-            self.set_to_eval()
-            if eval_exists:
-                # Callbacks before validation 'epoch'
-                eval_dataloader.before_epoch()
-                input_eval, target_eval = next(eval_dataloader)
-                # Create logs for validation
-                logs = {}
-                for callback in callbacks:
-                    callback.before_evaluate(self, epoch, logs=logs)    # todo check this also!
-                # Validation metrics 'callback'
-                for val_metric in self.validation_metrics:
-                    val_metric.before_batch()
-                y_hat = self.forward(input_eval)
-                if isinstance(self.loss, RegularizedLoss):
-                    data_loss_val, reg_loss_val = self.loss(y_hat, target_eval, layers=self.layers)
-                else:
-                    data_loss_val, reg_loss_val = self.loss(y_hat, target_eval)
-                optim_log_dict = self.optimizer.to_log_dict()
-                eval_dataloader.after_epoch()
-                eval_epoch_losses[epoch] = np.mean(data_loss_val + reg_loss_val, axis=0)
-                logs['Val_loss'] = eval_epoch_losses[epoch]
-                for val_metric in self.validation_metrics:
-                    logs[val_metric.get_name()] = val_metric.update(y_hat, target_eval)
-                    val_metric.after_batch()
-                optimizer_state.append(optim_log_dict)
-                # Callbacks after validation
-                for callback in callbacks:
-                    callback.after_evaluate(self, epoch, logs=logs)
+            self.__train_epoch_loop(train_dataloader, epoch, metric_logs, callbacks, train_mb_losses, mb_num)
+            self.__val_epoch_loop(epoch, metric_logs, callbacks, eval_dataloader)
 
         # Callbacks after training cycle
         train_dataloader.after_cycle()

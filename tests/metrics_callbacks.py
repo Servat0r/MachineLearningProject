@@ -35,11 +35,12 @@ def test_fully_connected_minibatch_regularization_metrics(
     loss_function = cm.MSELoss(reduction='mean')
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function, metrics=metrics)
-    train_epoch_losses, eval_epoch_losses, optimizer_state = np.zeros(n_epochs), np.zeros(n_epochs), []
+    optimizer_state = []
+    optim_monitor = cc.OptimizerMonitor(optimizer_state)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, train_epoch_losses=train_epoch_losses,
-        eval_epoch_losses=eval_epoch_losses, optimizer_state=optimizer_state,
+        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[optim_monitor],
     )
+    train_epoch_losses, eval_epoch_losses = history['loss'], history['Val_loss']
     for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
             enumerate(zip(train_epoch_losses, eval_epoch_losses, optimizer_state)):
         print(f'epoch: {epoch} ' +
@@ -49,7 +50,7 @@ def test_fully_connected_minibatch_regularization_metrics(
 
     history_losses = history['loss']
     assert np.equal(history_losses, train_epoch_losses).all()
-    plot_history(start_plot_epoch, history)
+    plot_history(start_plot_epoch, history=history)
 
 
 def test_fully_connected_regularization_metrics_logging(
@@ -80,12 +81,15 @@ def test_fully_connected_regularization_metrics_logging(
     loss_function = cm.MSELoss(reduction='mean')
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function, metrics=metrics)
-    train_epoch_losses, eval_epoch_losses, optimizer_state = np.zeros(n_epochs), np.zeros(n_epochs), []
+    optimizer_state = []
+    optim_monitor = cc.OptimizerMonitor(optimizer_state)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, train_epoch_losses=train_epoch_losses,
-        eval_epoch_losses=eval_epoch_losses, optimizer_state=optimizer_state,
-        callbacks=[cc.TrainingCSVLogger(fpath=train_log_file, round_val=round_val, include_mb=include_mb)],
+        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[
+            cc.TrainingCSVLogger(train_fpath=train_log_file, round_val=round_val, include_mb=include_mb),
+            optim_monitor,
+        ],
     )
+    train_epoch_losses, eval_epoch_losses = history['loss'], history['Val_loss']
     for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
             enumerate(zip(train_epoch_losses, eval_epoch_losses, optimizer_state)):
         print(f'epoch: {epoch} ' +

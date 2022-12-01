@@ -130,32 +130,32 @@ def fc_minibatch_model_regularization_metrics(*test_nums: int):
 def fc_minibatch_model_regularization_metrics_logging(*test_nums: int):
     if 0 in test_nums:
         test_fully_connected_regularization_metrics_logging(
-            n_epochs=250, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
+            n_epochs=100, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
             start_plot_epoch=0, lr=1e-4, epoch_shuffle=True, func_args={'start': EVAL_START},
-            metrics=[cmt.MEE(), cmt.RMSE()], train_log_file='train_log.csv', round_val=4,
-            # include_mb=True,
+            metrics=[cmt.MEE(), cmt.RMSE(), cmt.Timing()], train_log_file='train_log.csv', round_val=4,
+            include_mb=True,
         )
     if 1 in test_nums:
         test_fully_connected_regularization_metrics_logging(
-            n_epochs=50, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
+            n_epochs=100, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
             start_plot_epoch=0, lr=1e-4, epoch_shuffle=False, func_args={'start': EVAL_START},
-            metrics=[cmt.MEE(), cmt.MSE(), cmt.RMSE(), cmt.Timing()], train_log_file='train_log.csv',
-            round_val=8, # include_mb=True,
+            metrics=[cmt.MEE(), cmt.RMSE(), cmt.Timing()], train_log_file='train_log.csv',
+            round_val=8, include_mb=True,
         )
 
     if 2 in test_nums:
         test_fully_connected_regularization_metrics_logging(
-            n_epochs=20, mb_size=10, func=randn_sqrt_data, l1_regularizer=1e-5,
+            n_epochs=100, mb_size=10, func=randn_sqrt_data, l1_regularizer=1e-5,
             l2_regularizer=1e-6, func_args={}, train_log_file='train_log.csv',
-            metrics=[cmt.MEE(), cmt.MSE(), cmt.RMSE(), cmt.Timing()],
-            round_val=8, # include_mb=True,
+            metrics=[cmt.MEE(), cmt.RMSE(), cmt.Timing()],
+            round_val=8, include_mb=True,
         )
     if 3 in test_nums:
         test_fully_connected_regularization_metrics_logging(
-            n_epochs=20, mb_size=10, func=randn_sqrt_data, epoch_shuffle=False,
+            n_epochs=100, mb_size=10, func=randn_sqrt_data, epoch_shuffle=False,
             l1_regularizer=1e-5, l2_regularizer=1e-6, func_args={},
-            metrics=[cmt.MEE(), cmt.MSE(), cmt.RMSE(), cmt.Timing()], train_log_file='train_log.csv',
-            round_val=8, # include_mb=True,
+            metrics=[cmt.MEE(), cmt.RMSE(), cmt.Timing()], train_log_file='train_log.csv',
+            round_val=8, include_mb=True,
         )
 
 

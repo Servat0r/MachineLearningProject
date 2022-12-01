@@ -9,7 +9,8 @@ class History(Callback):
 
     def __init__(self, n_epochs: int, dtype=np.float64):
         self.logbook = {
-            'loss': np.zeros(n_epochs, dtype=dtype)
+            'loss': np.zeros(n_epochs, dtype=dtype),
+            'Val_loss': np.zeros(n_epochs, dtype=dtype),
         }
         self.epoch = 0
         self.n_epochs = n_epochs

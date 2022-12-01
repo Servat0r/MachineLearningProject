@@ -114,6 +114,7 @@ def plot_losses(start_epoch, train_epoch_losses, eval_epoch_losses=None, other_m
     plt.plot(epochs, train_epoch_losses[start_epoch:], label='loss')
     if eval_epoch_losses is not None:
         plt.plot(epochs, eval_epoch_losses[start_epoch:], label='val_loss')
+    other_metric_logs = {} if other_metric_logs is None else other_metric_logs
     for metric_name, metric_vals in other_metric_logs.items():
         plt.plot(epochs, metric_vals[start_epoch:], label=metric_name)
     plt.legend()
