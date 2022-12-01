@@ -1,6 +1,5 @@
 from __future__ import annotations
 from .utils import *
-from core.data import DataLoader
 import core.modules as cm
 from core.callbacks import OptimizerMonitor
 
@@ -10,7 +9,7 @@ def test_separated(func=arange_square_data, lr=0.001):
     loss_function = cm.MSELoss(reduction='mean')
     optimizer = cm.SGD(lr=lr)
 
-    x, y, train_dataset, accuracy_precision = generate_dataset(func)
+    x, y, train_dataset = generate_dataset(func)
     for epoch in range(5001):
         optimizer.before_epoch()
 
@@ -38,12 +37,9 @@ def test_separated(func=arange_square_data, lr=0.001):
 
         loss = data_loss
         predictions = linear3.output
-        accuracy = np.mean(np.absolute(predictions - y) <
-                           accuracy_precision)
 
         if not epoch % 10:
             print(f'epoch: {epoch}, ' +
-                  f'acc: {accuracy:.4f}, ' +
                   f'loss: {loss.item():.4f} (' +
                   f'data_loss: {data_loss.item():.4f}, ' +
                   # f'reg_loss: {regularization_loss:.8f}), ' +
@@ -67,18 +63,10 @@ def test_fully_connected_minibatch_model(
 ):
     loss_function = cm.MSELoss(reduction='mean')
     optimizer = cm.SGD(lr=lr)
-    # Generate train dataset
-    x, y, train_dataset, accuracy_precision = generate_dataset(func)
-
-    # Generate validation dataset
-    func_args = {} if func_args is None else func_args
-    x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, **func_args)
-    eval_dataset = ArrayDataset(x_eval, y_eval)
-
-    # Generate dataloaders
-    train_dataloader = DataLoader(train_dataset, batch_size=mb_size, shuffle=epoch_shuffle)
-    eval_dataloader = DataLoader(eval_dataset, batch_size=N_SAMPLES//5)
-    model = cm.Model(generate_layers(low=-0.7, high=0.7))
+    train_dataloader, eval_dataloader, model = generate_dataset_and_model(
+        func, func_args, N_SAMPLES//5, mb_size, epoch_shuffle, winit_low=-0.7,
+        winit_high=0.7, l1_lambda=0., l2_lambda=0.,
+    )
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function)
     optimizer_state = []

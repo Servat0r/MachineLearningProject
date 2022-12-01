@@ -13,9 +13,19 @@ class Layer:
         i.e. weights/biases will NOT be updated during training.
         """
         self.frozen = frozen
-        self.__is_training = None
+        self._training = None
         self.input = None
         self.output = None
+        self._serialize_all = None
+
+    def equals(self, other, include_updates=False, include_all=False):
+        # include_all overwrites include_updates
+        if not isinstance(other, type(self)):
+            return False
+        check = all([
+            self.frozen == other.frozen, self._training == other._training
+        ])
+        return check
 
     def _init_unpickled_params(self):
         self.input = None
@@ -28,13 +38,19 @@ class Layer:
         self.frozen = False
 
     def set_to_train(self):
-        self.__is_training = True
+        self._training = True
 
     def set_to_eval(self):
-        self.__is_training = False
+        self._training = False
+
+    def set_serialize_all(self):
+        self._serialize_all = True
+
+    def unset_serialize_all(self):
+        self._serialize_all = False
 
     def is_training(self):
-        return self.is_trainable() and self.__is_training
+        return self.is_trainable() and self._training
 
     @abstractmethod
     def is_trainable(self) -> bool:
@@ -43,7 +59,7 @@ class Layer:
         """
         pass
 
-    def get_parameters(self) -> dict:
+    def get_parameters(self, copy=False) -> dict:
         """
         Retrieves layer parameters as a dictionary ('weights', 'biases', 'dweights' etc.).
         """
@@ -67,14 +83,24 @@ class Layer:
                 raise TypeError(f"Wrong type {type(param_val)} for {param_name} when parsing param dict")
 
     def __getstate__(self):
-        return {
+        state = {
             'frozen': self.frozen,
-            '__is_training': self.__is_training,
+            '_training': self._training,
+            '_serialize_all': self._serialize_all,
         }
+        return state
 
     def __setstate__(self, state):
         frozen = state.pop('frozen', False)
+        is_training = state.pop('_training', 2)  # neither True, False or None
+        if is_training == 2:
+            raise RuntimeError('Attribute \'_is_training\' not available!')
+        serialize_all = state.pop('_serialize_all', 2)
+        if serialize_all == 2:
+            raise RuntimeError('Attribute \'_serialize_all\' not available!')
         self.frozen = frozen
+        self._training = is_training
+        self._serialize_all = serialize_all
         self._init_unpickled_params()
 
     @abstractmethod
@@ -167,9 +193,35 @@ class Linear(Layer):
         self.weights_reg_updates = None
         self.biases_reg_updates = None
 
+    def equals(self, other, include_updates=False, include_all=False):
+        check = super(Linear, self).equals(other, include_updates, include_all)
+        if not check or not isinstance(other, Linear):
+            return False
+        include_updates = True if include_all else include_updates
+        check = [
+            self.in_features == other.in_features, self.out_features == other.out_features,
+            np.equal(self.weights, other.weights).all(), np.equal(self.biases, other.biases).all(),
+            self.grad_reduction == other.grad_reduction, self.dtype == other.dtype,
+            self.weights_regularizer == other.weights_regularizer,
+            self.biases_regularizer == other.biases_regularizer,
+        ]
+        if not all(check):
+            return False
+        if include_updates:
+            check = [
+                np.equal(self.dweights, other.dweights).all(), np.equal(self.dbiases, other.dbiases).all(),
+                np.equal(self.weight_momentums, other.weight_momentums).all(),
+                np.equal(self.bias_momentums, other.bias_momentums).all(),
+                np.equal(self.weights_reg_updates, other.weights_reg_updates).all(),
+                np.equal(self.biases_reg_updates, other.biases_reg_updates).all(),
+            ]
+            if not all(check):
+                return False
+        return True
+
     def _init_unpickled_params(self):
         super(Linear, self)._init_unpickled_params()
-        if not self.is_training():
+        if not self.is_training() and not self._serialize_all:
             # Set updates for backward
             self.dweights = None
             self.dbiases = None
@@ -194,10 +246,10 @@ class Linear(Layer):
     def get_dbiases(self, copy=True) -> np.ndarray | None:
         return self.dbiases.copy() if copy else self.dbiases
 
-    def get_parameters(self):
+    def get_parameters(self, copy=False):
         return {
-            'weights': self.weights,
-            'biases': self.biases,
+            'weights': self.get_weights(copy=copy),
+            'biases': self.get_biases(copy=copy),
         }
 
     def __getstate__(self):
@@ -212,7 +264,7 @@ class Linear(Layer):
             'weights_regularizer': self.weights_regularizer,    # todo getstate?
             'biases_regularizer': self.biases_regularizer,      # todo getstate?
         })
-        if self.is_training():
+        if self.is_training() or self._serialize_all:
             state.update({
                 'dweights': self.dweights,
                 'dbiases': self.dbiases,
@@ -328,6 +380,9 @@ class ReLU(Activation):
         super(ReLU, self).__init__(frozen=frozen)
         self.subgrad_func = self.default_subgrad_func if subgrad_func is None else subgrad_func
 
+    def __eq__(self, other):
+        return super(ReLU, self).__eq__(other) and self.subgrad_func == other.subgrad_func
+
     def __getstate__(self):
         state = super(ReLU, self).__getstate__()
         state.update({
@@ -353,6 +408,9 @@ class SoftmaxLayer(Activation):
     def __init__(self, const_shift=0, max_shift=False):
         super(SoftmaxLayer, self).__init__()
         self.softmax = cf.Softmax(const_shift=const_shift, max_shift=max_shift)
+
+    def equals(self, other, include_updates=False, include_all=False):
+        return super(SoftmaxLayer, self).equals(other, include_updates, include_all) and self.softmax == other.softmax
 
     def __getstate__(self):
         state = super(SoftmaxLayer, self).__getstate__()
@@ -395,8 +453,31 @@ class Dense(Layer):
         self.activation = activation_layer
         self.net = None
 
+    def equals(self, other, include_updates=False, include_all=False):
+        if not super(Dense, self).equals(other, include_updates, include_all):
+            return False
+        check = [
+            self.linear.equals(other.linear, include_updates, include_all),
+            self.activation.equals(other.activation, include_updates, include_all),
+        ]
+        if not all(check):
+            return False
+        if include_updates:
+            return np.equal(self.net, other.net).all()
+        return True
+
     # Methods below (set_to_train, ..., unfreeze_layer) ensure that training and freeze state
     # is maintained consistently with the underlying linear and activation layer
+
+    def set_serialize_all(self):
+        self.linear.set_serialize_all()
+        self.activation.set_serialize_all()
+        super(Dense, self).set_serialize_all()
+
+    def unset_serialize_all(self):
+        self.linear.unset_serialize_all()
+        self.activation.unset_serialize_all()
+        super(Dense, self).unset_serialize_all()
 
     def set_to_train(self):
         self.linear.set_to_train()
@@ -420,7 +501,7 @@ class Dense(Layer):
 
     def _init_unpickled_params(self):
         super(Dense, self)._init_unpickled_params()
-        if not self.is_training():
+        if not self.is_training() and not self._serialize_all:
             self.net = None
 
     def __getstate__(self):
@@ -429,7 +510,7 @@ class Dense(Layer):
             'linear': self.linear,
             'activation': self.activation,
         })
-        if self.is_training():
+        if self.is_training() or self._serialize_all:
             state.update({
                 'net': self.net,
             })
@@ -452,10 +533,10 @@ class Dense(Layer):
     def is_trainable(self) -> bool:
         return self.linear.is_trainable() and not self.frozen
 
-    def get_parameters(self) -> dict:
+    def get_parameters(self, copy=False) -> dict:
         return {
-            'linear': self.linear.get_parameters(),
-            'activation': self.activation.get_parameters(),
+            'linear': self.linear.get_parameters(copy=copy),
+            'activation': self.activation.get_parameters(copy=copy),
         }
 
 

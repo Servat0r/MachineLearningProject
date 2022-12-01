@@ -12,7 +12,7 @@ def keras_test_fully_connected_minibatch_model(
     loss_function = tf.keras.losses.MeanSquaredError()
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr)
     # Generate train dataset
-    x, y, train_dataset, accuracy_precision = generate_dataset(func)
+    x, y, train_dataset, = generate_dataset(func)
 
     # Generate validation dataset
     args = () if args is None else args

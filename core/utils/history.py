@@ -19,6 +19,18 @@ class History(Callback):
         # Conveniently define length as the number of epochs for which there exists valid data in the history
         return self.epoch
 
+    def __eq__(self, other):
+        if not isinstance(other, History):
+            return False
+        check = all([self.epoch == other.epoch, self.n_epochs == other.n_epochs, len(self.logbook) == len(other.logbook)])
+        if not check:
+            return False
+        for (k1, v1), (k2, v2) in zip(self.logbook.items(), other.logbook.items()):
+            check = (k1 == k2) and np.equal(v1, v2).all()
+            if not check:
+                return False
+        return True
+
     def keys(self):
         return self.logbook.keys()
 

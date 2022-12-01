@@ -85,32 +85,32 @@ class TrainingCSVLogger(BaseCSVLogger):
             raise ValueError(f"Cannot log without train or validation keys!")
         self.open()
         self.include_val = len(val) > 0  # At least one validation metric specified in initial logs
-        print('epoch', *train.keys(), *val.keys(), sep=self.sep, file=self.fp)
+        print('epoch', *train.keys(), *val.keys(), sep=self.sep, file=self.fp, flush=True)
         if self.include_mb:
-            print('epoch', 'minibatch', *train.keys(), sep=self.sep, file=self.mb_fp)
+            print('epoch', 'minibatch', *train.keys(), sep=self.sep, file=self.mb_fp, flush=True)
         # If logger is serialized after this method call, it will not print headers again
         self.overwrite = False
 
     def after_training_cycle(self, model, logs=None):
         self.close()
-        print(f'CSV logging for training cycle ended')
+        print(f'CSV logging for training cycle ended', flush=True)
 
     def after_training_epoch(self, model, epoch, logs=None):
         values = self.fmt_values(logs.values())
         if self.include_val:
-            print(epoch, *values, sep=self.sep, file=self.fp, end=',')
+            print(epoch, *values, sep=self.sep, file=self.fp, end=',', flush=True)
         else:
-            print(epoch, *values, sep=self.sep, file=self.fp)
+            print(epoch, *values, sep=self.sep, file=self.fp, flush=True)
 
     def after_training_batch(self, model, epoch, batch, logs=None):
         if self.include_mb:
             values = self.fmt_values(logs.values())
-            print(epoch, batch, *values, sep=self.sep, file=self.mb_fp)
+            print(epoch, batch, *values, sep=self.sep, file=self.mb_fp, flush=True)
 
     def after_evaluate(self, model, epoch=None, logs=None):
         if self.include_val:
             values = self.fmt_values(logs.values())
-            print(*values, sep=self.sep, file=self.fp)
+            print(*values, sep=self.sep, file=self.fp, flush=True)
 
 
 class TestCSVLogger(BaseCSVLogger):

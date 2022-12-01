@@ -35,7 +35,7 @@ def keras_test_fully_connected_minibatch_model_with_regularizations(
         l1_regularizer=0., l2_regularizer=0., lr=0.001, start_plot_epoch=0, *args, **kwargs,
 ):
     # Generate train dataset
-    x, y, train_dataset, accuracy_precision = generate_dataset(func)
+    x, y, train_dataset = generate_dataset(func)
 
     # Generate validation dataset
     args = () if args is None else args
@@ -60,7 +60,7 @@ def keras_test_fully_connected_minibatch_model_with_regularizations_lrscheduler(
         *args, **kwargs,
 ):
     # Generate train dataset
-    x, y, train_dataset, accuracy_precision = generate_dataset(func)
+    x, y, train_dataset = generate_dataset(func)
 
     # Generate validation dataset
     initializer = tf.keras.initializers.RandomUniform(-0.7, 0.7)

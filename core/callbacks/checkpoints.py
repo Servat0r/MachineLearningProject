@@ -15,20 +15,17 @@ class ModelCheckpoint(Callback):
         self.save_history = save_history
 
     def __save_model(self, model):
-        history = None
-        if not self.save_history:
-            history = model.set_to_eval(detach_history=True)
-        # Save model in specified path
+        model.set_to_eval()
         model.save(self.fpath, include_compile_objs=False, include_history=self.save_history)
-        if not self.save_history:
-            model.history = history
 
     def after_training_epoch(self, model, epoch, logs=None):
-        if epoch % self.save_every == 0:
+        if (epoch % self.save_every == 0) or model.stop_training:
             self.__save_model(model)
+            print(f'Saved model at {epoch} training epoch')
 
     def after_training_cycle(self, model, logs=None):
         self.__save_model(model)
+        print(f'Saved model after training cycle')
 
 
 class ModelBackup(Callback):
@@ -41,19 +38,17 @@ class ModelBackup(Callback):
         self.save_every = save_every
 
     def __save_model(self, model):
-        is_training = model.is_training()
-        model.set_to_train()
-        # For saving also updating status (todo modify model for saving momentums)
-        model.save(self.fpath, include_compile_objs=True, include_history=True)
-        if not is_training:
-            model.set_to_eval(detach_history=False)
+        # For saving also updating status (todo modify linear layer for saving momentums)
+        model.save(self.fpath, include_compile_objs=True, include_history=True, serialize_all=True)
 
     def after_training_epoch(self, model, epoch, logs=None):
-        if epoch % self.save_every == 0:
+        if (epoch % self.save_every == 0) or model.stop_training:
             self.__save_model(model)
+            print(f'Saved model at {epoch} training epoch')
 
     def after_training_cycle(self, model, logs=None):
         self.__save_model(model)
+        print(f'Saved model after training cycle')
 
 
 __all__ = [

@@ -9,6 +9,11 @@ class Softmax(Callable):
         self.const_shift = const_shift  # constant shift for arguments
         self.max_shift = max_shift      # subtracting the maximum input value from all inputs
 
+    def __eq__(self, other):
+        if not super(Softmax, self).__eq__(other) or not isinstance(other, Softmax):
+            return False
+        return all([self.const_shift == other.const_shift, self.max_shift == other.max_shift])
+
     def __call__(self, x: np.ndarray) -> np.ndarray:
         if self.const_shift != 0:
             x += self.const_shift
@@ -44,6 +49,11 @@ class CategoricalCrossEntropy(Callable):
         super(CategoricalCrossEntropy, self).__init__()
         self.clip_value = clip_value
 
+    def __eq__(self, other):
+        if not super(CategoricalCrossEntropy, self).__eq__(other) or not isinstance(other, CategoricalCrossEntropy):
+            return False
+        return self.clip_value == other.clip_value
+
     def __call__(self, x: np.ndarray, truth: np.ndarray) -> np.ndarray:
         samples = len(x)
         x_clipped = np.clip(x, self.clip_value, 1 - self.clip_value)
@@ -72,6 +82,11 @@ class SquaredError(Callable):
 
     def __init__(self, const=0.5):
         self.const = const
+
+    def __eq__(self, other):
+        if not super(SquaredError, self).__eq__(other) or not isinstance(other, SquaredError):
+            return False
+        return self.const == other.const
 
     def __call__(self, x: np.ndarray, truth: np.ndarray):
         return self.const * np.sum(np.square(truth - x), axis=-1)

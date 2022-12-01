@@ -3,6 +3,8 @@ from core.data import ArrayDataset
 import matplotlib.pyplot as plt
 import core.utils as cu
 import core.modules as cm
+from core.data import DataLoader
+from core.callbacks import Callback
 
 
 INPUT_DIM = 8
@@ -103,9 +105,31 @@ def generate_dataset(func, samples=N_SAMPLES, input_dim=INPUT_DIM, output_dim=OU
     x = x.reshape((x.shape[0], x.shape[1], INPUT_DIM))
     y = y.reshape((y.shape[0], y.shape[1], OUTPUT_DIM))
     train_dataset = ArrayDataset(x, y)
-    accuracy_precision = np.std(y) / 250
 
-    return x, y, train_dataset, accuracy_precision
+    return x, y, train_dataset
+
+
+def generate_dataset_and_model(
+        func, func_args, eval_samples, mb_size, epoch_shuffle, winit_low, winit_high, l1_lambda, l2_lambda
+):
+    # Generate train and validation dataset
+    x, y, train_dataset = generate_dataset(func)
+    func_args = {} if func_args is None else func_args
+    x_eval, y_eval, eval_dataset = generate_dataset(
+        func, samples=eval_samples, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, **func_args
+    )
+
+    # Generate dataloaders
+    train_dataloader = DataLoader(train_dataset, batch_size=mb_size, shuffle=epoch_shuffle)
+    eval_dataloader = DataLoader(eval_dataset, batch_size=N_SAMPLES//5)
+    model = cm.Model(
+        generate_layers(
+            low=winit_low, high=winit_high,
+            weights_regularizer=cm.L1L2Regularizer(l1_lambda=l1_lambda, l2_lambda=l2_lambda),
+            biases_regularizer=cm.L1L2Regularizer(l1_lambda=l1_lambda, l2_lambda=l2_lambda),
+        )
+    )
+    return train_dataloader, eval_dataloader, model
 
 
 def plot_losses(start_epoch, train_epoch_losses, eval_epoch_losses=None, other_metric_logs: dict = None):
@@ -165,3 +189,16 @@ def generate_layers(low=-0.5, high=0.5, weights_regularizer=None, biases_regular
         weights_regularizer=weights_regularizer, biases_regularizer=biases_regularizer,
     )
     return [dense1, dense2, linear3]
+
+
+class WaitKey(Callback):
+    """
+    Utility callback for pausing after a training epoch.
+    """
+    def __init__(self, wait_every=1, prompt=None):
+        self.wait_every = wait_every
+        self.prompt = '' if prompt is None else prompt
+
+    def after_training_epoch(self, model, epoch, logs=None):
+        if epoch % self.wait_every == 0:
+            input(self.prompt)

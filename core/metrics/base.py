@@ -44,7 +44,7 @@ class Metric(Callable):
 class FunctionMetric(Metric):
 
     def __init__(self, func: Callable[[np.ndarray, np.ndarray], np.ndarray],
-                 batch_reduction: Callable[[np.ndarray], np.ndarray] = lambda x: x,
+                 batch_reduction: Callable[[np.ndarray], np.ndarray] = None,
                  # By default, batch results are not reduced
                  whole_reduction: Callable[[np.ndarray], np.ndarray] = np.mean,
                  # By default, we take the mean of all batch values
@@ -58,7 +58,7 @@ class FunctionMetric(Metric):
 
     def update(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         vals = self.func(pred, truth)
-        vals = self.batch_reduction(vals).astype(self.dtype)
+        vals = vals if self.batch_reduction is None else self.batch_reduction(vals).astype(self.dtype)
         self.values.append(vals)
         return vals
 
@@ -66,7 +66,8 @@ class FunctionMetric(Metric):
         if batch_num is not None:   # result over a batch
             return self.values[batch_num]
         else:   # result over all batches
-            result = self.whole_reduction(np.array(self.values, dtype=self.dtype))
+            result = np.array(self.values, dtype=self.dtype)
+            result = result if self.whole_reduction is None else self.whole_reduction(result)
             return result.astype(self.dtype)
 
     def reset(self):

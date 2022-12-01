@@ -159,11 +159,21 @@ def fc_minibatch_model_regularization_metrics_logging(*test_nums: int):
         )
 
 
+def fc_mb_model_checkpoint_backup(*test_nums: int):
+    if 0 in test_nums:
+        test_model_checkpoint_and_backup(
+            n_epochs=25, mb_size=10, func=arange_square_data, epoch_shuffle=True,
+            l1_regularizer=1e-6, l2_regularizer=1e-6, func_args={'start': EVAL_START},
+            metrics=[cmt.MEE(), cmt.RMSE()], round_val=8,
+        )
+
+
 if __name__ == '__main__':
     # sbase_tests(0)
     # fc_minibatch_model_tests(0, 1, 2, 3)
     # fc_minibatch_model_regularization(0, 1, 2, 3)
     # fc_minibatch_model_regularization_lrdecay(0, 1, 2, 3)
     # fc_minibatch_model_regularization_metrics(0, 1, 2, 3)
-    fc_minibatch_model_regularization_metrics_logging(0)  #, 1, 2, 3)
+    # fc_minibatch_model_regularization_metrics_logging(0)  #, 1, 2, 3)
+    fc_mb_model_checkpoint_backup(0)
     exit(0)

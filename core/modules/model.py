@@ -31,10 +31,43 @@ class Model:
         self.length = len(self.layers)
         self.history = None  # will be filled during training
         self.__is_training = None
-        self.__has_validation_set = None
+        self.has_validation_set = None
+        self.stop_training = None
 
-    def get_parameters(self) -> list[dict]:
-        return [layer.get_parameters() for layer in self.layers]
+    @staticmethod
+    def __objs_equal(self_obj, other_obj, include_all=False):
+        if self_obj is not None and other_obj is not None:
+            return self_obj == other_obj
+        elif include_all:
+            return self_obj == other_obj  # both None
+        return True
+
+    def equal(self, other: Model, include_updates=False, include_all=False):
+        # First check layers
+        for layer1, layer2 in zip(self.layers, other.layers):
+            if not layer1.equals(layer2, include_updates, include_all):
+                return False
+        # Then, check compile objects
+        check = [
+            self.__objs_equal(self.optimizer, other.optimizer, include_all),
+            self.__objs_equal(self.loss, other.loss, include_all),
+            self.__objs_equal(self.train_metrics, other.train_metrics, include_all),
+            self.__objs_equal(self.validation_metrics, other.validation_metrics, include_all),
+            self.__objs_equal(self.length, other.length, include_all),
+            self.__objs_equal(self.has_validation_set, other.has_validation_set, include_all),
+        ]
+        if not all(check):
+            return False
+        if (self.history is not None) and (other.history is not None):
+            if len(self.history) == len(other.history) and self.history != other.history:
+                return False
+        return True
+
+    def __eq__(self, other):
+        return isinstance(other, Model) and self.equal(other, include_all=True)
+
+    def get_parameters(self, copy=False) -> list[dict]:
+        return [layer.get_parameters(copy=copy) for layer in self.layers]
 
     def set_parameters(self, params: list):
         for layer, param_dict in zip(self.layers, params):
@@ -42,7 +75,7 @@ class Model:
 
     def save_parameters(self, fpath: str):
         with open(fpath, 'wb') as fp:
-            pickle.dump(self.get_parameters(), fp)
+            pickle.dump(self.get_parameters(), fp)  # todo if we introduce multithreading, copy -> True
 
     def load_parameters(self, fpath: str):
         with open(fpath, 'rb') as fp:
@@ -54,7 +87,7 @@ class Model:
             model = pickle.load(fp)
         return model
 
-    def save(self, fpath: str, include_compile_objs=True, include_history=True):
+    def save(self, fpath: str, include_compile_objs=True, include_history=True, serialize_all=False):
         # Detach optimizer, loss and metrics if not requested
         loss, optim, metrics, validation_metrics, history = None, None, None, None, None
         if not include_compile_objs:
@@ -69,6 +102,12 @@ class Model:
         if not include_history:
             history = self.history
             self.history = None
+        # Set/Unset _serialize_all flag for layers if requested
+        for layer in self.layers:
+            if serialize_all:
+                layer.set_serialize_all()
+            else:
+                layer.unset_serialize_all()
         # Serialize model
         with open(fpath, 'wb') as fp:
             pickle.dump(self, fp)
@@ -129,6 +168,7 @@ class Model:
         metrics = [metrics] if isinstance(metrics, Metric) else metrics
         self.train_metrics = metrics if metrics is not None else []  # this ensures "None-safety" for the training loop
         self.validation_metrics = []
+        self.stop_training = False
 
     def _compile_validation_metrics(self, metrics: Metric | Sequence[Metric]):
         metrics = [metrics] if isinstance(metrics, Metric) else metrics
@@ -139,10 +179,10 @@ class Model:
 
     def add_metric(self, metric: Metric):
         self.train_metrics.append(metric)
-        if self.__has_validation_set:
+        if self.has_validation_set:
             self._compile_validation_metrics(metric)
 
-    def __train_epoch_loop(self, train_dataloader, epoch, metric_logs, callbacks, train_mb_losses, mb_num):
+    def __train_epoch_loop(self, train_dataloader, epoch, n_epochs, metric_logs, callbacks, train_mb_losses, mb_num):
         # First, clean all old values for metric_logs and set model to train mode
         metric_logs['training'] = {k: None for k in metric_logs['training']}
         metric_logs['validation'] = {k: None for k in metric_logs['validation']}
@@ -168,6 +208,9 @@ class Model:
         # Callbacks after training epoch
         train_dataloader.after_epoch()
         self.optimizer.after_epoch()
+        # Sets stop_training to True before calling callbacks
+        if epoch == n_epochs - 1:
+            self.stop_training = True
         self.history.after_training_epoch(self, epoch, logs=metric_logs['training'])
         for callback in callbacks:
             callback.after_training_epoch(self, epoch, logs=metric_logs['training'])
@@ -241,9 +284,12 @@ class Model:
         train_mb_losses = np.zeros(mb_num)
 
         # Compile validation metrics if an eval dataset has been passed
-        self.__has_validation_set = eval_exists
-        if self.__has_validation_set:
+        self.has_validation_set = eval_exists
+        if self.has_validation_set:
             self._compile_validation_metrics(self.train_metrics)
+
+        # Resets stop_training to False
+        self.stop_training = False
 
         # Initialize history
         self.history = History(n_epochs=n_epochs)
@@ -257,7 +303,7 @@ class Model:
         metric_logs['training'].update({metric.get_name(): None for metric in self.train_metrics})
 
         # Add validation metrics
-        if self.__has_validation_set:
+        if self.has_validation_set:
             metric_logs['validation']['Val_loss'] = None
             metric_logs['validation'].update({val_metric.get_name(): None for val_metric in self.validation_metrics})
 
@@ -269,7 +315,9 @@ class Model:
             callback.before_training_cycle(self, logs=metric_logs)
 
         for epoch in range(n_epochs):
-            self.__train_epoch_loop(train_dataloader, epoch, metric_logs, callbacks, train_mb_losses, mb_num)
+            if self.stop_training:
+                break
+            self.__train_epoch_loop(train_dataloader, epoch, n_epochs, metric_logs, callbacks, train_mb_losses, mb_num)
             self.__val_epoch_loop(epoch, metric_logs, callbacks, eval_dataloader)
 
         # Callbacks after training cycle

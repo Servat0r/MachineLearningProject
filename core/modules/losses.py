@@ -17,6 +17,11 @@ class Loss:
         else:
             self.reduction = reduction
 
+    def __eq__(self, other):
+        if not isinstance(other, Loss):
+            return False
+        return all([self.dtype == other.dtype, self.reduction == other.reduction])
+
     def __call__(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         """
         Default call, returns raw values from forward pass.
@@ -55,6 +60,14 @@ class CrossEntropyLoss(Loss):   # todo need to check with a classification probl
         self.clip_value = clip_value
         self.func = cf.CategoricalCrossEntropy(self.clip_value)
 
+    def __eq__(self, other):
+        if not isinstance(other, CrossEntropyLoss):
+            return False
+        return all([
+            super(CrossEntropyLoss, self).__eq__(other), self.clip_value == other.clip_value,
+            self.func == other.func,
+        ])
+
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         y = self.func(pred, truth).astype(self.dtype)
         return self.reduce(y)
@@ -73,6 +86,11 @@ class MSELoss(Loss):
         super(MSELoss, self).__init__(reduction=reduction, dtype=dtype)
         self.func = cf.SquaredError(const=const)
 
+    def __eq__(self, other):
+        if not isinstance(other, MSELoss):
+            return False
+        return all([super(MSELoss, self).__eq__(other), self.func == other.func])
+
     def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         return self.reduce(self.func(pred, truth))
 
@@ -87,6 +105,11 @@ class RegularizedLoss(Loss):
     def __init__(self, base_loss: Loss):
         super(RegularizedLoss, self).__init__(dtype=base_loss.dtype)
         self.base_loss = base_loss
+
+    def __eq__(self, other):
+        if not isinstance(other, RegularizedLoss):
+            return False
+        return all([super(RegularizedLoss, self).__eq__(other), self.base_loss == other.base_loss])
 
     def __call__(self, pred: np.ndarray, truth: np.ndarray,
                  layers: Iterable[Layer] = None) -> tuple[np.ndarray, np.ndarray]:

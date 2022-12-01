@@ -69,6 +69,15 @@ class SGD(Optimizer):
         self.lr_decay_scheduler = lr_decay_scheduler
         self.momentum = momentum
 
+    def __eq__(self, other):
+        if not isinstance(other, SGD):
+            return False
+        return all([
+            self.lr == other.lr, self.current_lr == other.current_lr,
+            self.lr_decay_scheduler == other.lr_decay_scheduler,
+            self.momentum == other.momentum,
+        ])
+
     def before_epoch(self):
         if self.lr_decay_scheduler is not None:
             self.current_lr = self.lr_decay_scheduler(self.epoch, self.current_lr)

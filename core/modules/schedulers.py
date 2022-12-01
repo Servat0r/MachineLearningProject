@@ -28,6 +28,14 @@ class LinearDecayScheduler(Scheduler):
             result = round(result, self.round)
         return result
 
+    def __eq__(self, other):
+        if not isinstance(other, LinearDecayScheduler):
+            return False
+        return all([
+            self.start_value == other.start_value, self.end_value == other.end_value,
+            self.max_iter == other.max_iter, self.round == other.round,
+        ])
+
 
 class IterBasedDecayScheduler(Scheduler):   # todo I don't remember the actual name
 
@@ -41,6 +49,13 @@ class IterBasedDecayScheduler(Scheduler):   # todo I don't remember the actual n
         if self.round is not None:
             result = round(result, self.round)
         return result
+
+    def __eq__(self, other):
+        if not isinstance(other, IterBasedDecayScheduler):
+            return False
+        return all([
+            self.decay == other.decay, self.start_value == other.start_value, self.round == other.round
+        ])
 
 
 class ExponentialDecayScheduler(Scheduler):
@@ -56,6 +71,13 @@ class ExponentialDecayScheduler(Scheduler):
         if self.round is not None:
             result = round(result, self.round)
         return result
+
+    def __eq__(self, other):
+        if not isinstance(other, ExponentialDecayScheduler):
+            return False
+        return all([
+            self.start_value == other.start_value, self.alpha == other.alpha, self.round == other.round,
+        ])
 
 
 __all__ = [
