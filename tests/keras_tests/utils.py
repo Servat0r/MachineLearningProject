@@ -1,8 +1,7 @@
-import tensorflow as tf
 import matplotlib.pyplot as plt
 
 
-def keras_plot_losses(history: tf.keras.callbacks.History):
+def keras_plot_losses(history):
     print(history.history.keys())
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])

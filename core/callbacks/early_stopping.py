@@ -16,6 +16,7 @@ class EarlyStopping(Callback):
         self.patience_epochs = 0  # How many epochs have elapsed without improvement
         self.is_val_metric = None   # Whether metric is for training or validation
         self.return_best = return_best
+        self.best_value = None  # Best value for monitored metric (independent from min_delta)
         self.best = None
         self.best_epoch = None
 
@@ -25,14 +26,23 @@ class EarlyStopping(Callback):
         else:
             return target_metric > self.last_value + self.min_delta
 
+    def _is_better(self, target_metric):
+        if self.mode == 'min':
+            return target_metric < self.best_value
+        else:
+            return target_metric > self.best_value
+
     def _main(self, model, epoch, logs=None):
         target_metric = logs.get(self.monitor, None)
-        if (self.last_value is None) or self._is_improving(target_metric):
+        if self.last_value is None:
+            self.last_value = target_metric
+        if self.return_best and ((self.best is None) or self._is_better(target_metric)):
+            self.best = copy.deepcopy(model)
+            self.best_epoch = epoch
+            self.best_value = target_metric
+        if self._is_improving(target_metric):
             self.last_value = target_metric
             self.patience_epochs = 0
-            if self.return_best:
-                self.best = copy.deepcopy(model)
-                self.best_epoch = epoch
         else:
             self.last_value = target_metric
             self.patience_epochs += 1
@@ -62,6 +72,9 @@ class EarlyStopping(Callback):
 
     def get_best_epoch(self):
         return self.best_epoch
+
+    def get_best_value(self):
+        return self.best_value
 
 
 __all__ = [

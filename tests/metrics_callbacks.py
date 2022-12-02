@@ -70,7 +70,7 @@ def test_fully_connected_regularization_metrics_logging(
 
     history_losses = history['loss']
     assert np.equal(history_losses, train_epoch_losses).all()
-    plot_history(start_plot_epoch, eval_epoch_losses, history=history)
+    plot_history(start_plot_epoch, history=history)
 
     # Now test also TestCSVLogger  todo finish!
     model.set_to_test()

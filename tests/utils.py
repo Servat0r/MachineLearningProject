@@ -147,21 +147,32 @@ def plot_losses(start_epoch, train_epoch_losses, eval_epoch_losses=None, other_m
     plt.show()
 
 
-def plot_history(start_epoch, eval_epoch_losses=None, history=None):
-    n_epochs = len(history)
+def plot_history(start_epoch, history, n_epochs=None):
+    n_epochs = len(history) if n_epochs is None else n_epochs
     if start_epoch >= n_epochs:
         raise ValueError(
             f"Starting epoch is higher than the actual number of epochs for which history has valid data:"
             f" expected < {n_epochs}, got {start_epoch}"
         )
     epochs = np.arange(start_epoch, n_epochs)
-    """
-    if eval_epoch_losses is not None:
-        plt.plot(epochs, eval_epoch_losses[start_epoch:], label='val_loss')
-    """
     for metric_name, metric_vals in history.items():
-        # if metric_name.startswith('Val_'):
-        #     continue
+        plt.plot(epochs, metric_vals[start_epoch:n_epochs], label=metric_name)
+    plt.legend()
+    plt.xlabel('Epochs')
+    plt.ylabel('Metrics')
+    plt.show()
+
+
+def keras_plot_history(start_epoch, history, n_epochs):
+    if start_epoch >= n_epochs:
+        raise ValueError(
+            f"Starting epoch is higher than the actual number of epochs for which history has valid data:"
+            f" expected < {n_epochs}, got {start_epoch}"
+        )
+    epochs = np.arange(start_epoch, n_epochs)
+    dict_keys = history.history.keys()
+    for metric_name in dict_keys:
+        metric_vals = history.history[metric_name]
         plt.plot(epochs, metric_vals[start_epoch:n_epochs], label=metric_name)
     plt.legend()
     plt.xlabel('Epochs')

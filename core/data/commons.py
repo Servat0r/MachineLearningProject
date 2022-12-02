@@ -1,4 +1,4 @@
-# Commons datasets and dataloaders
+# Commons datasets and dataloaders: MONKs, ML-CUP, MNIST
 from __future__ import annotations
 import os
 import gzip

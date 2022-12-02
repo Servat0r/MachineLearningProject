@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tests.tensorflow.utils import *
+from tests.keras_tests.utils import *
 from tests.utils import *
 import core.modules as cm
 
@@ -123,6 +123,11 @@ def keras_test_fc_minibatch_model_regularization_lrschedulers(*test_nums: int):
             start=N_SAMPLES,
         )
 
+
+__all__ = [
+    'keras_test_fc_minibatch_model_regularization_lrschedulers',
+    'keras_test_fc_minibatch_model_regularization',
+]
 
 if __name__ == '__main__':
     keras_test_fc_minibatch_model_regularization(0, 1)

@@ -38,6 +38,10 @@ def keras_test_fully_connected_minibatch_model(
     # plot_losses(0, train_epoch_losses, eval_epoch_losses)
 
 
+__all__ = [
+    'keras_test_fully_connected_minibatch_model',
+]
+
 if __name__ == '__main__':
     keras_test_fully_connected_minibatch_model(n_epochs=250, mb_size=10, epoch_shuffle=True, lr=1e-3)
     keras_test_fully_connected_minibatch_model(n_epochs=250, mb_size=10, epoch_shuffle=False, lr=1e-3)
