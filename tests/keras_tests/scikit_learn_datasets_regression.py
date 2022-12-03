@@ -1,12 +1,10 @@
-# Comparison tests on scikit-learn datasets with tests/scikit_learn_datasets.py
+# Comparison tests on scikit-learn datasets with tests/scikit_learn_datasets_regression.py
 from __future__ import annotations
-from sklearn.datasets import load_diabetes, fetch_california_housing                # Regression datasets
-# from sklearn.datasets import load_iris, load_wine, load_files, load_breast_cancer   # Classification datasets
+from sklearn.datasets import load_diabetes, fetch_california_housing  # Regression datasets
 from sklearn.model_selection import train_test_split
 
 from tests.utils import *
 import tensorflow as tf
-# layers = tf.keras.layers
 
 
 def keras_test_diabetes(hidden_sizes=(4,), winit_low=-0.1, winit_high=0.1, epoch_shuffle=True):
@@ -69,7 +67,8 @@ def keras_test_california_housing(hidden_sizes=(4,), winit_low=-0.1, winit_high=
 
     model = tf.keras.Sequential()
     initializer = tf.keras.initializers.RandomUniform(winit_low, winit_high, seed=0)
-    l2_regularizer = tf.keras.regularizers.L2(1e-7)
+    # l2_regularizer = tf.keras.regularizers.L2(1e-7)
+    l2_regularizer = None
     for hsize in hidden_sizes:
         model.add(
             tf.keras.layers.Dense(
@@ -92,6 +91,6 @@ def keras_test_california_housing(hidden_sizes=(4,), winit_low=-0.1, winit_high=
 
 
 if __name__ == '__main__':
-    # keras_test_diabetes(hidden_sizes=(4,))
-    keras_test_california_housing(hidden_sizes=(4,))
+    keras_test_diabetes(hidden_sizes=(4,))
+    # keras_test_california_housing(hidden_sizes=(4,))
     exit(0)

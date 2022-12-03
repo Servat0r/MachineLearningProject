@@ -137,7 +137,30 @@ class TestCSVLogger(BaseCSVLogger):
             self.example += 1
 
 
+class InteractiveLogger(Callback):
+    """
+    Interactive logger to stdout.
+    """
+    def __init__(self):
+        super(InteractiveLogger, self).__init__()
+
+    def before_training_cycle(self, model, logs=None):
+        print('InteractiveLogger started')
+
+    def after_training_epoch(self, model, epoch, logs=None):
+        logstr = ', '.join([f'{k} = {v}' for k, v in logs.items()])
+        print(f'After training epoch {epoch}: [{logstr}]')
+
+    def after_evaluate(self, model, epoch=None, logs=None):
+        logstr = ', '.join([f'{k} = {v}' for k, v in logs.items()])
+        print(f'After evaluate {epoch}: [{logstr}]')
+
+    def after_training_cycle(self, model, logs=None):
+        print(f'Training cycle ended')
+
+
 __all__ = [
     'TrainingCSVLogger',
     'TestCSVLogger',
+    'InteractiveLogger',
 ]

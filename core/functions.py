@@ -33,13 +33,13 @@ class Softmax(Callable):
         # Reshape for summing elements on the ("last two") diagonals
         l, n = y.shape[0], y.shape[2]
         ind = np.array(range(n))
-        y[:, ind, ind] = s[:, 0, ind]
+        y[:, ind, ind] += s[:, 0, ind]
         return y
 
-    def vjp(self, x: np.ndarray, dvals: np.ndarray):
+    def vjp(self, x: np.ndarray, dvals: np.ndarray):    # todo check!
         s = self(x)
         sd = s * dvals
-        sd_sum = np.sum(sd, axis=1, keepdims=True)  # todo check axis!
+        sd_sum = np.sum(sd, axis=-1, keepdims=True)
         return sd - sd_sum * s
 
 
@@ -63,17 +63,20 @@ class CategoricalCrossEntropy(Callable):
             correct_confidences = x_clipped[range(samples), 0, truth]
         elif len(trshape) == 3:  # (l, 1, n)
             filtered_x = x_clipped * truth
-            correct_confidences = np.sum(filtered_x, axis=2)
+            correct_confidences = np.sum(filtered_x, axis=-1)
         negative_log_likelihoods = -np.log(correct_confidences)
         return negative_log_likelihoods
 
     def grad(self, x: np.ndarray, truth: np.ndarray):
-        x_clip = - 1.0 / np.clip(x, self.clip_value, 1 - self.clip_value)   # todo maybe this clip should not occur
+        # x_clip = - 1.0 / np.clip(x, self.clip_value, 1 - self.clip_value)   # todo maybe this clip should not occur
+        x_clip = - 1.0 / x
         trshape = truth.shape
         if len(trshape) == 1:
             # If labels are sparse, turn them into one-hot encoded ones
-            truth = np.eye(x.shape[2])[truth]
-            truth = np.reshape(truth, (trshape[0], 1, x.shape[2]))
+            ohe_truth = np.zeros_like(x_clip)  # (l, 1, n)
+            for i in range(trshape[0]):
+                ohe_truth[i, 0, truth[i]] = 1.
+            truth = ohe_truth
         result = x_clip * truth
         return result
 
@@ -112,6 +115,14 @@ def categorical_accuracy(pred: np.ndarray, truth: np.ndarray, dtype=np.int32) ->
     pred_indexes = np.argmax(pred, axis=-1)
     truth_indexes = np.argmax(truth, axis=-1)
     return np.equal(pred_indexes, truth_indexes).astype(dtype)
+
+
+def sparse_categorical_accuracy(pred: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.ndarray:
+    """
+    Accuracy for integer labels.
+    """
+    pred_indexes = np.argmax(pred, axis=-1).astype(np.int).reshape(truth.shape)
+    return np.equal(pred_indexes, truth).astype(dtype)
 
 
 def binary_accuracy(pred: np.ndarray, truth: np.ndarray, threshold=0.5, dtype=np.int32):
@@ -155,6 +166,7 @@ __all__ = [
     'SquaredError',
     'accuracy',
     'categorical_accuracy',
+    'sparse_categorical_accuracy',
     'binary_accuracy',
     'mean_euclidean_error',
     'root_mean_squared_error',

@@ -1,11 +1,10 @@
 # Base tests on scikit-learn datasets
 from __future__ import annotations
-from sklearn.datasets import load_diabetes, fetch_california_housing                # Regression datasets
-# from sklearn.datasets import load_iris, load_wine, load_files, load_breast_cancer   # Classification datasets
+from sklearn.datasets import load_diabetes, fetch_california_housing  # Regression datasets
 from sklearn.model_selection import train_test_split
 
 from tests.utils import *
-from core.callbacks import TrainingCSVLogger, EarlyStopping, OptimizerMonitor
+from core.callbacks import TrainingCSVLogger, EarlyStopping, OptimizerMonitor, InteractiveLogger
 from core.metrics import MEE, RMSE, Timing
 from core.data import ArrayDataset, DataLoader
 import core.utils as cu
@@ -58,7 +57,7 @@ def test_diabetes(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=Tr
     early_stopping = EarlyStopping(monitor='Val_RMSE', min_delta=1e-3, patience=100, return_best=True)
     history = model.train(
         train_dataloader, eval_dataloader, n_epochs=1000, callbacks=[
-            TrainingCSVLogger(round_val=8), OptimizerMonitor(optim_state), early_stopping
+            TrainingCSVLogger(round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
         ]
     )
     print(f'Training stopped at epoch {len(history)}, '
@@ -97,7 +96,7 @@ def test_california_housing(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_
     early_stopping = EarlyStopping(monitor='Val_RMSE', min_delta=1e-3, patience=100, return_best=True)
     history = model.train(
         train_dataloader, eval_dataloader, n_epochs=1000, callbacks=[
-            TrainingCSVLogger(round_val=8), OptimizerMonitor(optim_state), early_stopping
+            TrainingCSVLogger(round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
         ]
     )
     print(f'Training stopped at epoch {len(history)}, '
@@ -108,6 +107,6 @@ def test_california_housing(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_
 
 
 if __name__ == '__main__':
-    # test_diabetes(hidden_sizes=(4,))
-    test_california_housing(hidden_sizes=(4,))
+    test_diabetes(hidden_sizes=(4,))
+    # test_california_housing(hidden_sizes=(4,))
     exit(0)

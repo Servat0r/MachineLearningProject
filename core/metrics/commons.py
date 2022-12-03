@@ -60,6 +60,19 @@ class CategoricalAccuracy(LambdaFunctionMetric):
         )
 
 
+class SparseCategoricalAccuracy(LambdaFunctionMetric):
+    """
+    Accuracy metric for integer labels.
+    """
+    def lambda_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return sparse_categorical_accuracy(pred, truth, dtype=self.dtype)
+
+    def __init__(self, dtype=np.float64):
+        super(SparseCategoricalAccuracy, self).__init__(
+            func=sparse_categorical_accuracy, batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype,
+        )
+
+
 class BinaryAccuracy(LambdaFunctionMetric):
 
     def lambda_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
@@ -140,6 +153,7 @@ __all__ = [
     'Accuracy',
     'BinaryAccuracy',
     'CategoricalAccuracy',
+    'SparseCategoricalAccuracy',
     'MeanSquaredError',
     'MeanEuclideanError',
     'RootMeanSquaredError',
