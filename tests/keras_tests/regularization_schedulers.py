@@ -1,6 +1,5 @@
 import tensorflow as tf
-from tests.keras_tests.utils import *
-from tests.utils import *
+from tests import *
 import core.modules as cm
 
 

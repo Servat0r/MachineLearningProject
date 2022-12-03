@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tests.utils import *
+from tests import *
 
 
 layers = tf.keras.layers

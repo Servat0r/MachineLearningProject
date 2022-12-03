@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .utils import *
+from tests.utils import *
 import core.modules as cm
 from core.callbacks import OptimizerMonitor
 

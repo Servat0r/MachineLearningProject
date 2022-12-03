@@ -1,11 +1,11 @@
 # Base tests on scikit-learn datasets
 from __future__ import annotations
-from sklearn.datasets import load_iris, load_wine, load_breast_cancer, fetch_covtype  # Classification datasets
+from sklearn.datasets import load_iris, load_breast_cancer, fetch_covtype  # Classification datasets
 from sklearn.model_selection import train_test_split
 
 from tests.utils import *
 from core.callbacks import TrainingCSVLogger, EarlyStopping, OptimizerMonitor, InteractiveLogger
-from core.metrics import Timing, SparseCategoricalAccuracy
+from core.metrics import SparseCategoricalAccuracy
 from core.data import ArrayDataset, DataLoader
 import core.utils as cu
 import core.modules as cm

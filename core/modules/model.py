@@ -3,13 +3,13 @@ from __future__ import annotations
 import pickle
 import copy
 
-from ..utils import *
+from core.utils import *
+from core.data import *
 from .layers import *
 from .losses import *
 from .optimizers import *
 from ..metrics import *
 from ..callbacks import *
-from ..data import *
 
 
 class Model:

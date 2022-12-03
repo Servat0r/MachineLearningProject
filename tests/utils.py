@@ -1,3 +1,5 @@
+import os.path
+
 from core.utils import np
 from core.data import ArrayDataset
 import matplotlib.pyplot as plt
@@ -177,6 +179,26 @@ def keras_plot_history(start_epoch, history, n_epochs):
     plt.legend()
     plt.xlabel('Epochs')
     plt.ylabel('Metrics')
+    plt.show()
+
+
+def plot_metrics(
+        history, metrics_names, save_path, n_epochs=None, xlabel='Epochs', ylabel='Metrics', makedirs=True,
+):
+    n_epochs = len(history) if n_epochs is None else n_epochs
+    epochs = np.arange(n_epochs)
+    for metric_name, metric_vals in history.items():
+        if metric_name in metrics_names:
+            plt.plot(epochs, metric_vals[:n_epochs], label=metric_name)
+    plt.legend()
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.grid(visible=True, which='major')
+    if makedirs:
+        # Create directory for saving plot file
+        dirname = os.path.dirname(save_path)
+        os.makedirs(dirname, exist_ok=True)
+    plt.savefig(save_path)
     plt.show()
 
 

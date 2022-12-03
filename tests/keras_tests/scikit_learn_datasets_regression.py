@@ -3,7 +3,7 @@ from __future__ import annotations
 from sklearn.datasets import load_diabetes, fetch_california_housing  # Regression datasets
 from sklearn.model_selection import train_test_split
 
-from tests.utils import *
+from tests import *
 import tensorflow as tf
 
 

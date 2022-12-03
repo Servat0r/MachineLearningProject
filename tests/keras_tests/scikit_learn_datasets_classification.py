@@ -1,10 +1,10 @@
 # Comparison tests on scikit-learn datasets with tests/scikit_learn_datasets_regression.py
 from __future__ import annotations
-from sklearn.datasets import load_iris, load_wine, load_breast_cancer, fetch_covtype  # Classification datasets
+from sklearn.datasets import load_breast_cancer, fetch_covtype  # Classification datasets
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from tests.utils import *
+from tests import *
 import tensorflow as tf
 
 
