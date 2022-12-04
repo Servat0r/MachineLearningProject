@@ -24,7 +24,7 @@ class ModelCheckpoint(Callback):
         print(f'Saved model after training cycle')
 
     def __save_model(self, model):
-        model.set_to_eval()
+        model.set_to_eval()  # to exclude weights / biases updates (epoch/cycle is ended)
         model.save(self.file_path, include_compile_objs=False, include_history=self.save_history)
 
 
@@ -47,7 +47,8 @@ class ModelBackup(Callback):
         print(f'Saved model after training cycle')
 
     def __save_model(self, model):
-        # For saving also updating status (todo modify linear layer for saving momentums)
+        # serialize_all = True for saving also updating status
+        # todo modify linear layer for saving momentums
         model.save(self.file_path, include_compile_objs=True, include_history=True, serialize_all=True)
 
 

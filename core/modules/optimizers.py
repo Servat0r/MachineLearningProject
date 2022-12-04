@@ -41,7 +41,8 @@ class Optimizer:
 
     def update_regularization_values(self, layers):
         """
-        Subroutine for handling regularization terms in updating.
+        After having updated "standard delta values", add regularization
+        (penalization) term to layers' weights.
         """
         pass
 
@@ -63,6 +64,12 @@ class Optimizer:
 class SGD(Optimizer):
 
     def __init__(self, lr=0.1, lr_decay_scheduler: Scheduler = None, momentum=0.):
+        """
+        :param lr: Initial learning rate.
+        :param lr_decay_scheduler: A Scheduler (function) of the form
+        (iteration, current_value) -> next_value to be used for
+        learning rate decay.
+        """
         super(SGD, self).__init__()
         self.initial_learning_rate = lr
         self.current_learning_rate = lr
@@ -105,6 +112,21 @@ class SGD(Optimizer):
         else:
             raise TypeError(f"Invalid type {type(layers)}: allowed ones are {Layer} or {Iterable[Layer]}")
 
+    def update_body(self, layers: Layer | Iterable):
+        if isinstance(layers, Dense):
+            self.update_body(layers.linear)
+        elif isinstance(layers, Layer):
+            if isinstance(layers, Linear) and layers.is_trainable():
+                if self.momentum:
+                    self.__update_body_momentum(layers)
+                else:
+                    self.__update_body_no_momentum(layers)
+        elif isinstance(layers, Iterable):
+            for layer in layers:
+                self.update_body(layer)
+        else:
+            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are {Layer} or {Iterable[Layer]}")
+
     def __update_body_momentum(self, layer):
         if hasattr(layer, 'weight_momentums'):
             weight_updates = self.momentum * layer.weight_momentums - self.current_learning_rate * layer.delta_weights
@@ -123,21 +145,6 @@ class SGD(Optimizer):
 
         layer.weights += weight_updates
         layer.biases += bias_updates
-
-    def update_body(self, layers: Layer | Iterable):
-        if isinstance(layers, Dense):
-            self.update_body(layers.linear)
-        elif isinstance(layers, Layer):
-            if isinstance(layers, Linear) and layers.is_trainable():
-                if self.momentum:
-                    self.__update_body_momentum(layers)
-                else:
-                    self.__update_body_no_momentum(layers)
-        elif isinstance(layers, Iterable):
-            for layer in layers:
-                self.update_body(layer)
-        else:
-            raise TypeError(f"Invalid type {type(layers).__name__}: allowed ones are {Layer} or {Iterable[Layer]}")
 
     def to_log_dict(self) -> TDesc:
         return {

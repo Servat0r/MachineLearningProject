@@ -11,6 +11,11 @@ class Loss:
     REDUCTIONS = {'none', 'mean', 'sum'}
 
     def __init__(self, reduction='mean', dtype=np.float64):
+        """
+        :param reduction: Reduction to apply to calculated values for each example.
+        If 'mean', applies np.mean(); if 'sum', applies np.sum(); otherwise, no
+        reduction is applied.
+        """
         self.dtype = dtype
         if reduction is not None and reduction not in self.REDUCTIONS:
             raise ValueError(f"Unknown reduction type '{reduction}'")
@@ -51,7 +56,7 @@ class Loss:
             return y.astype(self.dtype)
 
 
-class CrossEntropyLoss(Loss):   # todo need to check with a classification problem
+class CrossEntropyLoss(Loss):
     """
     Categorical Cross Entropy Loss. Note that this class does NOT include a Softmax layer.
     """
@@ -78,8 +83,7 @@ class CrossEntropyLoss(Loss):   # todo need to check with a classification probl
 
 class MSELoss(Loss):
     """
-    Mean Squared Error Loss over a batch of training examples. Its .forward(...)
-    method is equivalent to SquaredErrorLoss.mean(...).
+    Mean Squared Error Loss over a batch of training examples.
     """
 
     def __init__(self, const=0.5, reduction='mean', dtype=np.float64):
@@ -100,7 +104,12 @@ class MSELoss(Loss):
 
 class RegularizedLoss(Loss):
     """
-    A loss with a regularization term.
+    A loss with a regularization term. This loss behaves by wrapping a "base" one
+    and returning a couple (data_loss, regularization_loss) each time it is called
+    with __call__() of forward(). Regularization term is calculated by scanning a
+    layer or a sequence of layers given as third parameter to the previous methods
+    and summing up updates given by all regularizers associated with them.
+    Backpropagation of regularization terms is left to layers themselves for simplicity.
     """
     def __init__(self, base_loss: Loss):
         super(RegularizedLoss, self).__init__(dtype=base_loss.dtype)
@@ -116,6 +125,10 @@ class RegularizedLoss(Loss):
         return self.forward(predicted, truth, layers)
 
     def regularization_loss(self, layers: Layer | Iterable[Layer]) -> np.ndarray:
+        """
+        Computes regularization term given a set of layers as described
+        in class documentation.
+        """
         if isinstance(layers, Dense):
             # Only linear layer inside a Dense has regularization term
             return self.regularization_loss(layers.linear)

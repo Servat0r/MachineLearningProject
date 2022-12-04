@@ -8,6 +8,17 @@ from .base import *
 class EarlyStopping(Callback):
 
     def __init__(self, monitor='Val_loss', min_delta=0, patience=0, mode='min', return_best_result=False):
+        """
+        :param monitor: Which metric to monitor.
+        :param min_delta: Minimum difference from previous metric value and current one to consider new value
+        an improvement (this prevents to fit when improvements are too much small). Defaults to 0.
+        :param patience: Maximum number of epochs that can elapse without an improvement (as defined above)
+        before this callback stops model training. Defaults to 0.
+        :param mode: 'min' for a metric that shall be minimized (e.g. MEE), 'max' if metric shall be maximized
+        (e.g. accuracy).
+        :param return_best_result: If True, attributes 'best_metric_value', 'best_model', 'best_epoch' will be
+        filled during training loop and available at the end. Defaults to False.
+        """
         self.monitor = monitor
         self.min_delta = abs(min_delta)
         self.patience = patience
@@ -49,16 +60,22 @@ class EarlyStopping(Callback):
             self.elapsed_patience_epochs = 0
         else:
             self.elapsed_patience_epochs += 1
-            if self.elapsed_patience_epochs >= self.patience:  # todo >= or > ?
+            if self.elapsed_patience_epochs > self.patience:
                 model.stop_training = True
 
     def _is_better(self, target_metric):
+        """
+        Defines if a metric value is better (< or >) than the *best* one (regardless of min_delta).
+        """
         if self.mode == 'min':
             return target_metric < self.best_metric_value
         else:
             return target_metric > self.best_metric_value
 
     def _is_improving(self, target_metric):
+        """
+        Defines if a metric value is better (< or >) than the *last* one, including min_delta.
+        """
         if self.mode == 'min':
             return target_metric + self.min_delta < self.last_value_recorded
         else:

@@ -1,5 +1,8 @@
 # Base layers for a Neural Network
 from __future__ import annotations
+
+import numpy as np
+
 from core.utils import *
 import core.functions as cf
 from core.modules.regularization import *
@@ -19,6 +22,18 @@ class Layer:
         self._serialize_all = None
 
     def equals(self, other, include_updates=False, include_all=False):
+        """
+        Base utility method to check equality between two layers by discriminating
+            1) case when updates are not of concern (e.g. after training);
+            2) case when updates are of concern but input/output not;
+            3) case when both updates and input/output are of concern (e.g. a backup).
+
+        todo actually it does NOT work properly for input / output (now they are not saved)
+
+        :param other: Other layer for verifying equality.
+        :param include_updates: For case 2) (used in subclasses).
+        :param include_all: For case 3) (used in subclasses).
+        """
         # include_all overwrites include_updates
         if not isinstance(other, type(self)):
             return False
@@ -28,6 +43,9 @@ class Layer:
         return check
 
     def _init_unpickled_parameters(self):
+        """
+        Re-initialization of parameters that are not serialized by Model.save().
+        """
         self.input = None
         self.output = None
 
@@ -66,6 +84,10 @@ class Layer:
         return {}   # By default, no parameters for this layer
 
     def set_parameters(self, parameter_dict: dict):
+        """
+        Sets layer parameters from a given dictionary, whose syntax **must** respect that
+        of get_parameters().
+        """
         if not isinstance(parameter_dict, dict):
             raise TypeError(f"Wrong type {type(parameter_dict)} when setting parameters for {self}")
         for parameter_name, parameter_value in parameter_dict.items():
@@ -107,13 +129,19 @@ class Layer:
     def forward(self, x: np.ndarray) -> np.ndarray:
         """
         Forward pass of the current level.
-        :param x:
-        :return:
+        :param x: Input values as (l, 1, n) numpy array
+        (l = number of examples, n = input dimension).
         """
         pass
 
     @abstractmethod
     def backward(self, delta_vals: np.ndarray):
+        """
+        Backward pass of the current level.
+        :param delta_vals: "Differential" values of the successive layer
+        (in terms of the computational graph associated to the network).
+        :return "Differential" values for the previous layer.
+        """
         pass
 
     def clear(self):
@@ -197,7 +225,9 @@ class Linear(Layer):
         check = super(Linear, self).equals(other, include_updates, include_all)
         if not check or not isinstance(other, Linear):
             return False
+        # Case 3) includes Case 2)
         include_updates = True if include_all else include_updates
+        # Base checks (Case 1)
         check = [
             self.in_features == other.in_features, self.out_features == other.out_features,
             np.equal(self.weights, other.weights).all(), np.equal(self.biases, other.biases).all(),
@@ -208,6 +238,7 @@ class Linear(Layer):
         if not all(check):
             return False
         if include_updates:
+            # Checks for Case 2)
             check = [
                 np.equal(self.delta_weights, other.delta_weights).all(), np.equal(self.delta_biases, other.delta_biases).all(),
                 np.equal(self.weight_momentums, other.weight_momentums).all(),
@@ -254,6 +285,7 @@ class Linear(Layer):
 
     def __getstate__(self):
         state = super(Linear, self).__getstate__()
+        # Attributes that are ALWAYS saved (Case 1)
         state.update({
             'weights': self.weights,
             'biases': self.biases,
@@ -265,6 +297,8 @@ class Linear(Layer):
             'biases_regularizer': self.biases_regularizer,      # todo getstate?
         })
         if self.is_training() or self._serialize_all:
+            # Attributes that are saved ONLY if model is layer is in
+            # a training loop or if requested by the caller (Cases 2-3)
             state.update({
                 'delta_weights': self.delta_weights,
                 'delta_biases': self.delta_biases,
@@ -293,9 +327,9 @@ class Linear(Layer):
                              f"(l > 0, 1, {self.in_features}), got {x.shape}.")
         shape = (x.shape,) if isinstance(x.shape, int) else x.shape
         if len(shape) == 1:
-            return x.reshape((shape[0], 1, 1))
+            return np.expand_dims(x, axes=[1, 2])  # todo check if it overlows with axes (not clear from numpy doc)
         elif len(shape) == 2:
-            return x.reshape((shape[0], 1, shape[1]))
+            return np.expand_dims(x, axis=1)
         else:
             return x
 
@@ -304,7 +338,6 @@ class Linear(Layer):
         self.output = self.input @ self.weights + self.biases
         return self.output
 
-    # noinspection PyAttributeOutsideInit
     def backward(self, delta_vals: np.ndarray):
         # We don't want to compute updates if we are not training the model!
         if self.is_training():
@@ -434,7 +467,7 @@ class SoftmaxLayer(Activation):
 
 class Dense(Layer):
     """
-    A fully-connected layer with activation function for all the neurons.
+    A fully-connected layer with activation function for all the units.
     """
     def __init__(
             self, in_features: int, out_features: int, activation_layer: Activation,
@@ -462,11 +495,12 @@ class Dense(Layer):
         if not all(check):
             return False
         if include_updates:
+            # self.net actually contains an intermediate input
             return np.equal(self.net, other.net).all()
         return True
 
-    # Methods below (set_to_train, ..., unfreeze_layer) ensure that training and freeze state
-    # is maintained consistently with the underlying linear and activation layer
+    # Methods below (set_serialize_all, ..., unfreeze_layer) ensure that training, serialization
+    # and freeze state is maintained consistently with the underlying linear and activation layer
 
     def set_serialize_all(self):
         self.linear.set_serialize_all()

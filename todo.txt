@@ -84,7 +84,7 @@ UNDONE:
     1b. (add also Linear Activation Layer?)
 
     2. Check CrossEntropy Loss and Softmax with (even) a small dataset to see what happens when training/validating
-    (e.g. MNIST or MONKs)
+    (e.g. MONKs)
 
     6. Add Fan-in initialization (basically, extend RandomUniformInitializer or directly pass np.sqrt(#units) to it)
 

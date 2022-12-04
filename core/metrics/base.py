@@ -49,6 +49,15 @@ class FunctionMetric(Metric):
                  whole_reduction: Callable[[np.ndarray], np.ndarray] = np.mean,
                  # By default, we take the mean of all batch values
                  dtype=np.float64):
+        """
+        :param func: Function of the form (predictions, truth) -> result to be wrapped
+        by this metric.
+        :param batch_reduction: Function to apply to raw values given by the metric for each
+        example in the current minibatch to return a unique value for the current minibatch.
+        :param whole_reduction: The same as batch_reduction, but applied to values given
+        by batch_reduction for each minibatch to return a unique value for the current epoch.
+        :param dtype: Numpy datatype to be used for input and output values. Defaults to float64.
+        """
         super(FunctionMetric, self).__init__(dtype=dtype)
         self.func = func
         self.batch_reduction = batch_reduction

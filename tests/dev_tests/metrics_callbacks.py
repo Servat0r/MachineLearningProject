@@ -56,7 +56,7 @@ def test_fully_connected_regularization_metrics_logging(
     optim_monitor = cc.OptimizerMonitor(optimizer_state)
     history = model.train(
         train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[
-            cc.TrainingCSVLogger(train_file_path=train_log_file, float_round_val=round_val, include_minibatch_logging=include_mb),
+            cc.TrainingCSVLogger(train_file_name=train_log_file, float_round_val=round_val, include_minibatch_logging=include_mb),
             optim_monitor,
         ],
     )
@@ -99,7 +99,7 @@ def test_model_checkpoint_and_backup(
     model.compile(optimizer=optimizer, loss=loss_function, metrics=metrics)
     history = model.train(
         train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[
-            cc.TrainingCSVLogger(train_file_path=train_log_file, float_round_val=round_val, include_minibatch_logging=True),
+            cc.TrainingCSVLogger(train_file_name=train_log_file, float_round_val=round_val, include_minibatch_logging=True),
             cc.ModelCheckpoint(file_path=model_checkpoint_fpath, save_every=save_every),
             cc.ModelBackup(file_path=model_backup_fpath, save_every=save_every),
             WaitKey(wait_every=save_every, prompt='Press any key to continue ...'),
@@ -133,7 +133,7 @@ def test_early_stopping(
     early_stopping = cc.EarlyStopping(monitor, min_delta, patience, mode, return_best_result=True)
     history = model.train(
         train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[
-            cc.TrainingCSVLogger(train_file_path=train_log_file, float_round_val=round_val, include_minibatch_logging=True),
+            cc.TrainingCSVLogger(train_file_name=train_log_file, float_round_val=round_val, include_minibatch_logging=True),
             early_stopping,
         ],
     )

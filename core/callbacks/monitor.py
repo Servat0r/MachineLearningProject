@@ -9,9 +9,9 @@ class OptimizerMonitor(Callback):
     Monitors optimizer state, i.e. fills a list with dict containing
     optimizer states and (optionally) logs them into a JSON file.
     """
-    def __init__(self, target_list: list, target_fpath: str = None, overwrite=True):
+    def __init__(self, target_list: list, target_file_path: str = None, overwrite=True):
         self.target_list = target_list
-        self.target_file_path = target_fpath
+        self.target_file_path = target_file_path
         self.target_fp = None
         self.overwrite = overwrite
 
@@ -38,10 +38,10 @@ class OptimizerMonitor(Callback):
         self.open()
 
     def after_training_epoch(self, model, epoch, logs=None):
-        optim_log_dict = model.optimizer.to_log_dict()
+        optimizer_log_dict = model.optimizer.to_log_dict()
         msg = {
             'epoch': epoch,
-            'state': optim_log_dict,
+            'state': optimizer_log_dict,
         }
         self.target_list.append(msg)
 

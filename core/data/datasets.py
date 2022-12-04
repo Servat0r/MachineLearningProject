@@ -28,8 +28,8 @@ class ArrayDataset(BaseDataset):
     """
     def __init__(self, x: np.ndarray, y: np.ndarray):
         """
-        :param x: Input data; first shape value is always treated as number of elements.
-        :param y: Input labels first shape value is always treated as number of elements
+        :param x: Input data. First shape value is always treated as number of elements.
+        :param y: Input labels. First shape value is always treated as number of elements
         and must be equal to the correspondent for x.
         """
         x_shape, y_shape = x.shape, y.shape

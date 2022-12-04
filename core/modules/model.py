@@ -93,6 +93,13 @@ class Model:
         return model
 
     def save(self, file_path: str, include_compile_objs=True, include_history=True, serialize_all=False):
+        """
+        Saves model to a given file using pickle for serialization.
+        :param file_path: Path of the file to which the model will be saved.
+        :param include_compile_objs: If True, saves also optimizer, loss and training/validation metrics.
+        :param include_history: If True, saves also current history.
+        :param serialize_all: If True, saves layers with Layer._serialize_all enabled.
+        """
         # Detach optimizer, loss and metrics if not requested
         loss, optimizer, metrics, validation_metrics, history = None, None, None, None, None
         if not include_compile_objs:
@@ -126,11 +133,19 @@ class Model:
             self.history = history
 
     def set_to_train(self):
+        """
+        Sets flags for indicating that the model is ready to train.
+        """
         self.__is_training = True
         for layer in self.layers:
             layer.set_to_train()
 
     def set_to_eval(self, detach_history=False):
+        """
+        Resets flags that indicate that the model is ready to train
+        for indicating that it is ready for validation / test.
+        :param detach_history: If True, detaches self.history.
+        """
         self.__is_training = False
         for layer in self.layers:
             layer.set_to_eval()
@@ -141,7 +156,9 @@ class Model:
         return None
 
     def set_to_test(self):
-        # Convenient alias for set_to_eval(detach_history=True)
+        """
+        Convenient alias for set_to_eval(detach_history=True).
+        """
         return self.set_to_eval(detach_history=True)
 
     def is_training(self):
@@ -179,15 +196,19 @@ class Model:
         self.validation_metrics = []
         self.stop_training = False
 
-    def add_metric(self, metric: Metric):
-        self.train_metrics.append(metric)
-        if self.has_validation_set:
-            self._compile_validation_metrics(metric)
-
     def train(
             self, train_dataloader: DataLoader, eval_dataloader: DataLoader = None,
             max_epochs: int = 1, callbacks: Callback | Sequence[Callback] = None,
     ):
+        """
+        Main training (and validation) loop.
+        :param train_dataloader: DataLoader for training data.
+        :param eval_dataloader: DataLoader for validation data.
+        :param max_epochs: Maximum number of epochs for training.
+        :param callbacks: Callbacks to be passed for customizing behavior.
+        :return: A `core.utils.History` object containing training
+        and validation results.
+        """
         validation_set_exists = eval_dataloader is not None
         callbacks = [] if callbacks is None else callbacks
         minibatch_number = train_dataloader.get_batch_number()
@@ -241,6 +262,9 @@ class Model:
         return self.history
 
     def _compile_validation_metrics(self, metrics: Metric | Sequence[Metric]):
+        """
+        Fills `self.validation_metrics` during training loop by using the given ones.
+        """
         metrics = [metrics] if isinstance(metrics, Metric) else metrics
         for metric in metrics:
             val_metric = copy.deepcopy(metric)  # todo maybe a clone method is better
@@ -250,6 +274,10 @@ class Model:
     def __train_epoch_loop(
             self, train_dataloader, epoch, max_epochs, metric_logs, callbacks, train_minibatch_losses, minibatch_number
     ):
+        """
+        Main training loop for a single epoch. Parameters have same names
+        of the corresponding variables in `self.train()`.
+        """
         # First, clean all old values for metric_logs and set model to train mode
         metric_logs['training'] = {k: None for k in metric_logs['training']}
         metric_logs['validation'] = {k: None for k in metric_logs['validation']}
@@ -287,6 +315,10 @@ class Model:
     def __train_minibatch_loop(
             self, train_dataloader, epoch, minibatch, metric_logs, callbacks, train_minibatch_losses
     ):
+        """
+        Main training loop for a single minibatch. Parameters have same names
+        of the corresponding variables in `self.train()`.
+        """
         minibatch_data = next(train_dataloader)
         input_minibatch, target_minibatch = minibatch_data[0], minibatch_data[1]
         # Callbacks before training batch
@@ -317,6 +349,10 @@ class Model:
             callback.after_training_batch(self, epoch, minibatch, logs=metric_logs['training'])
 
     def __val_epoch_loop(self, epoch, metric_logs, callbacks, eval_dataloader=None):
+        """
+        Main validation loop for a single epoch. Parameters have same names
+        of the corresponding variables in `self.train()`.
+        """
         validation_set_exists = eval_dataloader is not None
         # Set model to eval mode (useful e.g. for ModelCheckpoint callback independently from validation)
         self.set_to_eval()
@@ -346,8 +382,10 @@ class Model:
             # Now update history with validation data
             self.history.after_evaluate(self, epoch, logs=metric_logs['validation'])
 
-    # Utility method for more clariness when using model for predictions
     def predict(self, x: np.ndarray):
+        """
+        Utility method for better readability when using model for predictions
+        """
         self.set_to_eval()
         return self.forward(x)
 

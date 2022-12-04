@@ -7,6 +7,11 @@ from .base import *
 
 
 class LambdaFunctionMetric(FunctionMetric):
+    """
+    Utility class for a FunctionMetric based on a function which is defined with some
+    more parameters than (predicted, truth), but such that they can be fixed once for
+    the entire lifecycle (e.g. datatype).
+    """
 
     @abstractmethod
     def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
@@ -28,7 +33,13 @@ class LambdaFunctionMetric(FunctionMetric):
     def __eq__(self, other):
         if not isinstance(other, LambdaFunctionMetric):
             return False
+        if not isinstance(other, type(self)):
+            return False
         self_dict, other_dict = self.__dict__.copy(), other.__dict__.copy()
+        # self.func and other.func actually are bound methods rather than "pure" functions.
+        # Without excluding them, == will always give False.
+        # Since we check that self and other are of the same type, for these simple cases
+        # this implies that also functions are the same, except for extra arguments.
         self_dict.pop('func')
         other_dict.pop('func')
         return self_dict == other_dict
@@ -125,7 +136,9 @@ RMSE = RootMeanSquaredError
 
 
 class Timing(FunctionMetric):
-
+    """
+    A metric that monitors elapsed time for each training step.
+    """
     PRECISIONS = {'s', 'ns'}  # 's' -> perf_counter(), 'ns' -> perf_counter_ns()
 
     def get_time(self):
@@ -138,6 +151,10 @@ class Timing(FunctionMetric):
         return np.sum([self.get_time() - self.start_time], dtype=self.dtype)
 
     def __init__(self, precision=None, dtype=np.float64):
+        """
+        :param precision: If 's', a perf_counter() will be used for calculating time;
+        otherwise, if 'ns', a pref_counter_ns() will be used.
+        """
         precision = 's' if precision is None else precision
         if precision not in self.PRECISIONS:
             raise ValueError(f"Invalid precision value '{precision}': expected one of 's', 'ns'")
