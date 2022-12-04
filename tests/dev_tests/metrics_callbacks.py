@@ -23,7 +23,7 @@ def test_fully_connected_minibatch_regularization_metrics(
     optimizer_state = []
     optim_monitor = cc.OptimizerMonitor(optimizer_state)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[optim_monitor],
+        train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[optim_monitor],
     )
     train_epoch_losses, eval_epoch_losses = history['loss'], history['Val_loss']
     for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
@@ -55,8 +55,8 @@ def test_fully_connected_regularization_metrics_logging(
     optimizer_state = []
     optim_monitor = cc.OptimizerMonitor(optimizer_state)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[
-            cc.TrainingCSVLogger(train_fpath=train_log_file, round_val=round_val, include_mb=include_mb),
+        train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[
+            cc.TrainingCSVLogger(train_file_path=train_log_file, float_round_val=round_val, include_minibatch_logging=include_mb),
             optim_monitor,
         ],
     )
@@ -98,10 +98,10 @@ def test_model_checkpoint_and_backup(
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function, metrics=metrics)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[
-            cc.TrainingCSVLogger(train_fpath=train_log_file, round_val=round_val, include_mb=True),
-            cc.ModelCheckpoint(fpath=model_checkpoint_fpath, save_every=save_every),
-            cc.ModelBackup(fpath=model_backup_fpath, save_every=save_every),
+        train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[
+            cc.TrainingCSVLogger(train_file_path=train_log_file, float_round_val=round_val, include_minibatch_logging=True),
+            cc.ModelCheckpoint(file_path=model_checkpoint_fpath, save_every=save_every),
+            cc.ModelBackup(file_path=model_backup_fpath, save_every=save_every),
             WaitKey(wait_every=save_every, prompt='Press any key to continue ...'),
         ],
     )
@@ -130,10 +130,10 @@ def test_early_stopping(
     loss_function = cm.MSELoss(reduction='mean')
     # Use Model class for training and epoch losses recording
     model.compile(optimizer=optimizer, loss=loss_function, metrics=metrics)
-    early_stopping = cc.EarlyStopping(monitor, min_delta, patience, mode, return_best=True)
+    early_stopping = cc.EarlyStopping(monitor, min_delta, patience, mode, return_best_result=True)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[
-            cc.TrainingCSVLogger(train_fpath=train_log_file, round_val=round_val, include_mb=True),
+        train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[
+            cc.TrainingCSVLogger(train_file_path=train_log_file, float_round_val=round_val, include_minibatch_logging=True),
             early_stopping,
         ],
     )

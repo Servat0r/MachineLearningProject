@@ -43,7 +43,7 @@ def test_separated(func=arange_square_data, lr=0.001):
                   f'loss: {loss.item():.4f} (' +
                   f'data_loss: {data_loss.item():.4f}, ' +
                   # f'reg_loss: {regularization_loss:.8f}), ' +
-                  f'lr: {optimizer.current_lr}')
+                  f'lr: {optimizer.current_learning_rate}')
 
         # Backward pass
         dvals = loss_function.backward(linear3.output, y)
@@ -72,7 +72,7 @@ def test_fully_connected_minibatch_model(
     optimizer_state = []
     optim_monitor = OptimizerMonitor(optimizer_state)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[optim_monitor],
+        train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[optim_monitor],
     )
     train_epoch_losses, eval_epoch_losses = history['loss'], history['Val_loss']
     for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \

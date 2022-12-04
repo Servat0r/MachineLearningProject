@@ -54,16 +54,16 @@ def test_diabetes(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=Tr
         optimizer, loss, metrics=[MEE(), RMSE(), Timing()]
     )
     optim_state = []
-    early_stopping = EarlyStopping(monitor='Val_RMSE', min_delta=1e-3, patience=100, return_best=True)
+    early_stopping = EarlyStopping(monitor='Val_RMSE', min_delta=1e-3, patience=100, return_best_result=True)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=1000, callbacks=[
-            TrainingCSVLogger(round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
+        train_dataloader, eval_dataloader, max_epochs=1000, callbacks=[
+            TrainingCSVLogger(float_round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
         ]
     )
     print(f'Training stopped at epoch {len(history)}, '
           f'best model reached at {early_stopping.get_best_epoch()} '
           f'with a value of {early_stopping.get_best_value()} '
-          f'(last reference value is = {early_stopping.last_value} with min delta = {early_stopping.min_delta})')
+          f'(last reference value is = {early_stopping.last_value_recorded} with min delta = {early_stopping.min_delta})')
     plot_history(0, history=history)
 
 
@@ -93,16 +93,16 @@ def test_california_housing(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_
         optimizer, loss, metrics=[MEE(), RMSE(), Timing()]
     )
     optim_state = []
-    early_stopping = EarlyStopping(monitor='Val_RMSE', min_delta=1e-3, patience=100, return_best=True)
+    early_stopping = EarlyStopping(monitor='Val_RMSE', min_delta=1e-3, patience=100, return_best_result=True)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=1000, callbacks=[
-            TrainingCSVLogger(round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
+        train_dataloader, eval_dataloader, max_epochs=1000, callbacks=[
+            TrainingCSVLogger(float_round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
         ]
     )
     print(f'Training stopped at epoch {len(history)}, '
           f'best model reached at {early_stopping.get_best_epoch()} '
           f'with a value of {early_stopping.get_best_value()} '
-          f'(last reference value is = {early_stopping.last_value} with min delta = {early_stopping.min_delta})')
+          f'(last reference value is = {early_stopping.last_value_recorded} with min delta = {early_stopping.min_delta})')
     plot_history(0, history=history)
 
 

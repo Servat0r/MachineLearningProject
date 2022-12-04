@@ -97,12 +97,10 @@ UNDONE:
         - Hold-out: start from a bunch of data and create three dataset (train, validation, test), then train and evaluate
         the resulting model;
         - k-fold CV: start from a bunch of data and create k different datasets, then at each time merge k-1 of them to use
-        for training and use the remaining for validation, cycling on the k datasets for validation; [k = 5, 10 w.r.t. LOO]
-        - (if we have time) double k-fold CV (see slides on validation);
+        for training and use the remaining for validation, cycling on the k datasets for validation; [k = 5, 10 w.r.t. LOO];
 
     13. Add "hyperparameter tuning" routines:
         - Grid-Search: start from a set of possible hyperparameters, then train and evaluate the models for each combination;
-        - Nested Grid Search: start with a coarse-grained grid search, then refine it on good parameters
-        - others (maybe) that we have seen in the course;
+        - [se si riesce] Nested Grid Search: start with a coarse-grained grid search, then refine it on good parameters
     NOTE: For 12) and 13), these should be "parameters", i.e. we want to select one from 12) and one from 13) into a bigger
     algorithm that performs all the trainings and evaluations and selects the best model;

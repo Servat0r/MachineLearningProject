@@ -28,17 +28,17 @@ class Softmax(Callable):
     def jacobian(self, x: np.ndarray):
         s = self(x)  # (l, 1, n)
         # Calculate the common part
-        st = np.transpose(s, axes=[0, -1, -2])  # (l, n, 1)
-        y = (-1.0) * (st @ s)  # (l, n, n)
+        s_transposed = np.transpose(s, axes=[0, -1, -2])  # (l, n, 1)
+        y = (-1.0) * (s_transposed @ s)  # (l, n, n)
         # Reshape for summing elements on the ("last two") diagonals
         l, n = y.shape[0], y.shape[2]
         ind = np.array(range(n))
         y[:, ind, ind] += s[:, 0, ind]
         return y
 
-    def vjp(self, x: np.ndarray, dvals: np.ndarray):    # todo check!
+    def vjp(self, x: np.ndarray, delta_values: np.ndarray):    # todo check!
         s = self(x)
-        sd = s * dvals
+        sd = s * delta_values
         sd_sum = np.sum(sd, axis=-1, keepdims=True)
         return sd - sd_sum * s
 
@@ -98,65 +98,65 @@ class SquaredError(Callable):
         return -2 * self.const * (truth - x)
 
 
-def accuracy(pred: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.ndarray:
+def accuracy(predicted: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.ndarray:
     """
     Accuracy for arrays of scalar values.
     """
-    return np.equal(pred, truth).astype(dtype)
+    return np.equal(predicted, truth).astype(dtype)
 
 
 # todo this implementation shall be made more efficient (need to replace argmax for truth indexes
 # todo with something that access the correct elements of the array and return the array given by
 # todo accessing with them)
-def categorical_accuracy(pred: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.ndarray:
+def categorical_accuracy(predicted: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.ndarray:
     """
     Accuracy for one-hot encoded labels.
     """
-    pred_indexes = np.argmax(pred, axis=-1)
+    predicted_indexes = np.argmax(predicted, axis=-1)
     truth_indexes = np.argmax(truth, axis=-1)
-    return np.equal(pred_indexes, truth_indexes).astype(dtype)
+    return np.equal(predicted_indexes, truth_indexes).astype(dtype)
 
 
-def sparse_categorical_accuracy(pred: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.ndarray:
+def sparse_categorical_accuracy(predicted: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.ndarray:
     """
     Accuracy for integer labels.
     """
-    pred_indexes = np.argmax(pred, axis=-1).astype(np.int).reshape(truth.shape)
-    return np.equal(pred_indexes, truth).astype(dtype)
+    predicted_indexes = np.argmax(predicted, axis=-1).astype(np.int).reshape(truth.shape)
+    return np.equal(predicted_indexes, truth).astype(dtype)
 
 
-def binary_accuracy(pred: np.ndarray, truth: np.ndarray, threshold=0.5, dtype=np.int32):
+def binary_accuracy(predicted: np.ndarray, truth: np.ndarray, threshold=0.5, dtype=np.int32):
     """
     Accuracy for binary labels. Predicted labels are treated
     as ones if above threshold and zeros otherwise.
     """
-    pred_transformed = np.zeros_like(pred, dtype=truth.dtype)
-    pred_transformed[pred >= threshold] = 1.
-    return accuracy(pred_transformed, truth, dtype)
+    predicted_transformed = np.zeros_like(predicted, dtype=truth.dtype)
+    predicted_transformed[predicted >= threshold] = 1.
+    return accuracy(predicted_transformed, truth, dtype)
 
 
-def mean_euclidean_error(pred: np.ndarray, truth: np.ndarray, reduce=True, dtype=np.float64):
+def mean_euclidean_error(predicted: np.ndarray, truth: np.ndarray, reduce=True, dtype=np.float64):
     """
     Mean Euclidean Error, i.e. average over all examples of 2-norm of that example.
-    :param pred: Predicted values.
+    :param predicted: Predicted values.
     :param truth: Ground truth values.
     :param reduce: If True, average over examples will be calculated; otherwise,
     raw values for each example will be returned (see MeanEuclideanError metric).
     :param dtype: Data type of result array. Defaults to np.float64.
     """
-    raw_values = np.linalg.norm(pred - truth, axis=-1)
+    raw_values = np.linalg.norm(predicted - truth, axis=-1)
     if reduce:
         return raw_values.astype(dtype)
     else:
         return np.mean(raw_values, dtype=dtype)
 
 
-def root_mean_squared_error(pred: np.ndarray, truth: np.ndarray, dtype=np.float64):
+def root_mean_squared_error(predicted: np.ndarray, truth: np.ndarray, dtype=np.float64):
     """
     Root Mean Squared Error, i.e. square root of the average
     of all squared 2-norms of the examples.
     """
-    norms = np.sum(np.square(pred - truth), axis=-1)
+    norms = np.sum(np.square(predicted - truth), axis=-1)
     return np.sqrt(np.mean(norms, dtype=dtype))
 
 

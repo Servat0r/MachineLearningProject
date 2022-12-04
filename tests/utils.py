@@ -205,19 +205,19 @@ def plot_metrics(
 def generate_layers(low=-0.5, high=0.5, weights_regularizer=None, biases_regularizer=None, grad_reduction='mean'):
     dense1 = cm.Dense(
             INPUT_DIM, HIDDEN_SIZE, cm.Tanh(),
-            weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction=grad_reduction,
+            weights_initializer=cu.RandomUniformInitializer(low, high), gradients_reduction=grad_reduction,
             # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
             weights_regularizer=weights_regularizer, biases_regularizer=biases_regularizer,
         )
     dense2 = cm.Dense(
         HIDDEN_SIZE, HIDDEN_SIZE, cm.Tanh(),
-        weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction=grad_reduction,
+        weights_initializer=cu.RandomUniformInitializer(low, high), gradients_reduction=grad_reduction,
         # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
         weights_regularizer=weights_regularizer, biases_regularizer=biases_regularizer,
     )
     linear3 = cm.Linear(
         HIDDEN_SIZE, OUTPUT_DIM,
-        weights_initializer=cu.RandomUniformInitializer(low, high), grad_reduction=grad_reduction,
+        weights_initializer=cu.RandomUniformInitializer(low, high), gradients_reduction=grad_reduction,
         # biases_initializer=cu.RandomUniformInitializer(-1.0, 1.0),
         weights_regularizer=weights_regularizer, biases_regularizer=biases_regularizer,
     )

@@ -22,21 +22,21 @@ class Loss:
             return False
         return all([self.dtype == other.dtype, self.reduction == other.reduction])
 
-    def __call__(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
+    def __call__(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         """
         Default call, returns raw values from forward pass.
-        :param pred: Predicted values.
+        :param predicted: Predicted values.
         :param truth: Ground truth values.
         :return:
         """
-        return self.forward(pred, truth)
+        return self.forward(predicted, truth)
 
     @abstractmethod
-    def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
+    def forward(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         pass
 
     @abstractmethod
-    def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
+    def backward(self, delta_vals: np.ndarray, truth: np.ndarray) -> np.ndarray:
         pass
 
     def reduce(self, y: np.ndarray):
@@ -68,12 +68,12 @@ class CrossEntropyLoss(Loss):   # todo need to check with a classification probl
             self.func == other.func,
         ])
 
-    def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        y = self.func(pred, truth).astype(self.dtype)
+    def forward(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        y = self.func(predicted, truth).astype(self.dtype)
         return self.reduce(y)
 
-    def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return self.func.grad(dvals, truth).astype(self.dtype)
+    def backward(self, delta_vals: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return self.func.grad(delta_vals, truth).astype(self.dtype)
 
 
 class MSELoss(Loss):
@@ -91,11 +91,11 @@ class MSELoss(Loss):
             return False
         return all([super(MSELoss, self).__eq__(other), self.func == other.func])
 
-    def forward(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return self.reduce(self.func(pred, truth))
+    def forward(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return self.reduce(self.func(predicted, truth))
 
-    def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return self.func.grad(dvals, truth).astype(self.dtype)
+    def backward(self, delta_vals: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return self.func.grad(delta_vals, truth).astype(self.dtype)
 
 
 class RegularizedLoss(Loss):
@@ -111,16 +111,18 @@ class RegularizedLoss(Loss):
             return False
         return all([super(RegularizedLoss, self).__eq__(other), self.base_loss == other.base_loss])
 
-    def __call__(self, pred: np.ndarray, truth: np.ndarray,
+    def __call__(self, predicted: np.ndarray, truth: np.ndarray,
                  layers: Iterable[Layer] = None) -> tuple[np.ndarray, np.ndarray]:
-        return self.forward(pred, truth, layers)
+        return self.forward(predicted, truth, layers)
 
     def regularization_loss(self, layers: Layer | Iterable[Layer]) -> np.ndarray:
         if isinstance(layers, Dense):
+            # Only linear layer inside a Dense has regularization term
             return self.regularization_loss(layers.linear)
         elif isinstance(layers, Layer):
             result = np.zeros(1)
             if isinstance(layers, Linear) and layers.is_trainable():
+                # Update result accordingly to the specific regularizers of this layer
                 if layers.weights_regularizer is not None:
                     result += layers.weights_regularizer.loss(layers.weights)
                 if layers.biases_regularizer is not None:
@@ -134,18 +136,18 @@ class RegularizedLoss(Loss):
         else:
             raise TypeError(f"Invalid type {type(layers)}: allowed ones are {Layer} or {Iterable[Layer]}")
 
-    def forward(self, pred: np.ndarray, truth: np.ndarray,
+    def forward(self, predicted: np.ndarray, truth: np.ndarray,
                 layers: Iterable[Layer] = None) -> tuple[np.ndarray, np.ndarray]:
-        data_loss = self.base_loss.forward(pred, truth)
-        reg_loss = self.regularization_loss(layers)
-        return data_loss, reg_loss
+        data_loss = self.base_loss.forward(predicted, truth)
+        regularization_loss = self.regularization_loss(layers)
+        return data_loss, regularization_loss
 
-    def backward(self, dvals: np.ndarray, truth: np.ndarray) -> np.ndarray:
+    def backward(self, delta_vals: np.ndarray, truth: np.ndarray) -> np.ndarray:
         # Backward pass "direct" handling (i.e., by updating gradients of the weights)
         # without an underlying computational graph is complicated
         # For regularizers like L1, the actual backward pass happens when calling
         # backward() on the previous layers.
-        return self.base_loss.backward(dvals, truth)
+        return self.base_loss.backward(delta_vals, truth)
 
 
 __all__ = [

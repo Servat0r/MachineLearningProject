@@ -19,7 +19,7 @@ def test_fully_connected_minibatch_model_with_regularizations(
     optimizer_state = []
     optim_monitor = OptimizerMonitor(optimizer_state)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[optim_monitor],
+        train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[optim_monitor],
     )
     train_epoch_losses, eval_epoch_losses = history['loss'], history['Val_loss']
     for epoch, (epoch_tr_loss, epoch_ev_loss, optim_state) in \
@@ -48,7 +48,7 @@ def test_fc_minibatch_model_with_regularizations_lrscheduler(
     optimizer_state = []
     optim_monitor = OptimizerMonitor(optimizer_state)
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=[optim_monitor],
+        train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=[optim_monitor],
     )
     train_epoch_losses, eval_epoch_losses = history['loss'], history['Val_loss']
     # Print results

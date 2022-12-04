@@ -9,12 +9,12 @@ from .base import *
 class LambdaFunctionMetric(FunctionMetric):
 
     @abstractmethod
-    def lambda_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
+    def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         pass
 
     def __init__(self, *args, **kwargs):
         super(LambdaFunctionMetric, self).__init__(*args, **kwargs)
-        self.func = self.lambda_fun
+        self.func = self.lambda_function
 
     def __getstate__(self):
         self_dict = self.__dict__.copy()
@@ -23,7 +23,7 @@ class LambdaFunctionMetric(FunctionMetric):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.func = self.lambda_fun
+        self.func = self.lambda_function
 
     def __eq__(self, other):
         if not isinstance(other, LambdaFunctionMetric):
@@ -38,8 +38,8 @@ class Accuracy(LambdaFunctionMetric):
     """
     Accuracy metric for numerical (scalar) labels.
     """
-    def lambda_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return accuracy(pred, truth, dtype=self.dtype)
+    def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return accuracy(predicted, truth, dtype=self.dtype)
 
     def __init__(self, dtype=np.float64):
         super(Accuracy, self).__init__(
@@ -51,8 +51,8 @@ class CategoricalAccuracy(LambdaFunctionMetric):
     """
     Accuracy metric for one-hot encoded labels.
     """
-    def lambda_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return categorical_accuracy(pred, truth, dtype=self.dtype)
+    def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return categorical_accuracy(predicted, truth, dtype=self.dtype)
 
     def __init__(self, dtype=np.float64):
         super(CategoricalAccuracy, self).__init__(
@@ -64,8 +64,8 @@ class SparseCategoricalAccuracy(LambdaFunctionMetric):
     """
     Accuracy metric for integer labels.
     """
-    def lambda_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return sparse_categorical_accuracy(pred, truth, dtype=self.dtype)
+    def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return sparse_categorical_accuracy(predicted, truth, dtype=self.dtype)
 
     def __init__(self, dtype=np.float64):
         super(SparseCategoricalAccuracy, self).__init__(
@@ -75,8 +75,8 @@ class SparseCategoricalAccuracy(LambdaFunctionMetric):
 
 class BinaryAccuracy(LambdaFunctionMetric):
 
-    def lambda_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return binary_accuracy(pred, truth, self.threshold, self.dtype)
+    def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return binary_accuracy(predicted, truth, self.threshold, self.dtype)
 
     def __init__(self, dtype=np.float64, threshold=0.5):
         self.threshold = threshold
@@ -96,8 +96,8 @@ class MeanSquaredError(FunctionMetric):
 
 class MeanEuclideanError(LambdaFunctionMetric):
 
-    def lambda_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return mean_euclidean_error(pred, truth, reduce=False, dtype=self.dtype)
+    def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return mean_euclidean_error(predicted, truth, reduce=False, dtype=self.dtype)
 
     def __init__(self, dtype=np.float64):
         super(MeanEuclideanError, self).__init__(
@@ -108,8 +108,8 @@ class MeanEuclideanError(LambdaFunctionMetric):
 
 class RootMeanSquaredError(LambdaFunctionMetric):
 
-    def lambda_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return root_mean_squared_error(pred, truth, dtype=self.dtype)
+    def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return root_mean_squared_error(predicted, truth, dtype=self.dtype)
 
     def __init__(self, dtype=np.float64):
         super(RootMeanSquaredError, self).__init__(
@@ -134,7 +134,7 @@ class Timing(FunctionMetric):
     def set_time(self):
         self.start_time = self.get_time()
 
-    def time_fun(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
+    def time_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         return np.sum([self.get_time() - self.start_time], dtype=self.dtype)
 
     def __init__(self, precision=None, dtype=np.float64):
@@ -143,7 +143,7 @@ class Timing(FunctionMetric):
             raise ValueError(f"Invalid precision value '{precision}': expected one of 's', 'ns'")
         self.precision = precision
         self.start_time = None
-        super(Timing, self).__init__(func=self.time_fun, whole_reduction=np.sum, dtype=dtype)
+        super(Timing, self).__init__(func=self.time_function, whole_reduction=np.sum, dtype=dtype)
 
     def before_batch(self):
         self.set_time()

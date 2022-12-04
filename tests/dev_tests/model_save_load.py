@@ -79,7 +79,7 @@ def test_save_load_trained_model(fpath='trained_model.model'):
     optimizer = cm.SGD(lr=1e-3, momentum=0.9)
     model1.compile(optimizer=optimizer, loss=loss)
 
-    model1.train(train_dataloader, n_epochs=10)
+    model1.train(train_dataloader, max_epochs=10)
     model1.save(fpath)
     model2 = cm.Model.load(fpath)
     assert check_same_params(model1, model2)
@@ -95,7 +95,7 @@ def test_save_load_predict_trained_model(fpath='trained_model.model'):
     optimizer = cm.SGD(lr=1e-3, momentum=0.9)
     model1.compile(optimizer=optimizer, loss=loss)
 
-    model1.train(train_dataloader, n_epochs=10)
+    model1.train(train_dataloader, max_epochs=10)
     model1.save(fpath)
     model2 = cm.Model.load(fpath)
     x_test, y_eval = arange_square_data(

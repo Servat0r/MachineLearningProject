@@ -30,7 +30,7 @@ class Optimizer:
         """
         self.before_update()
         self.update_body(layers)
-        self.update_reg_values(layers)
+        self.update_regularization_values(layers)
         self.after_update()
 
     def after_update(self):
@@ -39,7 +39,7 @@ class Optimizer:
         """
         pass
 
-    def update_reg_values(self, layers):
+    def update_regularization_values(self, layers):
         """
         Subroutine for handling regularization terms in updating.
         """
@@ -64,8 +64,8 @@ class SGD(Optimizer):
 
     def __init__(self, lr=0.1, lr_decay_scheduler: Scheduler = None, momentum=0.):
         super(SGD, self).__init__()
-        self.lr = lr
-        self.current_lr = lr
+        self.initial_learning_rate = lr
+        self.current_learning_rate = lr
         self.lr_decay_scheduler = lr_decay_scheduler
         self.momentum = momentum
 
@@ -73,14 +73,15 @@ class SGD(Optimizer):
         if not isinstance(other, SGD):
             return False
         return all([
-            self.lr == other.lr, self.current_lr == other.current_lr,
+            self.initial_learning_rate == other.initial_learning_rate,
+            self.current_learning_rate == other.current_learning_rate,
             self.lr_decay_scheduler == other.lr_decay_scheduler,
             self.momentum == other.momentum,
         ])
 
     def before_epoch(self):
         if self.lr_decay_scheduler is not None:
-            self.current_lr = self.lr_decay_scheduler(self.epoch, self.current_lr)
+            self.current_learning_rate = self.lr_decay_scheduler(self.epoch, self.current_learning_rate)
 
     def after_epoch(self):
         self.iterations = 0
@@ -89,36 +90,36 @@ class SGD(Optimizer):
     def after_update(self):
         self.iterations += 1
 
-    def update_reg_values(self, layers: Layer | Iterable[Layer]):
+    def update_regularization_values(self, layers: Layer | Iterable[Layer]):
         if isinstance(layers, Dense):
-            self.update_reg_values(layers.linear)
+            self.update_regularization_values(layers.linear)
         elif isinstance(layers, Layer):
             if isinstance(layers, Linear) and layers.is_trainable():
                 if layers.weights_regularizer is not None:
-                    layers.weights -= layers.weights_reg_updates
+                    layers.weights -= layers.weights_regularization_updates
                 if layers.biases_regularizer is not None:
-                    layers.biases -= layers.biases_reg_updates
+                    layers.biases -= layers.biases_regularization_updates
         elif isinstance(layers, Iterable):
             for layer in layers:
-                self.update_reg_values(layer)
+                self.update_regularization_values(layer)
         else:
             raise TypeError(f"Invalid type {type(layers)}: allowed ones are {Layer} or {Iterable[Layer]}")
 
     def __update_body_momentum(self, layer):
         if hasattr(layer, 'weight_momentums'):
-            weight_updates = self.momentum * layer.weight_momentums - self.current_lr * layer.dweights
+            weight_updates = self.momentum * layer.weight_momentums - self.current_learning_rate * layer.delta_weights
             layer.weight_momentums = weight_updates
 
             # Build bias updates
-            bias_updates = self.momentum * layer.bias_momentums - self.current_lr * layer.dbiases
+            bias_updates = self.momentum * layer.bias_momentums - self.current_learning_rate * layer.delta_biases
             layer.bias_momentums = bias_updates
 
             layer.weights += weight_updates
             layer.biases += bias_updates
 
     def __update_body_no_momentum(self, layer):
-        weight_updates = - self.current_lr * layer.dweights
-        bias_updates = - self.current_lr * layer.dbiases
+        weight_updates = - self.current_learning_rate * layer.delta_weights
+        bias_updates = - self.current_learning_rate * layer.delta_biases
 
         layer.weights += weight_updates
         layer.biases += bias_updates
@@ -140,7 +141,7 @@ class SGD(Optimizer):
 
     def to_log_dict(self) -> TDesc:
         return {
-            'lr': self.current_lr,
+            'lr': self.current_learning_rate,
         }
 
 

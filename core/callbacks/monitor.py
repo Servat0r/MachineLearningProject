@@ -11,14 +11,14 @@ class OptimizerMonitor(Callback):
     """
     def __init__(self, target_list: list, target_fpath: str = None, overwrite=True):
         self.target_list = target_list
-        self.target_fpath = target_fpath
+        self.target_file_path = target_fpath
         self.target_fp = None
         self.overwrite = overwrite
 
     def open(self):
         self.close()
-        if self.target_fpath is not None:
-            self.target_fp = open(self.target_fpath, 'w') if self.overwrite else open(self.target_fpath, 'a')
+        if self.target_file_path is not None:
+            self.target_fp = open(self.target_file_path, 'w') if self.overwrite else open(self.target_file_path, 'a')
 
     def close(self):
         if self.target_fp is not None:

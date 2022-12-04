@@ -9,33 +9,16 @@ class BaseCSVLogger(Callback):
 
     __float_types = {float, np.float, np.float_, np.float32, np.float64}  # Set will eliminate aliases
 
-    def is_float(self, val):
-        return any([isinstance(val, tp) for tp in self.__float_types])
-
-    def fmt_float(self, val):
-        tp = type(val)
-        if isinstance(val, np.ndarray):
-            val = val.item()
-        return tp(round(val, self.round_val)) if self.round_val is not None else val
-
-    def fmt_values(self, values):
-        result = []
-        for val in values:
-            if self.is_float(val):
-                val = self.fmt_float(val)
-            result.append(val)
-        return result
-
-    def __init__(self, fpath: str = 'log.csv', overwrite=True, sep=',', round_val: int = None):
-        self.fpath = fpath
+    def __init__(self, file_path: str = 'log.csv', overwrite=True, separator=',', float_round_val: int = None):
+        self.file_path = file_path
         self.fp = None
         self.overwrite = overwrite
-        self.sep = sep
-        self.round_val = round_val
+        self.separator = separator
+        self.float_round_val = float_round_val
 
     def open(self):
         self.close()
-        self.fp = open(self.fpath, 'w') if self.overwrite else open(self.fpath, 'a')
+        self.fp = open(self.file_path, 'w') if self.overwrite else open(self.file_path, 'a')
 
     def close(self):
         if self.fp is not None:
@@ -51,31 +34,51 @@ class BaseCSVLogger(Callback):
         self.__dict__.update(state)
         self.fp = None
 
+    def is_float(self, val):
+        return any([isinstance(val, tp) for tp in self.__float_types])
+
+    def format_float(self, val):
+        tp = type(val)
+        if isinstance(val, np.ndarray):
+            val = val.item()
+        return tp(round(val, self.float_round_val)) if self.float_round_val is not None else val
+
+    def format_values(self, values):
+        result = []
+        for val in values:
+            if self.is_float(val):
+                val = self.format_float(val)
+            result.append(val)
+        return result
+
 
 class TrainingCSVLogger(BaseCSVLogger):
 
     def __init__(
-            self, train_dirpath: str = '.', train_fpath: str = 'train_log.csv',
-            overwrite=True, sep=',', include_mb=False, round_val: int = None,
+            self, train_directory_path: str = '.', train_file_path: str = 'train_log.csv',
+            overwrite=True, separator=',', include_minibatch_logging=False, float_round_val: int = None,
     ):
-        epoch_train_fpath = os.path.join(train_dirpath, train_fpath)
-        mb_train_fpath = os.path.join(train_dirpath, f'minibatch_{train_fpath}')
-        super(TrainingCSVLogger, self).__init__(epoch_train_fpath, overwrite, sep, round_val=round_val)
-        self.include_mb = include_mb
-        self.mb_fpath = mb_train_fpath
-        self.mb_fp = None
-        self.include_val = False
+        epoch_train_fpath = os.path.join(train_directory_path, train_file_path)
+        mb_train_fpath = os.path.join(train_directory_path, f'minibatch_{train_file_path}')
+        super(TrainingCSVLogger, self).__init__(
+            epoch_train_fpath, overwrite, separator, float_round_val=float_round_val
+        )
+        self.include_minibatch_logging = include_minibatch_logging
+        self.minibatch_logfile_path = mb_train_fpath
+        self.minibatch_fp = None
+        self.include_validation_logs = False
 
     def open(self):
         super(TrainingCSVLogger, self).open()
-        if self.include_mb:
-            self.mb_fp = open(self.mb_fpath, 'w') if self.overwrite else open(self.mb_fpath, 'a')
+        if self.include_minibatch_logging:
+            self.minibatch_fp = open(self.minibatch_logfile_path, 'w') \
+                if self.overwrite else open(self.minibatch_logfile_path, 'a')
 
     def close(self):
         super(TrainingCSVLogger, self).close()
-        if self.mb_fp is not None:
-            self.mb_fp.close()
-            self.mb_fp = None
+        if self.minibatch_fp is not None:
+            self.minibatch_fp.close()
+            self.minibatch_fp = None
 
     def before_training_cycle(self, model, logs=None):
         if logs is None:
@@ -84,10 +87,10 @@ class TrainingCSVLogger(BaseCSVLogger):
         if (train is None) or (val is None):
             raise ValueError(f"Cannot log without train or validation keys!")
         self.open()
-        self.include_val = len(val) > 0  # At least one validation metric specified in initial logs
-        print('epoch', *train.keys(), *val.keys(), sep=self.sep, file=self.fp, flush=True)
-        if self.include_mb:
-            print('epoch', 'minibatch', *train.keys(), sep=self.sep, file=self.mb_fp, flush=True)
+        self.include_validation_logs = len(val) > 0  # At least one validation metric specified in initial logs
+        print('epoch', *train.keys(), *val.keys(), sep=self.separator, file=self.fp, flush=True)
+        if self.include_minibatch_logging:
+            print('epoch', 'minibatch', *train.keys(), sep=self.separator, file=self.minibatch_fp, flush=True)
         # If logger is serialized after this method call, it will not print headers again
         self.overwrite = False
 
@@ -96,34 +99,34 @@ class TrainingCSVLogger(BaseCSVLogger):
         print(f'CSV logging for training cycle ended', flush=True)
 
     def after_training_epoch(self, model, epoch, logs=None):
-        values = self.fmt_values(logs.values())
-        if self.include_val:
-            print(epoch, *values, sep=self.sep, file=self.fp, end=',', flush=True)
+        values = self.format_values(logs.values())
+        if self.include_validation_logs:
+            print(epoch, *values, sep=self.separator, file=self.fp, end=',', flush=True)
         else:
-            print(epoch, *values, sep=self.sep, file=self.fp, flush=True)
+            print(epoch, *values, sep=self.separator, file=self.fp, flush=True)
 
     def after_training_batch(self, model, epoch, batch, logs=None):
-        if self.include_mb:
-            values = self.fmt_values(logs.values())
-            print(epoch, batch, *values, sep=self.sep, file=self.mb_fp, flush=True)
+        if self.include_minibatch_logging:
+            values = self.format_values(logs.values())
+            print(epoch, batch, *values, sep=self.separator, file=self.minibatch_fp, flush=True)
 
     def after_evaluate(self, model, epoch=None, logs=None):
-        if self.include_val:
-            values = self.fmt_values(logs.values())
-            print(*values, sep=self.sep, file=self.fp, flush=True)
+        if self.include_validation_logs:
+            values = self.format_values(logs.values())
+            print(*values, sep=self.separator, file=self.fp, flush=True)
 
 
 class TestCSVLogger(BaseCSVLogger):
 
-    def __init__(self, fpath: str = 'test_log.csv', overwrite=True, sep=','):
-        super(TestCSVLogger, self).__init__(fpath, overwrite, sep)
-        self.example = 0  # Next example num
+    def __init__(self, file_path: str = 'test_log.csv', overwrite=True, separator=','):
+        super(TestCSVLogger, self).__init__(file_path, overwrite, separator)
+        self.next_example_num = 0  # Next example num
 
     def before_test_cycle(self, model, logs=None):
         if logs is None:
             raise ValueError(f"Cannot log with no metrics!")
         self.open()
-        print('example', *logs.keys(), sep=self.sep, file=self.fp)
+        print('example', *logs.keys(), sep=self.separator, file=self.fp)
         # If logger is serialized after this method call, it will not print headers again
         self.overwrite = False
 
@@ -133,8 +136,8 @@ class TestCSVLogger(BaseCSVLogger):
 
     def after_test_batch(self, model, logs=None):
         for example, values in enumerate(zip(*logs.values())):
-            print(example + self.example, *values, sep=self.sep, file=self.fp)
-            self.example += 1
+            print(example + self.next_example_num, *values, sep=self.separator, file=self.fp)
+            self.next_example_num += 1
 
 
 class InteractiveLogger(Callback):

@@ -53,8 +53,7 @@ class FunctionMetric(Metric):
         self.func = func
         self.batch_reduction = batch_reduction
         self.whole_reduction = whole_reduction
-        self.values = []
-        # list of array losses (todo we can convert to array by using np.c_ every time or knowing dataset size)
+        self.values = []  # metric values for each minibatch
 
     def update(self, pred: np.ndarray, truth: np.ndarray) -> np.ndarray:
         vals = self.func(pred, truth)

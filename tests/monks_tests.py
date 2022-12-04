@@ -50,11 +50,11 @@ def get_monk_setup_hold_out(
         p, q = sizes[i], sizes[i+1]
         layers.append(
             cm.Dense(p, q, cm.Tanh(),
-                     cu.RandomUniformInitializer(winit_low, winit_high), grad_reduction=grad_reduction)
+                     cu.RandomUniformInitializer(winit_low, winit_high), gradients_reduction=grad_reduction)
         )
     layers.append(
         cm.Dense(sizes[-1], out_size, cm.Sigmoid(),
-                 cu.RandomUniformInitializer(winit_low, winit_high), grad_reduction=grad_reduction)
+                 cu.RandomUniformInitializer(winit_low, winit_high), gradients_reduction=grad_reduction)
     )
     model = cm.Model(layers)
     return model, train_dataset, eval_dataset, test_dataset
@@ -63,7 +63,7 @@ def get_monk_setup_hold_out(
 def test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr=1e-1, momentum=0., batch_size=1,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
-        plot_save_paths=None, model_save_path=None, makedirs=True,
+        plot_save_paths=None, model_save_path=None,
 ):
     optimizer = cm.SGD(lr=lr, momentum=momentum)
     loss = cm.MSELoss(const=1., reduction='mean')
@@ -86,7 +86,7 @@ def test_monk(
     model.compile(optimizer, loss, metrics=metrics)
 
     # Training and results plotting
-    history = model.train(train_dataloader, eval_dataloader, n_epochs=n_epochs, callbacks=callbacks)
+    history = model.train(train_dataloader, eval_dataloader, max_epochs=n_epochs, callbacks=callbacks)
     model.set_to_eval()
     if model_save_path is not None:
         dirname = os.path.dirname(model_save_path)
@@ -100,7 +100,7 @@ def test_monk(
 def test_monk1(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
-        plot_save_paths=None, model_save_path=None, makedirs=True,
+        plot_save_paths=None, model_save_path=None,
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK1_TRAIN, test_file=MONK1_TEST, hidden_sizes=MONK1_HIDDEN_SIZES,
@@ -108,14 +108,14 @@ def test_monk1(
     )
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
-        metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path, makedirs
+        metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
     )
 
 
 def test_monk2(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
-        plot_save_paths=None, model_save_path=None, makedirs=True,
+        plot_save_paths=None, model_save_path=None,
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK2_TRAIN, test_file=MONK2_TEST, hidden_sizes=MONK2_HIDDEN_SIZES,
@@ -123,14 +123,14 @@ def test_monk2(
     )
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
-        metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path, makedirs
+        metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
     )
 
 
 def test_monk3(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
-        plot_save_paths=None, model_save_path=None, makedirs=True,
+        plot_save_paths=None, model_save_path=None,
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK3_TRAIN, test_file=MONK3_TEST, hidden_sizes=MONK3_HIDDEN_SIZES,
@@ -138,7 +138,7 @@ def test_monk3(
     )
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
-        metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path, makedirs
+        metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
     )
 
 

@@ -27,7 +27,7 @@ class Layer:
         ])
         return check
 
-    def _init_unpickled_params(self):
+    def _init_unpickled_parameters(self):
         self.input = None
         self.output = None
 
@@ -61,26 +61,26 @@ class Layer:
 
     def get_parameters(self, copy=False) -> dict:
         """
-        Retrieves layer parameters as a dictionary ('weights', 'biases', 'dweights' etc.).
+        Retrieves layer parameters as a dictionary ('weights', 'biases', 'delta_weights' etc.).
         """
         return {}   # By default, no parameters for this layer
 
-    def set_parameters(self, param_dict: dict):
-        if not isinstance(param_dict, dict):
-            raise TypeError(f"Wrong type {type(param_dict)} when setting parameters for {self}")
-        for param_name, param_val in param_dict.items():
-            if isinstance(param_val, np.ndarray):
-                setattr(self, param_name, param_val)
-            elif isinstance(param_val, dict):
-                attr = getattr(self, param_name)
-                if attr is None:
-                    raise AttributeError(f"Unknown attribute {param_name} for {type(self)}")
-                elif not isinstance(attr, Layer):
-                    raise TypeError(f"{attr} is not an instance of {Layer}")
+    def set_parameters(self, parameter_dict: dict):
+        if not isinstance(parameter_dict, dict):
+            raise TypeError(f"Wrong type {type(parameter_dict)} when setting parameters for {self}")
+        for parameter_name, parameter_value in parameter_dict.items():
+            if isinstance(parameter_value, np.ndarray):
+                setattr(self, parameter_name, parameter_value)
+            elif isinstance(parameter_value, dict):
+                attribute = getattr(self, parameter_name)
+                if attribute is None:
+                    raise AttributeError(f"Unknown attribute {parameter_name} for {type(self)}")
+                elif not isinstance(attribute, Layer):
+                    raise TypeError(f"{attribute} is not an instance of {Layer}")
                 else:
-                    attr.set_parameters(param_val)
+                    attribute.set_parameters(parameter_value)
             else:
-                raise TypeError(f"Wrong type {type(param_val)} for {param_name} when parsing param dict")
+                raise TypeError(f"Wrong type {type(parameter_value)} for {parameter_name} when parsing parameters dict")
 
     def __getstate__(self):
         state = {
@@ -92,7 +92,7 @@ class Layer:
 
     def __setstate__(self, state):
         frozen = state.pop('frozen', False)
-        is_training = state.pop('_training', 2)  # neither True, False or None
+        is_training = state.pop('_training', 2)  # neither True, False nor None
         if is_training == 2:
             raise RuntimeError('Attribute \'_is_training\' not available!')
         serialize_all = state.pop('_serialize_all', 2)
@@ -101,7 +101,7 @@ class Layer:
         self.frozen = frozen
         self._training = is_training
         self._serialize_all = serialize_all
-        self._init_unpickled_params()
+        self._init_unpickled_parameters()
 
     @abstractmethod
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -113,7 +113,7 @@ class Layer:
         pass
 
     @abstractmethod
-    def backward(self, dvals: np.ndarray):
+    def backward(self, delta_vals: np.ndarray):
         pass
 
     def clear(self):
@@ -134,8 +134,8 @@ class Input(Layer):
         self.output = x
         return self.output
 
-    def backward(self, dvals: np.ndarray):
-        return dvals
+    def backward(self, delta_vals: np.ndarray):
+        return delta_vals
 
     def is_trainable(self) -> bool:
         return False
@@ -153,7 +153,7 @@ class Linear(Layer):
     of the shape (l, 1, out_features).
     """
     def __init__(self, in_features: int, out_features: int, weights_initializer: Initializer,
-                 biases_initializer: Initializer = ZeroInitializer(), grad_reduction='mean', frozen=False,
+                 biases_initializer: Initializer = ZeroInitializer(), gradients_reduction='mean', frozen=False,
                  weights_regularizer: Regularizer = None, biases_regularizer: Regularizer = None, dtype=np.float64):
         """
         :param in_features: Input dimension.
@@ -161,7 +161,7 @@ class Linear(Layer):
         :param weights_initializer: Initializer to use for weights initialization.
         :param biases_initializer: Initializer to use for biases initialization. Defaults
         to a ZeroInitializer.
-        :param grad_reduction: Reduction to apply to the gradients of a batch of
+        :param gradients_reduction: Reduction to apply to the gradients of a batch of
         examples. Can be either 'none' (no reduction, if one wants to apply a 'custom'
         one), 'sum' (sum over all the gradients), 'mean' (average over all the gradients).
         :param weights_regularizer: Regularizer to apply to layer weights.
@@ -177,7 +177,7 @@ class Linear(Layer):
         biases_shape = (1, self.out_features)
         self.weights = weights_initializer(weights_shape, dtype=dtype)
         self.biases = biases_initializer(biases_shape, dtype=dtype)
-        self.grad_reduction = grad_reduction
+        self.gradients_reduction = gradients_reduction
         self.dtype = dtype
 
         # Set regularizer and its updates
@@ -185,13 +185,13 @@ class Linear(Layer):
         self.biases_regularizer = biases_regularizer
 
         # Set updates for backward
-        self.dweights = None
-        self.dbiases = None
+        self.delta_weights = None
+        self.delta_biases = None
         # Set updates for momentums
         self.weight_momentums = np.zeros_like(self.weights)
         self.bias_momentums = np.zeros_like(self.biases)
-        self.weights_reg_updates = None
-        self.biases_reg_updates = None
+        self.weights_regularization_updates = None
+        self.biases_regularization_updates = None
 
     def equals(self, other, include_updates=False, include_all=False):
         check = super(Linear, self).equals(other, include_updates, include_all)
@@ -201,7 +201,7 @@ class Linear(Layer):
         check = [
             self.in_features == other.in_features, self.out_features == other.out_features,
             np.equal(self.weights, other.weights).all(), np.equal(self.biases, other.biases).all(),
-            self.grad_reduction == other.grad_reduction, self.dtype == other.dtype,
+            self.gradients_reduction == other.gradients_reduction, self.dtype == other.dtype,
             self.weights_regularizer == other.weights_regularizer,
             self.biases_regularizer == other.biases_regularizer,
         ]
@@ -209,27 +209,27 @@ class Linear(Layer):
             return False
         if include_updates:
             check = [
-                np.equal(self.dweights, other.dweights).all(), np.equal(self.dbiases, other.dbiases).all(),
+                np.equal(self.delta_weights, other.delta_weights).all(), np.equal(self.delta_biases, other.delta_biases).all(),
                 np.equal(self.weight_momentums, other.weight_momentums).all(),
                 np.equal(self.bias_momentums, other.bias_momentums).all(),
-                np.equal(self.weights_reg_updates, other.weights_reg_updates).all(),
-                np.equal(self.biases_reg_updates, other.biases_reg_updates).all(),
+                np.equal(self.weights_regularization_updates, other.weights_regularization_updates).all(),
+                np.equal(self.biases_regularization_updates, other.biases_regularization_updates).all(),
             ]
             if not all(check):
                 return False
         return True
 
-    def _init_unpickled_params(self):
-        super(Linear, self)._init_unpickled_params()
+    def _init_unpickled_parameters(self):
+        super(Linear, self)._init_unpickled_parameters()
         if not self.is_training() and not self._serialize_all:
             # Set updates for backward
-            self.dweights = None
-            self.dbiases = None
+            self.delta_weights = None
+            self.delta_biases = None
             # Set updates for momentums
             self.weight_momentums = np.zeros_like(self.weights)
             self.bias_momentums = np.zeros_like(self.biases)
-            self.weights_reg_updates = None
-            self.biases_reg_updates = None
+            self.weights_regularization_updates = None
+            self.biases_regularization_updates = None
 
     def is_trainable(self) -> bool:
         return not self.frozen
@@ -240,11 +240,11 @@ class Linear(Layer):
     def get_biases(self, copy=True) -> np.ndarray | None:
         return self.biases.copy() if copy else self.biases
 
-    def get_dweights(self, copy=True) -> np.ndarray:
-        return self.dweights.copy() if copy else self.dweights
+    def get_delta_weights(self, copy=True) -> np.ndarray:
+        return self.delta_weights.copy() if copy else self.delta_weights
 
-    def get_dbiases(self, copy=True) -> np.ndarray | None:
-        return self.dbiases.copy() if copy else self.dbiases
+    def get_delta_biases(self, copy=True) -> np.ndarray | None:
+        return self.delta_biases.copy() if copy else self.delta_biases
 
     def get_parameters(self, copy=False):
         return {
@@ -259,19 +259,19 @@ class Linear(Layer):
             'biases': self.biases,
             'in_features': self.in_features,
             'out_features': self.out_features,
-            'grad_reduction': self.grad_reduction,
+            'gradients_reduction': self.gradients_reduction,
             'dtype': self.dtype,
             'weights_regularizer': self.weights_regularizer,    # todo getstate?
             'biases_regularizer': self.biases_regularizer,      # todo getstate?
         })
         if self.is_training() or self._serialize_all:
             state.update({
-                'dweights': self.dweights,
-                'dbiases': self.dbiases,
+                'delta_weights': self.delta_weights,
+                'delta_biases': self.delta_biases,
                 'weight_momentums': self.weight_momentums,
                 'bias_momentums': self.bias_momentums,
-                'weights_reg_updates': self.weights_reg_updates,
-                'biases_reg_updates': self.biases_reg_updates,
+                'weights_regularization_updates': self.weights_regularization_updates,
+                'biases_regularization_updates': self.biases_regularization_updates,
             })
         return state
 
@@ -305,31 +305,31 @@ class Linear(Layer):
         return self.output
 
     # noinspection PyAttributeOutsideInit
-    def backward(self, dvals: np.ndarray):
+    def backward(self, delta_vals: np.ndarray):
         # We don't want to compute updates if we are not training the model!
         if self.is_training():
-            tinp = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
+            transposed_input = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
             # Calculate update to layer's weights and biases
-            self.dweights = tinp @ dvals
-            self.dbiases = dvals.copy()
+            self.delta_weights = transposed_input @ delta_vals  # matmul operator
+            self.delta_biases = delta_vals.copy()
 
             # Apply reductions if requested
-            if self.grad_reduction == 'sum':
-                self.dweights = np.sum(self.dweights, axis=0)
-                self.dbiases = np.sum(self.dbiases, axis=0)
-            elif self.grad_reduction == 'mean':
-                self.dweights = np.mean(self.dweights, axis=0)
-                self.dbiases = np.mean(self.dbiases, axis=0)
+            if self.gradients_reduction == 'sum':
+                self.delta_weights = np.sum(self.delta_weights, axis=0)
+                self.delta_biases = np.sum(self.delta_biases, axis=0)
+            elif self.gradients_reduction == 'mean':
+                self.delta_weights = np.mean(self.delta_weights, axis=0)
+                self.delta_biases = np.mean(self.delta_biases, axis=0)
 
             # Handle regularization
             if self.weights_regularizer is not None:
-                self.weights_reg_updates = self.weights_regularizer.update(self.weights)
+                self.weights_regularization_updates = self.weights_regularizer.update(self.weights)
 
             if self.biases_regularizer is not None:
-                self.biases_reg_updates = self.biases_regularizer.update(self.biases)
+                self.biases_regularization_updates = self.biases_regularizer.update(self.biases)
 
         # Now calculate values to backpropagate to previous layer
-        return np.dot(dvals, self.weights.T)
+        return np.dot(delta_vals, self.weights.T)
 
 
 # noinspection PyAbstractClass
@@ -349,8 +349,8 @@ class Sigmoid(Activation):
         self.output = 1.0 / (1.0 + np.exp(-x))
         return self.output
 
-    def backward(self, dvals: np.ndarray):
-        return dvals * self.output * (1 - self.output)
+    def backward(self, delta_vals: np.ndarray):
+        return delta_vals * self.output * (1 - self.output)
 
 
 class Tanh(Activation):
@@ -360,25 +360,25 @@ class Tanh(Activation):
         self.output = np.tanh(x)
         return self.output
 
-    def backward(self, dvals: np.ndarray):
-        return dvals * (1. - np.square(self.output))
+    def backward(self, delta_vals: np.ndarray):
+        return delta_vals * (1. - np.square(self.output))
 
 
 class ReLU(Activation):
 
-    def default_subgrad_func(self, dvals: np.ndarray):
+    def default_subgradient_func(self, delta_values: np.ndarray):
         """
         Default subgradient for ReLU: for each input component,
         1 iff it is > 0, else 0; this is then multiplied by the
-        dvals input to get out_dvals.
+        delta_values input to get out_delta_values.
         """
-        out_dvals = dvals.copy()
-        out_dvals[self.input <= 0] = 0
-        return out_dvals
+        out_delta_values = delta_values.copy()
+        out_delta_values[self.input <= 0] = 0
+        return out_delta_values
 
     def __init__(self, frozen=False, subgrad_func: Callable = None):
         super(ReLU, self).__init__(frozen=frozen)
-        self.subgrad_func = self.default_subgrad_func if subgrad_func is None else subgrad_func
+        self.subgrad_func = self.default_subgradient_func if subgrad_func is None else subgrad_func
 
     def __eq__(self, other):
         return super(ReLU, self).__eq__(other) and self.subgrad_func == other.subgrad_func
@@ -399,8 +399,8 @@ class ReLU(Activation):
         self.output = np.maximum(self.input, 0)
         return self.output
 
-    def backward(self, dvals: np.ndarray):
-        return self.subgrad_func(dvals)
+    def backward(self, delta_vals: np.ndarray):
+        return self.subgrad_func(delta_vals)
 
 
 class SoftmaxLayer(Activation):
@@ -428,9 +428,8 @@ class SoftmaxLayer(Activation):
         self.output = self.softmax(x)
         return self.output
 
-    # todo check!
-    def backward(self, dvals: np.ndarray):
-        return self.softmax.vjp(self.input, dvals)
+    def backward(self, delta_vals: np.ndarray):
+        return self.softmax.vjp(self.input, delta_vals)
 
 
 class Dense(Layer):
@@ -440,14 +439,14 @@ class Dense(Layer):
     def __init__(
             self, in_features: int, out_features: int, activation_layer: Activation,
             weights_initializer: Initializer, biases_initializer: Initializer = ZeroInitializer(),
-            grad_reduction='mean', frozen=False, weights_regularizer: Regularizer = None,
+            gradients_reduction='mean', frozen=False, weights_regularizer: Regularizer = None,
             biases_regularizer: Regularizer = None, dtype=np.float64
     ):
         super(Dense, self).__init__(frozen=frozen)
         # Initialize linear part
         self.linear = Linear(
             in_features, out_features, weights_initializer, biases_initializer,
-            grad_reduction, weights_regularizer=weights_regularizer,
+            gradients_reduction, weights_regularizer=weights_regularizer,
             biases_regularizer=biases_regularizer, dtype=dtype,
         )
         self.activation = activation_layer
@@ -499,8 +498,8 @@ class Dense(Layer):
         self.activation.unfreeze_layer()
         super(Dense, self).unfreeze_layer()
 
-    def _init_unpickled_params(self):
-        super(Dense, self)._init_unpickled_params()
+    def _init_unpickled_parameters(self):
+        super(Dense, self)._init_unpickled_parameters()
         if not self.is_training() and not self._serialize_all:
             self.net = None
 
@@ -526,9 +525,9 @@ class Dense(Layer):
         self.output = self.activation.forward(self.net)
         return self.output
 
-    def backward(self, dvals: np.ndarray):
-        dvals = self.activation.backward(dvals)
-        return self.linear.backward(dvals)
+    def backward(self, delta_vals: np.ndarray):
+        delta_vals = self.activation.backward(delta_vals)
+        return self.linear.backward(delta_vals)
 
     def is_trainable(self) -> bool:
         return self.linear.is_trainable() and not self.frozen

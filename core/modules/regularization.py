@@ -23,8 +23,8 @@ class L1Regularizer(Regularizer):
     """
     L1 Regularizator, with the possibility to vary the subgradient used.
     """
-    def __init__(self, subgrad_func: Callable[[np.ndarray], np.ndarray] = np.sign, l1_lambda: float = 0.01):
-        self.subgrad_func = subgrad_func
+    def __init__(self, subgradient_func: Callable[[np.ndarray], np.ndarray] = np.sign, l1_lambda: float = 0.01):
+        self.subgrad_func = subgradient_func
         self.l1_lambda = l1_lambda
 
     def __eq__(self, other):
@@ -80,8 +80,8 @@ class L2Regularizer(Regularizer):
 
 class L1L2Regularizer(Regularizer):
 
-    def __init__(self, subgrad_func: Callable[[np.ndarray], np.ndarray] = np.sign, l1_lambda=0.01, l2_lambda=0.01):
-        self.l1_reg = L1Regularizer(subgrad_func, l1_lambda)
+    def __init__(self, subgradient_func: Callable[[np.ndarray], np.ndarray] = np.sign, l1_lambda=0.01, l2_lambda=0.01):
+        self.l1_reg = L1Regularizer(subgradient_func, l1_lambda)
         self.l2_reg = L2Regularizer(l2_lambda)
 
     def __eq__(self, other):

@@ -20,12 +20,12 @@ def get_model_classification(in_size, hidden_sizes, out_size, winit_low=-0.5, wi
         layers.append(
             cm.Dense(p, q, cm.Tanh(), cu.RandomUniformInitializer(winit_low, winit_high),
                      weights_regularizer=cm.L2Regularizer(l2_lambda), biases_regularizer=None,
-                     grad_reduction='mean')
+                     gradients_reduction='mean')
         )
     layers.append(
         cm.Linear(sizes[-1], out_size, cu.RandomUniformInitializer(winit_low, winit_high),
                   weights_regularizer=cm.L2Regularizer(l2_lambda), biases_regularizer=None,
-                  grad_reduction='mean')
+                  gradients_reduction='mean')
     )
     layers.append(cm.SoftmaxLayer())
     model = cm.Model(layers)
@@ -66,17 +66,17 @@ def test_iris(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=True):
     )
     optim_state = []
     early_stopping = EarlyStopping(
-        monitor='Val_SparseCategoricalAccuracy', min_delta=1e-6, patience=100, mode='max', return_best=True
+        monitor='Val_SparseCategoricalAccuracy', min_delta=1e-6, patience=100, mode='max', return_best_result=True
     )
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=1000, callbacks=[
-            TrainingCSVLogger(round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
+        train_dataloader, eval_dataloader, max_epochs=1000, callbacks=[
+            TrainingCSVLogger(float_round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
         ]
     )
     print(f'Training stopped at epoch {len(history)}, '
           f'best model reached at {early_stopping.get_best_epoch()} '
           f'with a value of {early_stopping.get_best_value()} '
-          f'(last reference value is = {early_stopping.last_value} with min delta = {early_stopping.min_delta})')
+          f'(last reference value is = {early_stopping.last_value_recorded} with min delta = {early_stopping.min_delta})')
     plot_history(0, history=history)
 
 
@@ -114,17 +114,17 @@ def test_breast_cancer(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuff
     )
     optim_state = []
     early_stopping = EarlyStopping(
-        monitor='Val_SparseCategoricalAccuracy', min_delta=1e-6, patience=100, mode='max', return_best=True
+        monitor='Val_SparseCategoricalAccuracy', min_delta=1e-6, patience=100, mode='max', return_best_result=True
     )
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=1000, callbacks=[
-            TrainingCSVLogger(round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
+        train_dataloader, eval_dataloader, max_epochs=1000, callbacks=[
+            TrainingCSVLogger(float_round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
         ]
     )
     print(f'Training stopped at epoch {len(history)}, '
           f'best model reached at {early_stopping.get_best_epoch()} '
           f'with a value of {early_stopping.get_best_value()} '
-          f'(last reference value is = {early_stopping.last_value} with min delta = {early_stopping.min_delta})')
+          f'(last reference value is = {early_stopping.last_value_recorded} with min delta = {early_stopping.min_delta})')
     plot_history(0, history=history)
 
 
@@ -165,18 +165,18 @@ def test_covtype(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=Tru
     )
     optim_state = []
     early_stopping = EarlyStopping(
-        monitor='Val_SparseCategoricalAccuracy', min_delta=1e-3, patience=20, mode='max', return_best=True
+        monitor='Val_SparseCategoricalAccuracy', min_delta=1e-3, patience=20, mode='max', return_best_result=True
     )
     history = model.train(
-        train_dataloader, eval_dataloader, n_epochs=100, callbacks=[
-            TrainingCSVLogger(round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
+        train_dataloader, eval_dataloader, max_epochs=100, callbacks=[
+            TrainingCSVLogger(float_round_val=8), OptimizerMonitor(optim_state), early_stopping, InteractiveLogger(),
             InteractiveLogger(),
         ]
     )
     print(f'Training stopped at epoch {len(history)}, '
           f'best model reached at {early_stopping.get_best_epoch()} '
           f'with a value of {early_stopping.get_best_value()} '
-          f'(last reference value is = {early_stopping.last_value} with min delta = {early_stopping.min_delta})')
+          f'(last reference value is = {early_stopping.last_value_recorded} with min delta = {early_stopping.min_delta})')
     plot_history(0, history=history)
 
 

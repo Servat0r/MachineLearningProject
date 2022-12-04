@@ -67,7 +67,7 @@ def keras_test_fully_connected_minibatch_model_with_regularizations_lrscheduler(
     kwargs = {} if args is None else kwargs
     x_eval, y_eval = func(samples=N_SAMPLES//5, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, *args, **kwargs)
     model = __generate_model(initializer, l1_regularizer, l2_regularizer, mb_size)
-    # Shadow optimizer in order to use custom lr and scheduler
+    # Shadow optimizer in order to use custom learning_rate and scheduler
     loss_function = tf.keras.losses.MeanSquaredError()
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum=momentum)
 
@@ -98,9 +98,9 @@ def keras_test_fc_minibatch_model_regularization_lrschedulers(*test_nums: int):
     if 0 in test_nums:
         keras_test_fully_connected_minibatch_model_with_regularizations_lrscheduler(
             n_epochs=100, mb_size=10, func=arange_square_data, lr=1e-4, momentum=0.9,
-            # max_iter = n_epochs * mb_size
+            # max_iterations = max_epochs * mb_size
             lr_scheduler=cm.LinearDecayScheduler(
-                start_value=1e-4, end_value=1e-5, max_iter=100, round_val=6,
+                start_value=1e-4, end_value=1e-5, max_iter=100, round_value=6,
             ),
             # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
             # lr_scheduler=cm.ExponentialDecayScheduler(start_value=1e-3, alpha=1e-3),
@@ -111,9 +111,9 @@ def keras_test_fc_minibatch_model_regularization_lrschedulers(*test_nums: int):
     if 1 in test_nums:
         keras_test_fully_connected_minibatch_model_with_regularizations_lrscheduler(
             n_epochs=100, mb_size=10, func=arange_square_data, lr=1e-4, momentum=0.9, epoch_shuffle=False,
-            # max_iter = n_epochs * mb_size
+            # max_iterations = max_epochs * mb_size
             lr_scheduler=cm.LinearDecayScheduler(
-                start_value=1e-4, end_value=1e-5, max_iter=100, round_val=6,
+                start_value=1e-4, end_value=1e-5, max_iter=100, round_value=6,
             ),
             # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
             # lr_scheduler=cm.ExponentialDecayScheduler(start_value=1e-3, alpha=1e-3),

@@ -35,9 +35,8 @@ class RandomNormalDefaultInitializer(Initializer):
     """
     Random normal (Gaussian) initializer (mean = 0, std = 1).
     """
-    def __init__(self, scale: TReal = 1.0, zero_bias=False):
+    def __init__(self, scale: TReal = 1.0):
         self.scale = scale
-        self.zero_bias = zero_bias
 
     def __call__(self, shape: TShape, dtype=np.float64, *args, **kwargs) -> np.ndarray:
         result = self.scale * np.random.randn(*shape)
