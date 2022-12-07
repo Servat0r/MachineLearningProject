@@ -15,6 +15,7 @@ Machine Learning Project
 |    |___ metrics
 |    |___ modules
 |    |___ utils
+|    |___ validation
 |    |___ functions.py
 |    |___ transforms.py
 |___ tests
