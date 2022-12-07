@@ -27,26 +27,33 @@ class Holdout:
     def __init__(self) -> None:
         pass
     
-    def split (dataset, splitPercentage):
-        trainset = list()
-        train_size = splitPercentage * len(dataset)
-        dataset_copy = list(dataset)
-        while len(trainset) < train_size:
-            index = randrange(len(dataset_copy))
-            trainset.append(dataset_copy.pop(index))
-        return trainset, dataset_copy
+    def split (self, dataset, splitPercentage, validationSplitPercentage=0):
+        trainSet = list()
+        validationSet=list()
+        trainSetSize = splitPercentage * len(dataset)
+        testSet = list(dataset)
+        while len(trainSet) < trainSetSize:
+            index = randrange(len(testSet))
+            trainSet.append(testSet.pop(index))
+        if (validationSplitPercentage >0):
+            validationSetSize = validationSplitPercentage * len(trainSet)
+            while len(validationSet)<validationSetSize:
+                 index = randrange(len(trainSet))
+                 validationSet.append(trainSet.pop(index))
+
+        return trainSet, testSet, validationSet
 
 
 
 # test cross validation split
-seed()
+seed(1)
 dataset = [[1], [2], [3], [4], [5], [6], [7], [8], [9], [10]]
-#dataset = [["pippo","pluto","paperino"],"topolino",["minnie","paperoga"],"de paperoni"]
 numFolds=3
 folds = KFoldValidation.split(dataset, numFolds)
 for i in range(len(folds)):
     print(folds[i])
-train,test=Holdout.split(dataset,0.20)
+train,test,validation =Holdout.split(Holdout,dataset,0.70)
 print("Holdout")
 print(train)
 print(test)
+print(validation)
