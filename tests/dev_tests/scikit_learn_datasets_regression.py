@@ -22,7 +22,7 @@ def get_model_regression(in_size, hidden_sizes, out_size, winit_low=-0.5, winit_
         )
     layers.append(
         cm.Linear(sizes[-1], out_size, cu.RandomUniformInitializer(winit_low, winit_high),
-                  weights_regularizer=None, biases_regularizer=None)
+                  weights_regularizer=cm.L2Regularizer(l2_lambda), biases_regularizer=None)
     )
     model = cm.Model(layers)
     return model
@@ -107,6 +107,6 @@ def test_california_housing(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_
 
 
 if __name__ == '__main__':
-    test_diabetes(hidden_sizes=(4,))
-    # test_california_housing(hidden_sizes=(4,))
+    # test_diabetes(hidden_sizes=(4,))
+    test_california_housing(hidden_sizes=(4,))
     exit(0)

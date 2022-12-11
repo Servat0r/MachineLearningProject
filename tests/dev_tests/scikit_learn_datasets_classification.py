@@ -181,7 +181,7 @@ def test_covtype(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=Tru
 
 
 if __name__ == '__main__':
-    test_iris(hidden_sizes=(2,))
-    # test_breast_cancer(hidden_sizes=(4,))
+    # test_iris(hidden_sizes=(2,))
+    test_breast_cancer(hidden_sizes=(4,))
     # test_covtype(hidden_sizes=(16,))
     exit(0)
