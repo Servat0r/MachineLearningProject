@@ -52,7 +52,7 @@ class Accuracy(LambdaFunctionMetric):
     def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         return accuracy(predicted, truth, dtype=self.dtype)
 
-    def __init__(self, dtype=np.float64):
+    def __init__(self, dtype=np.float32):
         super(Accuracy, self).__init__(
             func=accuracy, batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype
         )
@@ -65,7 +65,7 @@ class CategoricalAccuracy(LambdaFunctionMetric):
     def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         return categorical_accuracy(predicted, truth, dtype=self.dtype)
 
-    def __init__(self, dtype=np.float64):
+    def __init__(self, dtype=np.float32):
         super(CategoricalAccuracy, self).__init__(
             func=categorical_accuracy, batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype
         )
@@ -78,7 +78,7 @@ class SparseCategoricalAccuracy(LambdaFunctionMetric):
     def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         return sparse_categorical_accuracy(predicted, truth, dtype=self.dtype)
 
-    def __init__(self, dtype=np.float64):
+    def __init__(self, dtype=np.float32):
         super(SparseCategoricalAccuracy, self).__init__(
             func=sparse_categorical_accuracy, batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype,
         )
@@ -89,7 +89,7 @@ class BinaryAccuracy(LambdaFunctionMetric):
     def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         return binary_accuracy(predicted, truth, self.threshold, self.dtype)
 
-    def __init__(self, dtype=np.float64, threshold=0.5):
+    def __init__(self, dtype=np.float32, threshold=0.5):
         self.threshold = threshold
         super(BinaryAccuracy, self).__init__(
             func=binary_accuracy, batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype
@@ -98,7 +98,7 @@ class BinaryAccuracy(LambdaFunctionMetric):
 
 class MeanSquaredError(FunctionMetric):
 
-    def __init__(self, const=0.5, dtype=np.float64):
+    def __init__(self, const=0.5, dtype=np.float32):
         super(MeanSquaredError, self).__init__(
             func=SquaredError(const=const), batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype
         )
@@ -110,7 +110,7 @@ class MeanEuclideanError(LambdaFunctionMetric):
     def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         return mean_euclidean_error(predicted, truth, reduce=False, dtype=self.dtype)
 
-    def __init__(self, dtype=np.float64):
+    def __init__(self, dtype=np.float32):
         super(MeanEuclideanError, self).__init__(
             func=mean_euclidean_error, batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype,
         )
@@ -122,7 +122,7 @@ class RootMeanSquaredError(LambdaFunctionMetric):
     def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         return root_mean_squared_error(predicted, truth, dtype=self.dtype)
 
-    def __init__(self, dtype=np.float64):
+    def __init__(self, dtype=np.float32):
         super(RootMeanSquaredError, self).__init__(
             func=root_mean_squared_error, whole_reduction=np.mean, dtype=dtype,
         )
@@ -150,7 +150,7 @@ class Timing(FunctionMetric):
     def time_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
         return np.sum([self.get_time() - self.start_time], dtype=self.dtype)
 
-    def __init__(self, precision=None, dtype=np.float64):
+    def __init__(self, precision=None, dtype=np.float32):
         """
         :param precision: If 's', a perf_counter() will be used for calculating time;
         otherwise, if 'ns', a pref_counter_ns() will be used.

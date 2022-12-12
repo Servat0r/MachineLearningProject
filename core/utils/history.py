@@ -7,7 +7,7 @@ from core.callbacks import Callback
 
 class History(Callback):
 
-    def __init__(self, max_epochs: int, dtype=np.float64):
+    def __init__(self, max_epochs: int, dtype=np.float32):
         self.logbook = {
             'loss': np.zeros(max_epochs, dtype=dtype),
             'Val_loss': np.zeros(max_epochs, dtype=dtype),

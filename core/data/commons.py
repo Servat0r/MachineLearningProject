@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 
 
 def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True,
-              validation_size=None, dtype=np.float64):
+              validation_size=None, dtype=np.float32):
     """
     Reads the monks datasets
     :param name: name of the dataset
@@ -19,7 +19,7 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
     :param validation_size: If not None, splits the dataset into a train and validation one
     with given validation size. Defaults to None.
     :param dtype: Numpy datatype to which datasets input will be transformed.
-    Defaults to np.float64.
+    Defaults to np.float32.
     :return: Train dataset as ArrayDataset as first value, and as second one a validation dataset
     if validation_size != None, otherwise None.
     """
@@ -57,7 +57,7 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
 
 def read_cup(
         use_internal_test_set=False, directory_path: str = '../datasets/cup', internal_test_set_size=0.2,
-        shuffle_once=True, validation_size=3 / 8, dtype=np.float64,
+        shuffle_once=True, validation_size=3 / 8, dtype=np.float32,
 ):
     """
     Reads the CUP training and test set

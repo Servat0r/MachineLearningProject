@@ -5,7 +5,7 @@ from core.utils.types import *
 
 class Metric(Callable):
 
-    def __init__(self, dtype=np.float64):
+    def __init__(self, dtype=np.float32):
         self.name = self.default_name()
         self.dtype = dtype
 
@@ -48,7 +48,7 @@ class FunctionMetric(Metric):
                  # By default, batch results are not reduced
                  whole_reduction: Callable[[np.ndarray], np.ndarray] = np.mean,
                  # By default, we take the mean of all batch values
-                 dtype=np.float64):
+                 dtype=np.float32):
         """
         :param func: Function of the form (predictions, truth) -> result to be wrapped
         by this metric.

@@ -135,14 +135,14 @@ def binary_accuracy(predicted: np.ndarray, truth: np.ndarray, threshold=0.5, dty
     return accuracy(predicted_transformed, truth, dtype)
 
 
-def mean_euclidean_error(predicted: np.ndarray, truth: np.ndarray, reduce=True, dtype=np.float64):
+def mean_euclidean_error(predicted: np.ndarray, truth: np.ndarray, reduce=True, dtype=np.float32):
     """
     Mean Euclidean Error, i.e. average over all examples of 2-norm of that example.
     :param predicted: Predicted values.
     :param truth: Ground truth values.
     :param reduce: If True, average over examples will be calculated; otherwise,
     raw values for each example will be returned (see MeanEuclideanError metric).
-    :param dtype: Data type of result array. Defaults to np.float64.
+    :param dtype: Data type of result array. Defaults to np.float32.
     """
     raw_values = np.linalg.norm(predicted - truth, axis=-1)
     if reduce:
@@ -151,7 +151,7 @@ def mean_euclidean_error(predicted: np.ndarray, truth: np.ndarray, reduce=True, 
         return np.mean(raw_values, dtype=dtype)
 
 
-def root_mean_squared_error(predicted: np.ndarray, truth: np.ndarray, dtype=np.float64):
+def root_mean_squared_error(predicted: np.ndarray, truth: np.ndarray, dtype=np.float32):
     """
     Root Mean Squared Error, i.e. square root of the average
     of all squared 2-norms of the examples.

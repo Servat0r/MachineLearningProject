@@ -36,7 +36,7 @@ def get_monk_setup_hold_out(
         dirpath: str = '../datasets/monks', train_file=MONK1_TRAIN, test_file=MONK1_TEST,
         in_size=MONK1_INSIZE, hidden_sizes=MONK1_HIDDEN_SIZES, out_size=MONK1_OUTSIZE,
         validation_size=None, grad_reduction='mean', shuffle=True,
-        winit_low=-0.1, winit_high=0.1, dtype=np.float64,
+        winit_low=-0.1, winit_high=0.1, dtype=np.float32,
 ):
     # Get datasets
     train_data, train_labels, eval_data, eval_labels = read_monk(train_file, dirpath, shuffle, validation_size, dtype)

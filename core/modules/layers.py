@@ -1,8 +1,5 @@
 # Base layers for a Neural Network
 from __future__ import annotations
-
-import numpy as np
-
 from core.utils import *
 import core.functions as cf
 from core.modules.regularization import *
@@ -182,7 +179,7 @@ class Linear(Layer):
     """
     def __init__(self, in_features: int, out_features: int, weights_initializer: Initializer,
                  biases_initializer: Initializer = ZeroInitializer(), gradients_reduction='mean', frozen=False,
-                 weights_regularizer: Regularizer = None, biases_regularizer: Regularizer = None, dtype=np.float64):
+                 weights_regularizer: Regularizer = None, biases_regularizer: Regularizer = None, dtype=np.float32):
         """
         :param in_features: Input dimension.
         :param out_features: Output dimension.
@@ -473,7 +470,7 @@ class Dense(Layer):
             self, in_features: int, out_features: int, activation_layer: Activation,
             weights_initializer: Initializer, biases_initializer: Initializer = ZeroInitializer(),
             gradients_reduction='mean', frozen=False, weights_regularizer: Regularizer = None,
-            biases_regularizer: Regularizer = None, dtype=np.float64
+            biases_regularizer: Regularizer = None, dtype=np.float32
     ):
         super(Dense, self).__init__(frozen=frozen)
         # Initialize linear part

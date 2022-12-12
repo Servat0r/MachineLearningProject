@@ -10,12 +10,12 @@ TInit = TypeVar('TInit', bound=Callable[[tuple, Optional[tuple], ...], tuple[np.
 class Initializer:
 
     @abstractmethod
-    def __call__(self, shape: TShape, dtype=np.float64, *args, **kwargs) -> np.ndarray:
+    def __call__(self, shape: TShape, dtype=np.float32, *args, **kwargs) -> np.ndarray:
         pass
 
 
 class ZeroInitializer(Initializer):
-    def __call__(self, shape: TShape, dtype=np.float64, *args, **kwargs) -> np.ndarray:
+    def __call__(self, shape: TShape, dtype=np.float32, *args, **kwargs) -> np.ndarray:
         return np.zeros(shape, dtype=dtype)
 
 
@@ -27,7 +27,7 @@ class RandomUniformInitializer(Initializer):
         self.low = low
         self.high = high
 
-    def __call__(self, shape: TShape, dtype=np.float64, *args, **kwargs) -> np.ndarray:
+    def __call__(self, shape: TShape, dtype=np.float32, *args, **kwargs) -> np.ndarray:
         return np.random.uniform(self.low, self.high, shape).astype(dtype=dtype)
 
 
@@ -38,7 +38,7 @@ class RandomNormalDefaultInitializer(Initializer):
     def __init__(self, scale: TReal = 1.0):
         self.scale = scale
 
-    def __call__(self, shape: TShape, dtype=np.float64, *args, **kwargs) -> np.ndarray:
+    def __call__(self, shape: TShape, dtype=np.float32, *args, **kwargs) -> np.ndarray:
         result = self.scale * np.random.randn(*shape)
         return result.astype(dtype=dtype)
 

@@ -85,10 +85,10 @@ def test_california_housing(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_
     eval_dataloader = DataLoader(eval_dataset, batch_size=len(eval_dataset))
 
     # Optimizer and loss
-    optimizer = cm.SGD(lr=1e-5, momentum=0.9)
+    optimizer = cm.SGD(lr=1e-6, momentum=0.9)
     loss = cm.MSELoss(const=0.5, reduction='mean')
 
-    model = get_model_regression(8, hidden_sizes, 1, winit_low, winit_high, l2_lambda=1e-7)
+    model = get_model_regression(8, hidden_sizes, 1, winit_low, winit_high, l2_lambda=1e-10)
     model.compile(
         optimizer, loss, metrics=[MEE(), RMSE(), Timing()]
     )
@@ -108,5 +108,5 @@ def test_california_housing(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_
 
 if __name__ == '__main__':
     # test_diabetes(hidden_sizes=(4,))
-    test_california_housing(hidden_sizes=(4,))
+    test_california_housing(hidden_sizes=(8,))
     exit(0)

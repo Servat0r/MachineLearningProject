@@ -10,7 +10,7 @@ class Loss:
     """
     REDUCTIONS = {'none', 'mean', 'sum'}
 
-    def __init__(self, reduction='mean', dtype=np.float64):
+    def __init__(self, reduction='mean', dtype=np.float32):
         """
         :param reduction: Reduction to apply to calculated values for each example.
         If 'mean', applies np.mean(); if 'sum', applies np.sum(); otherwise, no
@@ -60,7 +60,7 @@ class CrossEntropyLoss(Loss):
     """
     Categorical Cross Entropy Loss. Note that this class does NOT include a Softmax layer.
     """
-    def __init__(self, clip_value: TReal = 1e-7, reduction='mean', dtype=np.float64):
+    def __init__(self, clip_value: TReal = 1e-7, reduction='mean', dtype=np.float32):
         super(CrossEntropyLoss, self).__init__(reduction=reduction, dtype=dtype)
         self.clip_value = clip_value
         self.func = cf.CategoricalCrossEntropy(self.clip_value)
@@ -86,7 +86,7 @@ class MSELoss(Loss):
     Mean Squared Error Loss over a batch of training examples.
     """
 
-    def __init__(self, const=0.5, reduction='mean', dtype=np.float64):
+    def __init__(self, const=0.5, reduction='mean', dtype=np.float32):
         super(MSELoss, self).__init__(reduction=reduction, dtype=dtype)
         self.func = cf.SquaredError(const=const)
 

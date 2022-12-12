@@ -15,7 +15,7 @@ Machine Learning Project
 |    |___ metrics
 |    |___ modules
 |    |___ utils
-|    |___ validation
+|    |___ validation.py
 |    |___ functions.py
 |    |___ transforms.py
 |___ tests
@@ -122,7 +122,7 @@ loss = cm.MSELoss(const=1., reduction='mean')
 
 model.compile(optimizer, loss, metrics=[MEE(), RMSE()])
 history = model.train(
-    train_dataloader, eval_dataloader, n_epochs=100,
+    train_dataloader, eval_dataloader, max_epochs=100,
     callbacks=[
         EarlyStopping('Val_MEE', patience=2),
         TrainingCSVLogger()
