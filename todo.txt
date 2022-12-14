@@ -61,6 +61,8 @@ DONE:
 
 PRIORITY:
 
+    REPLACE np.reshape WITH np.expand_dims
+
     14. Checkout course lectures if there is something missing
 
     0.1. Complete metrics:

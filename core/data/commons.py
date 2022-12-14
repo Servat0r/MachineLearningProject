@@ -33,6 +33,7 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
     monk_dataset = OneHotEncoder().fit_transform(monk_dataset).toarray().astype(dtype)
     labels = labels.to_numpy()[:, np.newaxis]
 
+    # todo here we are excluding TEST data (refactor for using HoldOut?)
     if validation_size is not None:
         train_monk_dataset, eval_monk_dataset, train_labels, eval_labels = train_test_split(
             monk_dataset, labels, test_size=validation_size, random_state=0, shuffle=shuffle_once, stratify=labels
@@ -57,7 +58,7 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
 
 def read_cup(
         use_internal_test_set=False, directory_path: str = '../datasets/cup', internal_test_set_size=0.2,
-        shuffle_once=True, validation_size=3 / 8, dtype=np.float32,
+        shuffle_once=True, validation_size=3/8, dtype=np.float32,
 ):
     """
     Reads the CUP training and test set
@@ -127,14 +128,8 @@ def read_cup(
             train_data, train_targets, test_size=internal_test_set_size, random_state=0,
         )
 
-    # Split into train and validation todo Sure? Did it mean this or to use internal test set for validation?
-    train_data, eval_data, train_targets, eval_targets = train_test_split(
-        train_data, train_targets, test_size=validation_size, random_state=0
-    )
-
     # As with MONKs, return raw numpy arrays for allowing different strategies (hold-out, k-fold etc.)
-    return train_data, train_targets, eval_data, eval_targets, \
-        int_test_set_data, int_test_set_targets, cup_test_set_data
+    return train_data, train_targets, int_test_set_data, int_test_set_targets, cup_test_set_data
 
 
 __all__ = [

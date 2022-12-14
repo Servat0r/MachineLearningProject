@@ -6,8 +6,6 @@ from abc import abstractmethod, ABC
 from typing import *
 import numpy as np
 import numpy.random as npr
-import cupy as cp
-import numba as nb
 
 
 # TypeVars

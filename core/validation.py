@@ -1,32 +1,45 @@
 from __future__ import annotations
 import math
 from core.utils import *
-from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 
 
-class KFoldValidation:
+class Validator:
+    """
+    Base class for validation approaches.
+    """
+    def split(self, inputs: np.ndarray, targets: np.ndarray, shuffle=True,
+              random_state=None) -> Generator[tuple[np.ndarray, np.ndarray]]:
+        pass
 
-    def __init__(self, number_of_folds: int, seed: int = None):
+
+class KFold(Validator):
+
+    def __init__(self, number_of_folds: int):
         self.number_of_folds = number_of_folds
-        # Reproducibility with seed
-        self.seed = seed
 
-    def split(self, dataset: np.ndarray, targets: np.ndarray, shuffle=True) -> list[tuple[np.ndarray, np.ndarray]]:
+    def split(self, inputs: np.ndarray, targets: np.ndarray, shuffle=True, random_state=None) \
+            -> Generator[tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]]:
         if shuffle:  # We want to actually permute the dataset before partitioning
             # Create random number generator
-            rng = np.random.default_rng(self.seed)
-            permuted = rng.permutation(len(dataset), axis=0)  # Permutation of indexes
+            rng = np.random.default_rng(random_state)
+            permuted = rng.permutation(len(inputs), axis=0)  # Permutation of indexes
         else:
-            permuted = np.arange(len(dataset))
-        dataset_split = []
+            permuted = np.arange(len(inputs))
         for i in range(self.number_of_folds):
-            start_index, end_index = self.fold_indexes(dataset, i)
-            dataset_split.append((
-                dataset[permuted[start_index:end_index]],
-                targets[permuted[start_index:end_index]],
-            ))
-        return dataset_split  # number_of_folds arrays
+            start_index, end_index = self.fold_indexes(inputs, i)
+
+            validation_inputs = inputs[permuted[start_index:end_index]]
+            validation_targets = targets[permuted[start_index:end_index]]
+
+            train_inputs = np.concatenate((
+                inputs[permuted[:start_index]], inputs[permuted[end_index:]],
+            ), axis=0)
+            train_targets = np.concatenate((
+                targets[permuted[:start_index]], targets[permuted[end_index:]]
+            ), axis=0)
+
+            yield (train_inputs, train_targets), (validation_inputs, validation_targets)
 
     def fold_indexes(self, dataset: np.ndarray, fold_num: int) -> tuple[int, int]:
         base_fold_size = math.floor(len(dataset) / self.number_of_folds)  # Base fold size (until overflowing)
@@ -43,26 +56,33 @@ class KFoldValidation:
         return start_index, end_index   # length of the fold == end_index - start_index
 
 
-class Holdout:
+class Holdout(Validator):
 
     def split(
-            self, X, y, split_percentage, validation_split_percentage=0, shuffle=True, stratify=None, random_state=None
-    ):
-        dev_x, test_x, dev_y, test_y = train_test_split(
-            X, y, test_size=split_percentage, shuffle=shuffle, random_state=random_state, stratify=stratify
-        )
+            self, inputs: np.ndarray, targets: np.ndarray, shuffle=True,
+            random_state=None, validation_split_percentage=0.0, stratify=None
+    ) -> Generator[tuple[np.ndarray, np.ndarray]]:
         if validation_split_percentage:  # != 0 AND != None
             train_x, val_x, train_y, val_y = train_test_split(
-                dev_x, dev_y, test_size=validation_split_percentage, shuffle=shuffle,
+                inputs, targets, test_size=validation_split_percentage, shuffle=shuffle,
                 random_state=random_state, stratify=stratify
             )
         else:
-            train_x, val_x, train_y, val_y = dev_x, None, dev_y, None
-        return train_x, train_y, val_x, val_y, test_x, test_y
+            train_x, val_x, train_y, val_y = inputs, None, targets, None
+        t = (val_x, val_y) if validation_split_percentage else None
+        yield [(train_x, train_y), t]
+
+
+__all__ = ['Validator', 'Holdout', 'KFold']
 
 
 if __name__ == '__main__':
-    X, y = load_breast_cancer(return_X_y=True)
+    X = np.arange(200).reshape((100, 2))
+    y = np.arange(100)
     num_folds = 5
-    k_fold = KFoldValidation(num_folds)
-    folds1 = k_fold.split(X, y)
+    k_fold = KFold(num_folds)
+    for train_data, eval_data in k_fold.split(X, y, random_state=0, shuffle=False):
+        train_inputs, train_targets = train_data
+        eval_inputs, eval_targets = eval_data
+        print('Train:', train_targets)
+        print('Eval:', eval_targets)
