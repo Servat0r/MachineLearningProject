@@ -34,6 +34,8 @@ class EarlyStopping(Callback):
     def before_training_cycle(self, model, logs=None):
         if not self.monitor.startswith('Val_'):
             self.is_validation_metric = False
+        elif self.monitor == 'Val_loss':
+            self.is_validation_metric = True
         else:
             for val_metric in model.validation_metrics:
                 if val_metric.name == self.monitor:
