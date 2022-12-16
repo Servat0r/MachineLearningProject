@@ -1,0 +1,100 @@
+[
+  {
+    "config": {
+      "size_hidden_layers": [
+        4
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "sigmoid",
+      "learning_rate": 0.001,
+      "momentum": 0.4,
+      "regularization": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.1,
+        0.1
+      ],
+      "max_epoch": 250,
+      "minibatch_size": 8
+    },
+    "mean": 1.5650501251220703,
+    "std": 0.0
+  },
+  {
+    "config": {
+      "size_hidden_layers": [
+        4
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "sigmoid",
+      "learning_rate": 0.001,
+      "momentum": 0.2,
+      "regularization": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.1,
+        0.1
+      ],
+      "max_epoch": 250,
+      "minibatch_size": 8
+    },
+    "mean": 1.57746422290802,
+    "std": 0.0
+  },
+  {
+    "config": {
+      "size_hidden_layers": [
+        4
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "sigmoid",
+      "learning_rate": 0.001,
+      "momentum": 0.4,
+      "regularization": [
+        "es",
+        "Val_loss",
+        0.001,
+        50
+      ],
+      "weights_initialization": [
+        "Uniform",
+        -0.1,
+        0.1
+      ],
+      "max_epoch": 250,
+      "minibatch_size": 8
+    },
+    "mean": 1.5858538150787354,
+    "std": 0.0
+  },
+  {
+    "config": {
+      "size_hidden_layers": [
+        4
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "sigmoid",
+      "learning_rate": 0.001,
+      "momentum": 0.2,
+      "regularization": [
+        "es",
+        "Val_loss",
+        0.001,
+        50
+      ],
+      "weights_initialization": [
+        "Uniform",
+        -0.1,
+        0.1
+      ],
+      "max_epoch": 250,
+      "minibatch_size": 8
+    },
+    "mean": 1.5891207456588745,
+    "std": 0.0
+  }
+]
