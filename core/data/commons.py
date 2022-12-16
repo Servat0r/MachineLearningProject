@@ -57,15 +57,15 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
 
 
 def read_cup(
-        use_internal_test_set=False, directory_path: str = '../datasets/cup', internal_test_set_size=0.2,
-        shuffle_once=True, validation_size=3/8, dtype=np.float32,
+        use_internal_test_set=False, directory_path: str = '../datasets/cup',
+        internal_test_set_size=0.2, shuffle_once=True, dtype=np.float32,
 ):
     """
     Reads the CUP training and test set
     :return: CUP training data, CUP training targets and CUP test data (as numpy ndarray)
     """
     # read the dataset
-    column_names = ['id', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'target_x', 'target_y']
+    column_names = ['id', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'target_x', 'target_y']
     internal_test_set_path = os.path.join(directory_path, "CUP-INTERNAL-TEST.csv")
     dev_set_path = os.path.join(directory_path, "CUP-DEV-SET.csv")
     original_train_set_path = os.path.join(directory_path, "ML-CUP22-TR.csv")
@@ -74,8 +74,7 @@ def read_cup(
     # If internal test set is required and paths for it and development one do not exist, create them
     if use_internal_test_set and not (os.path.exists(internal_test_set_path) and
                                       os.path.exists(original_train_set_path)):
-        dataframe = pd.read_csv(original_train_set_path, sep=',',
-                                names=column_names, skiprows=range(7), usecols=range(0, 13))
+        dataframe = pd.read_csv(original_train_set_path, sep=',', names=column_names, skiprows=range(7))
         # Shuffle the dataframe by using ids
         dataframe = dataframe.sample(frac=1, axis=0, random_state=0)
         # Take the first (100*int_ts_size)% of the dataset to form internal test set
@@ -84,19 +83,20 @@ def read_cup(
         dev_set_dataframe = dataframe.iloc[math.floor(len(dataframe) * internal_test_set_size):, :]
         # Save extracted dataframes with 6-digit precision (as they are in original file)
         internal_test_set_dataframe.to_csv(
-            path_or_buf=internal_test_set_path, index=False, float_format='%.6f', header=False)
+            path_or_buf=internal_test_set_path, index=False, float_format='%.6f', header=False
+        )
         dev_set_dataframe.to_csv(path_or_buf=dev_set_path, index=False, float_format='%.6f', header=False)
 
     # If internal test set is required and paths for it and development one already exist, use them
     int_test_set_data, int_test_set_targets = None, None
     if use_internal_test_set and os.path.exists(internal_test_set_path) and os.path.exists(dev_set_path):
-        train_data = pd.read_csv(dev_set_path, sep=',', names=column_names, skiprows=range(7), usecols=range(1, 11))
-        train_targets = pd.read_csv(dev_set_path, sep=',', names=column_names, skiprows=range(7), usecols=range(11, 13))
+        train_data = pd.read_csv(dev_set_path, sep=',', names=column_names, skiprows=range(7), usecols=range(1, 10))
+        train_targets = pd.read_csv(dev_set_path, sep=',', names=column_names, skiprows=range(7), usecols=range(10, 12))
 
         int_test_set_data = pd.read_csv(internal_test_set_path,  sep=',',
-                                        names=column_names, skiprows=range(7), usecols=range(1, 11))
+                                        names=column_names, skiprows=range(7), usecols=range(1, 10))
         int_test_set_targets = pd.read_csv(internal_test_set_path,  sep=',',
-                                           names=column_names, skiprows=range(7), usecols=range(11, 13))
+                                           names=column_names, skiprows=range(7), usecols=range(10, 12))
 
         int_test_set_data = int_test_set_data.to_numpy(dtype=dtype)
         int_test_set_targets = int_test_set_targets.to_numpy(dtype=dtype)
@@ -104,12 +104,11 @@ def read_cup(
     # ("fallback")
     else:
         train_data = pd.read_csv(original_train_set_path, sep=',',
-                                 names=column_names, skiprows=range(7), usecols=range(1, 11))
+                                 names=column_names, skiprows=range(7), usecols=range(1, 10))
         train_targets = pd.read_csv(original_train_set_path, sep=',',
-                                    names=column_names, skiprows=range(7), usecols=range(11, 13))
+                                    names=column_names, skiprows=range(7), usecols=range(11, 12))
 
-    cup_test_set_data = pd.read_csv(test_set_path, sep=',',
-                                    names=column_names[: -2], skiprows=range(7), usecols=range(1, 11))
+    cup_test_set_data = pd.read_csv(test_set_path, sep=',', names=column_names[: -2], skiprows=range(7))
 
     train_data = train_data.to_numpy(dtype=dtype)
     train_targets = train_targets.to_numpy(dtype=dtype)
@@ -127,6 +126,13 @@ def read_cup(
         train_data, int_test_set_data, train_targets, int_test_set_targets = train_test_split(
             train_data, train_targets, test_size=internal_test_set_size, random_state=0,
         )
+
+    # As usual, expand dimensions BEFORE usage
+    train_data = np.expand_dims(train_data, axis=1)
+    train_targets = np.expand_dims(train_targets, axis=1)
+    int_test_set_data = np.expand_dims(int_test_set_data, axis=1)
+    int_test_set_targets = np.expand_dims(int_test_set_targets, axis=1)
+    cup_test_set_data = np.expand_dims(cup_test_set_data, axis=1)
 
     # As with MONKs, return raw numpy arrays for allowing different strategies (hold-out, k-fold etc.)
     return train_data, train_targets, int_test_set_data, int_test_set_targets, cup_test_set_data

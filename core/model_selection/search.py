@@ -4,7 +4,7 @@ import core.modules as cm
 from core.utils.types import *
 from core.utils.speedtests import timeit
 from core.utils.initializers import RandomUniformInitializer, RandomNormalDefaultInitializer
-from core.metrics import Metric, MEE
+from core.metrics import Metric
 from core.callbacks import Callback, EarlyStopping, TrainingCSVLogger
 import core.model_selection.validation as cv
 from core.data import *
@@ -48,9 +48,9 @@ class ParameterSequence:
 
         'decay': [
             'none',  # No weight decay
-            ('linear', start_value, end_value, max_iter, round_val),  # Linear decay
-            ('iter', decay, start_value, round_val),  # Iter-based decay
-            ('exponential', start_value, alpha, round_val)  # Exponential decay
+            ('linear', end_value / start_value, round_val),  # Linear decay
+            ('iter', decay, round_val),  # Iter-based decay
+            ('exponential', alpha, round_val)  # Exponential decay
         ]
 
         'momentum': [0.0, 0.1],  # momentum values
@@ -130,15 +130,19 @@ class ParameterSequence:
 
     def convert_decay(self, data):
         config = data.get('decay')
+        start_lr_value = data.get('learning_rate')
+        max_epochs = data.get('max_epoch')
         if (config is None) or (config == 'none'):
             return None
         scheduler_name, scheduler_args = config[0], config[1:]
         if scheduler_name == 'linear':
+            # Multiply decay value by initial learning rate
+            scheduler_args = (start_lr_value, start_lr_value * scheduler_args[0], max_epochs) + scheduler_args[1:]
             return cm.LinearDecayScheduler(*scheduler_args)
         elif scheduler_name == 'iter':
-            return cm.IterBasedDecayScheduler(*scheduler_args)
+            return cm.IterBasedDecayScheduler(start_lr_value, *scheduler_args)
         elif scheduler_name == 'exponential':
-            return cm.ExponentialDecayScheduler(*scheduler_args)
+            return cm.ExponentialDecayScheduler(start_lr_value, *scheduler_args)
         else:
             raise TypeError(f"Unkwown scheduler config {config}")
 
@@ -180,7 +184,7 @@ class ParameterSequence:
                 callbacks.append(
                     EarlyStopping(
                         monitor=reg_vals[0], min_delta=reg_vals[1], patience=reg_vals[2],
-                        mode='min', return_best_result=True
+                        mode='min', return_best_result=False,
                     )
                 )
         return callbacks
@@ -219,43 +223,64 @@ class BaseSearch:
     def setup_parameters(self) -> ParameterSequence:
         pass
 
+    def __search_base_routine(
+            self, parameters_sequence: ParameterSequence, comb: dict,
+            inputs: np.ndarray, targets: np.ndarray, cv_shuffle=True,
+            cv_random_state=None, epoch_shuffle=True, *args, **kwargs
+    ):
+        print(f'Using comb = {comb}')
+        last_metric_values = []
+        for train_data, eval_data in self.cross_validator.split(
+                inputs, targets, shuffle=cv_shuffle, random_state=cv_random_state, *args, **kwargs
+        ):
+            model, optimizer, loss, callbacks = parameters_sequence.convert(comb)
+            model.compile(optimizer, loss, metrics=[self.scoring_metric])
+            train_dataset = ArrayDataset(*train_data)
+            eval_dataset = ArrayDataset(*eval_data) if eval_data is not None else None
+
+            train_dataloader = DataLoader(train_dataset, batch_size=comb['minibatch_size'], shuffle=epoch_shuffle)
+            if eval_data is not None:
+                eval_dataloader = DataLoader(eval_dataset, batch_size=len(eval_dataset))
+            else:
+                eval_dataloader = None
+            history = model.train(
+                train_dataloader, eval_dataloader, max_epochs=comb['max_epoch'], callbacks=callbacks
+            )
+            metric_values = history[f'Val_{self.scoring_metric.get_name()}']
+            last_metric_value = metric_values[len(history) - 1]
+            last_metric_values.append(last_metric_value)
+
+        mean_metric_value = np.mean(last_metric_values)
+        std_metric_value = np.std(last_metric_values)
+        return {
+            'config': comb,
+            'mean': mean_metric_value.item(),
+            'std': std_metric_value.item(),
+        }
+
     @timeit
     def search(
             self, inputs: np.ndarray, targets: np.ndarray, cv_shuffle=True,
-            cv_random_state=None, epoch_shuffle=True, *args, **kwargs
+            cv_random_state=None, epoch_shuffle=True, n_jobs: int = os.cpu_count(),
+            *args, **kwargs
     ):
         parameters_sequence = self.setup_parameters()
         hyperpar_comb = parameters_sequence.get_configs(self.parameters)
-        for comb in hyperpar_comb:
-            print(f'Using comb = {comb}')
-            last_metric_values = []
-            for train_data, eval_data in self.cross_validator.split(
-                    inputs, targets, shuffle=cv_shuffle, random_state=cv_random_state, *args, **kwargs
-            ):
-                model, optimizer, loss, callbacks = parameters_sequence.convert(comb)
-                model.compile(optimizer, loss, metrics=[self.scoring_metric])
-                train_dataset = ArrayDataset(*train_data)
-                eval_dataset = ArrayDataset(*eval_data) if eval_data is not None else None
-
-                train_dataloader = DataLoader(train_dataset, batch_size=comb['minibatch_size'], shuffle=epoch_shuffle)
-                if eval_data is not None:
-                    eval_dataloader = DataLoader(eval_dataset, batch_size=len(eval_dataset))
-                else:
-                    eval_dataloader = None
-                history = model.train(
-                    train_dataloader, eval_dataloader, max_epochs=comb['max_epoch'], callbacks=callbacks
-                )
-                metric_values = history[f'Val_{self.scoring_metric.get_name()}']
-                last_metric_value = metric_values[len(history)-1]
-                last_metric_values.append(last_metric_value)
-
-            mean_metric_value = np.mean(last_metric_values)
-            std_metric_value = np.std(last_metric_values)
-            self.results.append({
-                'config': comb,
-                'mean': mean_metric_value.item(),
-                'std': std_metric_value.item(),
-            })
+        if n_jobs is None:
+            print('Doing Sequential Search')
+            for comb in hyperpar_comb:
+                self.results.append(self.__search_base_routine(
+                    parameters_sequence, comb, inputs, targets, cv_shuffle,
+                    cv_random_state, epoch_shuffle, *args, **kwargs
+                ))
+        else:
+            print(f'Doing Parallel Search with {n_jobs} workers')
+            self.results = Parallel(n_jobs)(
+                delayed(BaseSearch.__search_base_routine)(
+                    self, parameters_sequence, comb, inputs, targets, cv_shuffle,
+                    cv_random_state, epoch_shuffle, *args, **kwargs
+                ) for comb in hyperpar_comb
+            )
         self.results = sorted(self.results, key=lambda x: x['mean'])
 
     def save_best(self, number: int, directory_path: str = '.', file_name: str = 'best_results.json'):
@@ -275,3 +300,9 @@ class FixedCombSearch(BaseSearch):
 
     def setup_parameters(self) -> ParameterSequence:
         return ParameterList()
+
+
+__all__ = [
+    'ParameterSequence', 'ParameterGrid', 'ParameterList',
+    'BaseSearch', 'GridSearch', 'FixedCombSearch',
+]

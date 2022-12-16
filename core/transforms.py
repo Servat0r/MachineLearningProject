@@ -16,20 +16,6 @@ class Transform(Callable):
         return self.transform(x)
 
 
-class OneHotEncoder(Transform):
-
-    def transform(self, x: np.ndarray):
-        n_labels = np.max(x) + 1
-        n_samples = len(x)
-        out_shape = x.shape + (n_labels,)
-        out = np.zeros(out_shape)
-        out[range(n_samples), x] = 1
-        return out
-
-    def inverse_transform(self, x: np.ndarray):
-        return np.argmax(x, axis=-1)
-
-
 class StandardScaler(Transform):
     """
     Own implementation of scikit-learn StandardScaler to be used in the project.
@@ -70,6 +56,5 @@ class StandardScaler(Transform):
 
 __all__ = [
     'Transform',
-    'OneHotEncoder',
     'StandardScaler',
 ]

@@ -107,6 +107,6 @@ def test_california_housing(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_
 
 
 if __name__ == '__main__':
-    # test_diabetes(hidden_sizes=(4,))
-    test_california_housing(hidden_sizes=(8,))
+    test_diabetes(hidden_sizes=(8,))
+    # test_california_housing(hidden_sizes=(8,))
     exit(0)

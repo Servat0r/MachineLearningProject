@@ -23,7 +23,7 @@ class RandomUniformInitializer(Initializer):
     """
     Random uniform initializer within a specified range [p, q].
     """
-    def __init__(self, low: TReal = 0.0, high: TReal = 1.0):
+    def __init__(self, low: TReal = -0.1, high: TReal = 0.1):
         self.low = low
         self.high = high
 

@@ -39,7 +39,7 @@ class LinearDecayScheduler(Scheduler):
 
 class IterBasedDecayScheduler(Scheduler):   # todo I don't remember the actual name
 
-    def __init__(self, decay: float, start_value: float, round_val: int = None):
+    def __init__(self, start_value: float, decay: float, round_val: int = None):
         self.decay = decay
         self.start_value = start_value
         self.round_value = round_val

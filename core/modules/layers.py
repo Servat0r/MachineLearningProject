@@ -324,7 +324,7 @@ class Linear(Layer):
                              f"(l > 0, 1, {self.in_features}), got {x.shape}.")
         shape = (x.shape,) if isinstance(x.shape, int) else x.shape
         if len(shape) == 1:
-            return np.expand_dims(x, axes=[1, 2])  # todo check if it overlows with axes (not clear from numpy doc)
+            return np.expand_dims(x, axis=(1, 2))  # todo check if it overflows with axes (not clear from numpy doc)
         elif len(shape) == 2:
             return np.expand_dims(x, axis=1)
         else:
