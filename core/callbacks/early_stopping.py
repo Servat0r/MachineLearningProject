@@ -64,6 +64,7 @@ class EarlyStopping(Callback):
             self.elapsed_patience_epochs += 1
             if self.elapsed_patience_epochs > self.patience:
                 model.stop_training = True
+                print(f'{type(self).__name__} stopped training at epoch {epoch}')
 
     def _is_better(self, target_metric):
         """

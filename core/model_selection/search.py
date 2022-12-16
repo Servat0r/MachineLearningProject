@@ -1,4 +1,5 @@
 from itertools import product
+from joblib import Parallel, delayed
 import core.modules as cm
 from core.utils.types import *
 from core.utils.speedtests import timeit
@@ -227,12 +228,12 @@ class BaseSearch:
         hyperpar_comb = parameters_sequence.get_configs(self.parameters)
         for comb in hyperpar_comb:
             print(f'Using comb = {comb}')
-            model, optimizer, loss, callbacks = parameters_sequence.convert(comb)
-            model.compile(optimizer, loss, metrics=[self.scoring_metric])
             last_metric_values = []
             for train_data, eval_data in self.cross_validator.split(
                     inputs, targets, shuffle=cv_shuffle, random_state=cv_random_state, *args, **kwargs
             ):
+                model, optimizer, loss, callbacks = parameters_sequence.convert(comb)
+                model.compile(optimizer, loss, metrics=[self.scoring_metric])
                 train_dataset = ArrayDataset(*train_data)
                 eval_dataset = ArrayDataset(*eval_data) if eval_data is not None else None
 

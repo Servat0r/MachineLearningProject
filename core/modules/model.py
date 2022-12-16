@@ -196,6 +196,7 @@ class Model:
         self.validation_metrics = []
         self.stop_training = False
 
+    @timeit
     def train(
             self, train_dataloader: DataLoader, eval_dataloader: DataLoader = None,
             max_epochs: int = 1, callbacks: Callback | Sequence[Callback] = None,
