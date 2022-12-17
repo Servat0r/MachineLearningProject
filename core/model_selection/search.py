@@ -36,7 +36,7 @@ class ParameterSequence:
 
     Syntax is as following:
     {
-        'size_hidden_layers': [(4,)],  # tuple of hidden units per layers
+        'size_hidden_layers': [[4]],  # tuple of hidden units per layers
 
         'input_dim': [10],  # Input dimension
 
@@ -88,7 +88,7 @@ class ParameterSequence:
         layers = [cm.Input()]
         nr_hidden_layers = len(config['size_hidden_layers'])
         # input dimension unified with hidden sizes to simplify subsequent for loop
-        non_output_sizes = (config['input_dim'],) + config['size_hidden_layers']
+        non_output_sizes = [config['input_dim']] + config['size_hidden_layers']
         for i in range(0, nr_hidden_layers):
             activation = self.convert_activation(config)
             layers.append(cm.Dense(
@@ -137,7 +137,8 @@ class ParameterSequence:
         scheduler_name, scheduler_args = config[0], config[1:]
         if scheduler_name == 'linear':
             # Multiply decay value by initial learning rate
-            scheduler_args = (start_lr_value, start_lr_value * scheduler_args[0], max_epochs) + scheduler_args[1:]
+            scheduler_args = (start_lr_value, start_lr_value * scheduler_args[0],
+                              max_epochs) + tuple(scheduler_args[1:])
             return cm.LinearDecayScheduler(*scheduler_args)
         elif scheduler_name == 'iter':
             return cm.IterBasedDecayScheduler(start_lr_value, *scheduler_args)
