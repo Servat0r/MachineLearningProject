@@ -290,6 +290,10 @@ class BaseSearch:
         with open(file_path, 'w') as fp:
             json.dump(results, fp, indent=2)
 
+    def save_all(self, directory_path: str = '.', file_name: str = 'results.json'):
+        number = len(self.results)
+        self.save_best(number, directory_path, file_name)
+
 
 class GridSearch(BaseSearch):
 
