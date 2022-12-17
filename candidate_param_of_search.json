@@ -1,15 +1,15 @@
 {
-    "size_hidden_layers": [[8, 8], [8, 4], [4, 4]],
+    "size_hidden_layers": [[16, 8], [8, 8], [8, 4], [8], [16]],
     "input_dim": [9],
     "output_dim": [2],
     "activation": ["tanh", "sigmoid", "relu"],
-    "learning_rate": [1e-3, 1e-4, 1e-5, 1e-6],
-    "momentum": [0.0, 0.3, 0.6, 0.9],
+    "learning_rate": [1e-3, 1e-4, 1e-5],
+    "momentum": [0.0, 0.4, 0.8],
     "regularization": [
-        "none", ["l2", 1e-6], ["l2", 1e-7], ["l2", 1e-8], ["es", "Val_loss", 50]
+        "none", ["l2", 1e-6], ["l2", 1e-7], ["es", "Val_loss", 50]
     ],
     "weights_initialization": [["Uniform", -0.1, 0.1], ["Uniform", -0.5, 0.5]],
-    "max_epoch": [500, 1000],
-    "minibatch_size": [8, 16, 32],
+    "max_epoch": [250, 500, 1000],
+    "minibatch_size": [8, 16, 24],
     "decay": ["none", ["linear", 1e-1, 8], ["linear", 1e-2, 8]]
 }

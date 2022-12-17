@@ -4,7 +4,7 @@ from tests.utils import *
 from core.utils.types import *
 from core.data import *
 from core.callbacks import InteractiveLogger, TrainingCSVLogger, EarlyStopping
-from core.metrics import MEE, RMSE
+from core.metrics import MEE, RMSE, MSE
 import core.utils as cu
 import core.modules as cm
 from core.model_selection import Holdout
@@ -30,30 +30,34 @@ def test_cup_once(
     # Create datasets and dataloaders
     train_dataset = ArrayDataset(train_data, train_targets)
     eval_dataset = ArrayDataset(eval_data, eval_targets)
-    train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True)
     eval_dataloader = DataLoader(eval_dataset, batch_size=len(eval_dataset))
 
     # Create model, optimizer, loss etc
     model = cm.Model([
         cm.Input(),
         cm.Dense(
-            9, 4, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5),
-            weights_regularizer=cm.L2Regularizer(1e-8), biases_regularizer=cm.L2Regularizer(1e-6),
+            9, 16, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-0.1, 0.1),
+            # weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
+        ),
+        cm.Dense(
+            16, 8, cm.Sigmoid(), weights_initializer=cu.RandomUniformInitializer(-0.1, 0.1),
+            # weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),
         cm.Linear(
-            4, 2, weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5),
-            weights_regularizer=cm.L2Regularizer(1e-8), biases_regularizer=cm.L2Regularizer(1e-6),
+            16, 2, weights_initializer=cu.RandomUniformInitializer(-0.1, 0.1),
+            # weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),
     ])
-    optimizer = cm.SGD(lr=1e-5, momentum=0.9)
+    optimizer = cm.SGD(lr=1e-3, momentum=0.8)
     loss = cm.MSELoss(const=1.0, reduction='mean')
 
     # Compile and execute
-    model.compile(optimizer, loss, metrics=[MEE(), RMSE()])
+    model.compile(optimizer, loss, metrics=[MEE(), RMSE(), MSE(const=1.0)])
 
     history = model.train(
-        train_dataloader, eval_dataloader, max_epochs=200, callbacks=[
-            # EarlyStopping(min_delta=1e-4, patience=20, return_best_result=True),
+        train_dataloader, eval_dataloader, max_epochs=1000, callbacks=[
+            # EarlyStopping(min_delta=1e-4, patience=50, return_best_result=True),
             InteractiveLogger(), TrainingCSVLogger(train_file_name='cup_train_log.csv')
         ]
     )

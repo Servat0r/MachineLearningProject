@@ -110,7 +110,7 @@ class ParameterSequence:
         optimizer = cm.SGD(
             config['learning_rate'], lr_decay_scheduler=scheduler, momentum=config['momentum']
         )
-        loss = cm.MSELoss(const=1., reduction='mean')
+        loss = cm.MSELoss(const=1.0, reduction='mean')
         callbacks = self.convert_callbacks(config)
         return model, optimizer, loss, callbacks
 
@@ -250,6 +250,7 @@ class BaseSearch:
             last_metric_value = metric_values[len(history) - 1]
             last_metric_values.append(last_metric_value)
 
+        print(f'{len(last_metric_values)} last metric values for comb = {comb}')
         mean_metric_value = np.mean(last_metric_values)
         std_metric_value = np.std(last_metric_values)
         return {
