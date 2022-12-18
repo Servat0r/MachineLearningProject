@@ -104,8 +104,10 @@ def generate_dataset(func, samples=N_SAMPLES, input_dim=INPUT_DIM, output_dim=OU
     args = () if args is None else args
     kwargs = {} if kwargs is None else kwargs
     x, y = func(samples=samples, input_dim=input_dim, output_dim=output_dim, *args, **kwargs)
-    x = x.reshape((x.shape[0], x.shape[1], INPUT_DIM))
-    y = y.reshape((y.shape[0], y.shape[1], OUTPUT_DIM))
+    x = x.reshape((x.shape[0], INPUT_DIM))
+    y = y.reshape((y.shape[0], OUTPUT_DIM))
+    # x = x.reshape((x.shape[0], x.shape[1], INPUT_DIM))
+    # y = y.reshape((y.shape[0], y.shape[1], OUTPUT_DIM))
     train_dataset = ArrayDataset(x, y)
 
     return x, y, train_dataset

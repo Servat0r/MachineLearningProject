@@ -96,10 +96,10 @@ class MSELoss(Loss):
         return all([super(MSELoss, self).__eq__(other), self.func == other.func])
 
     def forward(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return self.reduce(self.func(predicted, truth))
+        return self.reduce(self.func(predicted, truth) / truth.shape[-1])
 
     def backward(self, delta_vals: np.ndarray, truth: np.ndarray) -> np.ndarray:
-        return self.func.grad(delta_vals, truth).astype(self.dtype)
+        return (self.func.grad(delta_vals, truth) / truth.shape[-1]).astype(self.dtype)
 
 
 class RegularizedLoss(Loss):

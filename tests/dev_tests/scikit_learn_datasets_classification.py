@@ -43,8 +43,8 @@ def test_iris(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=True):
     sc = StandardScaler()
     X_train, X_eval = sc.transform(X_train), sc.transform(X_eval)
 
-    X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[-1])
-    X_eval = X_eval.reshape(X_eval.shape[0], 1, X_eval.shape[-1])
+    # X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[-1])
+    # X_eval = X_eval.reshape(X_eval.shape[0], 1, X_eval.shape[-1])
 
     # todo for future, transform them in one-hot encoded versions
     # y_train = y_train.reshape(y_train.shape[0], 1, 1)

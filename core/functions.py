@@ -135,6 +135,14 @@ def binary_accuracy(predicted: np.ndarray, truth: np.ndarray, threshold=0.5, dty
     return accuracy(predicted_transformed, truth, dtype)
 
 
+def mean_absolute_error(predicted: np.ndarray, truth: np.ndarray, reduce=True, dtype=np.float32):
+    raw_values = np.mean(np.abs(truth - predicted), axis=-1)
+    if reduce:
+        return np.mean(raw_values, dtype=dtype)
+    else:
+        return raw_values.astype(dtype)
+
+
 def mean_euclidean_error(predicted: np.ndarray, truth: np.ndarray, reduce=True, dtype=np.float32):
     """
     Mean Euclidean Error, i.e. average over all examples of 2-norm of that example.
@@ -168,6 +176,7 @@ __all__ = [
     'categorical_accuracy',
     'sparse_categorical_accuracy',
     'binary_accuracy',
+    'mean_absolute_error',
     'mean_euclidean_error',
     'root_mean_squared_error',
 ]

@@ -105,6 +105,18 @@ class MeanSquaredError(FunctionMetric):
         self.name = 'MSE'
 
 
+class MeanAbsoluteError(LambdaFunctionMetric):
+
+    def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
+        return mean_absolute_error(predicted, truth, reduce=False, dtype=self.dtype)
+
+    def __init__(self, dtype=np.float32):
+        super(MeanAbsoluteError, self).__init__(
+            func=mean_absolute_error, batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype,
+        )
+        self.name = 'MAE'
+
+
 class MeanEuclideanError(LambdaFunctionMetric):
 
     def lambda_function(self, predicted: np.ndarray, truth: np.ndarray) -> np.ndarray:
@@ -129,10 +141,11 @@ class RootMeanSquaredError(LambdaFunctionMetric):
         self.name = 'RMSE'
 
 
-# Utility aliases of mse, mee, rmse
+# Utility aliases of mse, mee, rmse, mae
 MSE = MeanSquaredError
 MEE = MeanEuclideanError
 RMSE = RootMeanSquaredError
+MAE = MeanAbsoluteError
 
 
 class Timing(FunctionMetric):
@@ -175,5 +188,5 @@ __all__ = [
     'MeanEuclideanError',
     'RootMeanSquaredError',
     'MSE', 'MEE', 'RMSE',
-    'Timing',
+    'MAE', 'Timing',
 ]

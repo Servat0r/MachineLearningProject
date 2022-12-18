@@ -4,7 +4,7 @@ from tests.utils import *
 from core.utils.types import *
 from core.data import *
 from core.callbacks import InteractiveLogger, TrainingCSVLogger, EarlyStopping
-from core.metrics import MEE, RMSE, MSE
+from core.metrics import MEE, RMSE, MSE, MAE
 import core.utils as cu
 import core.modules as cm
 from core.model_selection import Holdout
@@ -59,10 +59,10 @@ def test_cup_once(
     loss = cm.MSELoss(const=1.0, reduction='mean')
 
     # Compile and execute
-    model.compile(optimizer, loss, metrics=[MEE(), RMSE(), MSE(const=1.0)])
+    model.compile(optimizer, loss, metrics=[MEE(), MAE(), RMSE(), MSE(const=1.0)])
 
     history = model.train(
-        train_dataloader, eval_dataloader, max_epochs=500, callbacks=[
+        train_dataloader, eval_dataloader, max_epochs=1000, callbacks=[
             EarlyStopping(min_delta=1e-4, patience=100, return_best_result=True),
             InteractiveLogger(), TrainingCSVLogger(train_file_name='cup_train_log.csv')
         ]
@@ -73,4 +73,4 @@ def test_cup_once(
 
 
 if __name__ == '__main__':
-    test_cup_once(scaler=MinMaxScaler())
+    test_cup_once()

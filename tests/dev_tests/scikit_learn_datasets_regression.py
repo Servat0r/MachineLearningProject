@@ -40,8 +40,8 @@ def test_diabetes(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=Tr
     X_dev, X_test, y_dev, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
     X_train, X_eval, y_train, y_eval = train_test_split(X_dev, y_dev, test_size=0.3, random_state=42, shuffle=True)
 
-    X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[-1])
-    X_eval = X_eval.reshape(X_eval.shape[0], 1, X_eval.shape[-1])
+    # X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[-1])
+    # X_eval = X_eval.reshape(X_eval.shape[0], 1, X_eval.shape[-1])
 
     y_train = y_train.reshape(y_train.shape[0], 1, 1)
     y_eval = y_eval.reshape(y_eval.shape[0], 1, 1)

@@ -127,13 +127,6 @@ def read_cup(
             train_data, train_targets, test_size=internal_test_set_size, random_state=0,
         )
 
-    # As usual, expand dimensions BEFORE usage
-    train_data = np.expand_dims(train_data, axis=1)
-    train_targets = np.expand_dims(train_targets, axis=1)
-    int_test_set_data = np.expand_dims(int_test_set_data, axis=1)
-    int_test_set_targets = np.expand_dims(int_test_set_targets, axis=1)
-    cup_test_set_data = np.expand_dims(cup_test_set_data, axis=1)
-
     # As with MONKs, return raw numpy arrays for allowing different strategies (hold-out, k-fold etc.)
     return train_data, train_targets, int_test_set_data, int_test_set_targets, cup_test_set_data
 

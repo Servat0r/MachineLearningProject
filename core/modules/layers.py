@@ -199,7 +199,7 @@ class Linear(Layer):
         self.in_features = in_features
         self.out_features = out_features
         weights_shape = (self.in_features, self.out_features)
-        biases_shape = (1, self.out_features)
+        biases_shape = (self.out_features,)
         self.weights = weights_initializer(weights_shape, dtype=dtype)
         self.biases = biases_initializer(biases_shape, dtype=dtype)
         self.gradients_reduction = gradients_reduction
@@ -316,16 +316,14 @@ class Linear(Layer):
         elif len(shape) == 2:
             return shape[1] == self.in_features
         else:
-            return (shape[1] == 1) and (shape[-1] == self.in_features)
+            return False
 
     def normalize_input_shape(self, x: np.ndarray):
         if not self.check_input_shape(x.shape):
             raise ValueError(f"Invalid input shape: expected one of l, (l,), (l, {self.in_features}), "
-                             f"(l > 0, 1, {self.in_features}), got {x.shape}.")
+                             f"got {x.shape}.")
         shape = (x.shape,) if isinstance(x.shape, int) else x.shape
         if len(shape) == 1:
-            return np.expand_dims(x, axis=(1, 2))  # todo check if it overflows with axes (not clear from numpy doc)
-        elif len(shape) == 2:
             return np.expand_dims(x, axis=1)
         else:
             return x
@@ -338,9 +336,15 @@ class Linear(Layer):
     def backward(self, delta_vals: np.ndarray):
         # We don't want to compute updates if we are not training the model!
         if self.is_training():
-            transposed_input = np.transpose(self.input, axes=[0, 2, 1])  # (l, m, 1)
+            """
+            transposed_input = np.expand_dims(self.input, axis=2)
+            expanded_delta_vals = np.expand_dims(delta_vals, axis=1)
+            self.delta_weights = transposed_input * expanded_delta_vals  # np.dot(transposed_input, expanded_delta_vals)
+            """
+            transposed_input = np.expand_dims(self.input, axis=2)
+            expanded_delta_vals = np.expand_dims(delta_vals, axis=1)
             # Calculate update to layer's weights and biases
-            self.delta_weights = transposed_input @ delta_vals  # matmul operator
+            self.delta_weights = transposed_input * expanded_delta_vals
             self.delta_biases = delta_vals.copy()
 
             # Apply reductions if requested

@@ -7,9 +7,14 @@ from core.data import *
 from core.model_selection import Holdout
 # from core.transforms import StandardScaler
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import keras.backend as K
 
 
 layers = tf.keras.layers
+
+
+def euclidean_distance_loss(y_true, y_pred):
+    return K.sqrt(K.sum(K.square(y_pred - y_true), axis=-1))
 
 
 def keras_test_cup_once(
@@ -25,13 +30,13 @@ def keras_test_cup_once(
     eval_data, eval_targets = None, None
     cross_validator = Holdout()
     for train_values, eval_values in cross_validator.split(train_data, train_targets, shuffle=True, random_state=0,
-                                                           validation_split_percentage=0.25):
+                                                           validation_split_percentage=0.2):
         train_data, train_targets = train_values
         eval_data, eval_targets = eval_values
 
     # initializer = tf.keras.initializers.RandomUniform(-0.05, 0.05)
     model = tf.keras.Sequential()
-    model.add(layers.Input(shape=(1, 9)))
+    model.add(layers.Input(shape=(9,)))
     model.add(
         layers.Dense(16, activation='tanh',
                      kernel_initializer=tf.keras.initializers.RandomUniform(-0.05, 0.05))
@@ -51,7 +56,10 @@ def keras_test_cup_once(
     loss = tf.keras.losses.MeanSquaredError()
 
     model.compile(
-        optimizer, loss, metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError()]
+        optimizer, loss,
+        metrics=[
+            tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(), euclidean_distance_loss
+        ]
     )
 
     early_stopping = tf.keras.callbacks.EarlyStopping(min_delta=1e-4, patience=100)
@@ -60,7 +68,11 @@ def keras_test_cup_once(
         validation_data=(eval_data, eval_targets), shuffle=True,
         callbacks=[early_stopping]
     )
-    keras_plot_history(0, history, early_stopping.stopped_epoch)
+    if early_stopping.stopped_epoch is not None and early_stopping.stopped_epoch > 0:
+        stop_epoch = early_stopping.stopped_epoch
+    else:
+        stop_epoch = 500
+    keras_plot_history(0, history, stop_epoch)
 
 
 if __name__ == '__main__':
