@@ -17,6 +17,9 @@ def cup_grid_search(
     with open(config_file_path, 'r') as fp:
         params_of_search = json.load(fp)
 
+    total_number_of_configurations = np.prod([len(val) for val in params_of_search.values()]).item()
+    print(f"Grid Search with {total_number_of_configurations} total number of configurations")
+
     # Read cup dataset
     train_data, train_targets, int_test_set_data, int_test_set_targets, cup_test_set_data = read_cup(
         use_internal_test_set=True, directory_path='../../datasets/cup', internal_test_set_size=0.2, shuffle_once=True,

@@ -177,7 +177,8 @@ class ParameterSequence:
             raise TypeError(f"Unknown initialization strategy {config}")
 
     def convert_callbacks(self, data):
-        callbacks = [TrainingCSVLogger(float_round_val=8)]
+        # callbacks = [TrainingCSVLogger(float_round_val=8)]
+        callbacks = []
         reg_config = data.get('regularization')
         if reg_config is not None:
             reg_type, reg_vals = reg_config[0], reg_config[1:]
