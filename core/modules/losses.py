@@ -86,7 +86,7 @@ class MSELoss(Loss):
     Mean Squared Error Loss over a batch of training examples.
     """
 
-    def __init__(self, const=0.5, reduction='mean', dtype=np.float32):
+    def __init__(self, const=1.0, reduction='mean', dtype=np.float32):
         super(MSELoss, self).__init__(reduction=reduction, dtype=dtype)
         self.func = cf.SquaredError(const=const)
 

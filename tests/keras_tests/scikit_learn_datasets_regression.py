@@ -2,6 +2,7 @@
 from __future__ import annotations
 from sklearn.datasets import load_diabetes, fetch_california_housing  # Regression datasets
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 from tests import *
 import tensorflow as tf
@@ -13,6 +14,9 @@ def keras_test_diabetes(hidden_sizes=(4,), winit_low=-0.1, winit_high=0.1, epoch
     X, y = load_diabetes(return_X_y=True)
     X_dev, X_test, y_dev, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
     X_train, X_eval, y_train, y_eval = train_test_split(X_dev, y_dev, test_size=0.3, random_state=42, shuffle=True)
+
+    scaler = StandardScaler()
+    X_train = scaler.transform(X_train)
 
     X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[-1])
     X_eval = X_eval.reshape(X_eval.shape[0], 1, X_eval.shape[-1])
@@ -91,6 +95,6 @@ def keras_test_california_housing(hidden_sizes=(4,), winit_low=-0.1, winit_high=
 
 
 if __name__ == '__main__':
-    keras_test_diabetes(hidden_sizes=(4,))
+    keras_test_diabetes(hidden_sizes=(8,))
     # keras_test_california_housing(hidden_sizes=(4,))
     exit(0)

@@ -58,7 +58,7 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
 
 def read_cup(
         use_internal_test_set=False, directory_path: str = '../datasets/cup',
-        internal_test_set_size=0.2, shuffle_once=True, dtype=np.float32,
+        internal_test_set_size=0.1, shuffle_once=True, dtype=np.float32,
 ):
     """
     Reads the CUP training and test set

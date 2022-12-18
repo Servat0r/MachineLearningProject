@@ -98,7 +98,7 @@ class BinaryAccuracy(LambdaFunctionMetric):
 
 class MeanSquaredError(FunctionMetric):
 
-    def __init__(self, const=0.5, dtype=np.float32):
+    def __init__(self, const=1.0, dtype=np.float32):
         super(MeanSquaredError, self).__init__(
             func=SquaredError(const=const), batch_reduction=np.mean, whole_reduction=np.mean, dtype=dtype
         )

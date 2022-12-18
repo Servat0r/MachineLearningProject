@@ -83,7 +83,7 @@ class CategoricalCrossEntropy(Callable):
 
 class SquaredError(Callable):
 
-    def __init__(self, const=0.5):
+    def __init__(self, const=1.0):
         self.const = const
 
     def __eq__(self, other):
@@ -146,9 +146,9 @@ def mean_euclidean_error(predicted: np.ndarray, truth: np.ndarray, reduce=True, 
     """
     raw_values = np.linalg.norm(predicted - truth, axis=-1)
     if reduce:
-        return raw_values.astype(dtype)
-    else:
         return np.mean(raw_values, dtype=dtype)
+    else:
+        return raw_values.astype(dtype)
 
 
 def root_mean_squared_error(predicted: np.ndarray, truth: np.ndarray, dtype=np.float32):

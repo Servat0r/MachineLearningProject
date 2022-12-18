@@ -9,20 +9,25 @@ from core.metrics import MEE, RMSE, Timing
 from core.data import ArrayDataset, DataLoader
 import core.utils as cu
 import core.modules as cm
+from core.transforms import StandardScaler
 
 
-def get_model_regression(in_size, hidden_sizes, out_size, winit_low=-0.5, winit_high=0.5, l2_lambda=1e-5):
+def get_model_regression(
+        in_size, hidden_sizes, out_size, winit_low=-0.5, winit_high=0.5, l2_lambda=1e-5, reduction='mean'
+):
     layers = [cm.Input()]
     sizes = [in_size] + list(hidden_sizes)
     for i in range(len(sizes)-1):
         p, q = sizes[i], sizes[i+1]
         layers.append(
             cm.Dense(p, q, cm.Tanh(), cu.RandomUniformInitializer(winit_low, winit_high),
-                     weights_regularizer=cm.L2Regularizer(l2_lambda), biases_regularizer=None)
+                     weights_regularizer=cm.L2Regularizer(l2_lambda), biases_regularizer=None,
+                     gradients_reduction=reduction)
         )
     layers.append(
         cm.Linear(sizes[-1], out_size, cu.RandomUniformInitializer(winit_low, winit_high),
-                  weights_regularizer=cm.L2Regularizer(l2_lambda), biases_regularizer=None)
+                  weights_regularizer=cm.L2Regularizer(l2_lambda), biases_regularizer=None,
+                  gradients_reduction=reduction)
     )
     model = cm.Model(layers)
     return model
@@ -41,15 +46,19 @@ def test_diabetes(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=Tr
     y_train = y_train.reshape(y_train.shape[0], 1, 1)
     y_eval = y_eval.reshape(y_eval.shape[0], 1, 1)
 
+    scaler = StandardScaler(1e-12)
+    X_train = scaler.transform(X_train)
+    X_eval = scaler.transform(X_eval)
+
     train_dataset, eval_dataset = ArrayDataset(X_train, y_train), ArrayDataset(X_eval, y_eval)
     train_dataloader = DataLoader(train_dataset, batch_size=10, shuffle=epoch_shuffle)
     eval_dataloader = DataLoader(eval_dataset, batch_size=len(eval_dataset))
 
     # Optimizer and loss
     optimizer = cm.SGD(lr=1e-5, momentum=0.9)
-    loss = cm.MSELoss(const=0.5, reduction='mean')
+    loss = cm.MSELoss(const=1.0, reduction='mean')
 
-    model = get_model_regression(10, hidden_sizes, 1, winit_low, winit_high, l2_lambda=1e-7)
+    model = get_model_regression(10, hidden_sizes, 1, winit_low, winit_high, l2_lambda=1e-7, reduction='sum')
     model.compile(
         optimizer, loss, metrics=[MEE(), RMSE(), Timing()]
     )
@@ -85,8 +94,8 @@ def test_california_housing(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_
     eval_dataloader = DataLoader(eval_dataset, batch_size=len(eval_dataset))
 
     # Optimizer and loss
-    optimizer = cm.SGD(lr=1e-6, momentum=0.9)
-    loss = cm.MSELoss(const=0.5, reduction='mean')
+    optimizer = cm.SGD(lr=1e-5, momentum=0.9)
+    loss = cm.MSELoss(const=1.0, reduction='mean')
 
     model = get_model_regression(8, hidden_sizes, 1, winit_low, winit_high, l2_lambda=1e-10)
     model.compile(
