@@ -9,7 +9,7 @@ from core.model_selection.search import *
 
 
 def cup_grid_search(
-        config_directory_name: str, config_file_name: str, metric: Metric = MEE(),
+        config_directory_name: str, config_file_name: str, metric: Metric = MSE(),
         cross_validator: cv.Validator = cv.Holdout(), save_all: bool = True,
         save_best: int = None, *args, **kwargs
 ):
@@ -28,9 +28,9 @@ def cup_grid_search(
     )
 
     if save_all:
-        grid_search.save_all(directory_path='../../results', file_name=f"results_{config_file_name}")
+        grid_search.save_all(directory_path='../../results', file_name=f"results_MSE_{config_file_name}")
     else:
-        grid_search.save_best(save_best, directory_path='../../results', file_name=f"results_{config_file_name}")
+        grid_search.save_best(save_best, directory_path='../../results', file_name=f"results_MSE_{config_file_name}")
 
     print('Test Finished!')
 
@@ -40,8 +40,9 @@ if __name__ == '__main__':
     if name == 'salvatore':
         cup_grid_search('../../search', 'coarse_gs_1_salvatore.json', save_all=True, validation_split_percentage=0.25)
     elif name == 'gaetano':
-        cup_grid_search('../../search', 'coarse_gs_1_gaetano.json', save_all=True, validation_split_percentage=0.25)
-        cup_grid_search('../../search', 'coarse_gs_2_gaetano.json', save_all=True, validation_split_percentage=0.25)
-        cup_grid_search('../../search', 'coarse_gs_3_gaetano.json', save_all=True, validation_split_percentage=0.25)
+        # cup_grid_search('../../search', 'coarse_gs_1_gaetano.json', save_all=True, validation_split_percentage=0.25)
+        # cup_grid_search('../../search', 'coarse_gs_2_gaetano.json', save_all=True, validation_split_percentage=0.25)
+        # cup_grid_search('../../search', 'coarse_gs_3_gaetano.json', save_all=True, validation_split_percentage=0.25)
+        cup_grid_search('../../search', 'coarse_gs_4_gaetano.json', save_all=True, validation_split_percentage=0.25)
     elif name == 'alberto':
         pass
