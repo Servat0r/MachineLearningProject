@@ -60,7 +60,7 @@ class Optimizer:
         self.iterations = 0
 
 
-# SGD Optimizer with optional momentum (todo add Nesterov momentum?)
+# SGD Optimizer with optional momentum
 class SGD(Optimizer):
 
     def __init__(self, lr=0.1, lr_decay_scheduler: Scheduler = None, momentum=0.):

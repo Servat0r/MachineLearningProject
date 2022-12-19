@@ -15,7 +15,7 @@ class DataLoader(Iterable):
 
     def __init__(
             self, dataset: BaseDataset, batch_size: int = 1, shuffle: bool = False,
-            log_to: str = None, log_values: bool = False,
+            shuffle_seed: int = 0, log_to: str = None, log_values: bool = False,
     ):
         """
         :param dataset: The dataset to use for retrieving samples.
@@ -42,7 +42,7 @@ class DataLoader(Iterable):
         self.permutation = None
         self.current_index = 0  # used for indexing on the permutation
         self.current_time = None   # used for timing dataset access
-        self.rng = npr.default_rng() if self.shuffle_every_epoch is not None else None
+        self.rng = npr.default_rng(seed=shuffle_seed) if self.shuffle_every_epoch is not None else None
         self.current_log_message = []
         self.current_epoch = 0
 

@@ -3,24 +3,14 @@ from joblib import Parallel, delayed
 import core.modules as cm
 from core.utils.types import *
 from core.utils.speedtests import timeit
-from core.utils.initializers import RandomUniformInitializer, RandomNormalDefaultInitializer
+from core.utils.initializers import RandomUniformInitializer, RandomNormalDefaultInitializer, FanInitializer
 from core.metrics import Metric
-from core.callbacks import Callback, EarlyStopping, TrainingCSVLogger
+from core.callbacks import Callback, EarlyStopping
 import core.model_selection.validation as cv
 from core.data import *
 import numpy as np
 import os
 import json
-
-
-# todo Need to do the following:
-#  1. Optimize the part in which we maintain self.results: instead of saving ALL data,
-#  maintain only the best (desired) ones (e.g. 4 in the example at the end);
-#  2. Test with MONK and CUP data
-#  3. Test with more parameter grids
-#  4. Add a NON-Grid Search for searching DIRECTLY on a sequence of configurations (instead of cross-product)
-#  (e.g. for the best models after the first coarse-grained grid search etc.)
-#  5. Fix the bug of EarlyStopping with Val_loss (if it still exists)
 
 
 def cross_product(inp: dict):
@@ -57,11 +47,15 @@ class ParameterSequence:
 
         'regularization': [
             'none',  # No regularization
-            ('es', 'Val_loss', 1e-3, 50),  # EarlyStopping with monitored metric, min_delta and patience
             ('l1', 1e-7),  # L1 with lambda
             ('l2', 1e-7),  # L2 with lambda
             ('l1l2', 1e-7, 1e-7)  # L1L2 with both lambdas
         ],
+
+        'early_stopping': [
+            'none',  # No ES
+            ('Val_loss', 1e-3, 50),  # EarlyStopping with monitored metric, min_delta and patience
+        ]
 
         'weights_initialization': [
             'Normal',  # Normal (mean = 0, std = 1) distribution
@@ -80,7 +74,7 @@ class ParameterSequence:
 
     def convert(self, config: dict) -> tuple[cm.Model, cm.Optimizer, cm.Loss, list[Callback]]:
         # Weights initializers
-        layer_weight_initializer = self.convert_weights_initialization(config)
+        layer_weight_initializers = self.convert_weights_initialization(config)
 
         # Weights and Biases regularizers (the same object can be used for all layers)
         layer_weights_regularizer, layer_biases_regularizer = self.convert_layer_regularization(config)
@@ -89,19 +83,19 @@ class ParameterSequence:
         nr_hidden_layers = len(config['size_hidden_layers'])
         # input dimension unified with hidden sizes to simplify subsequent for loop
         non_output_sizes = [config['input_dim']] + config['size_hidden_layers']
+        activations = self.convert_activation(config)
         for i in range(0, nr_hidden_layers):
-            activation = self.convert_activation(config)
             layers.append(cm.Dense(
                 non_output_sizes[i],
                 non_output_sizes[i + 1],
-                activation,
-                weights_initializer=layer_weight_initializer,
+                activations[i],
+                weights_initializer=layer_weight_initializers[i],
                 weights_regularizer=layer_weights_regularizer,
                 biases_regularizer=layer_biases_regularizer,
             ))
         layers.append(cm.Linear(
             non_output_sizes[-1], config['output_dim'],
-            weights_initializer=layer_weight_initializer,
+            weights_initializer=layer_weight_initializers[-1],
             weights_regularizer=layer_weights_regularizer,
             biases_regularizer=layer_biases_regularizer,
         ))
@@ -114,19 +108,31 @@ class ParameterSequence:
         callbacks = self.convert_callbacks(config)
         return model, optimizer, loss, callbacks
 
-    def convert_activation(self, data):
-        activation_name = data.get('activation')
-        if activation_name is None:
-            raise ValueError(f"Activation function cannot be None")
-        elif activation_name == 'tanh':
-            activation = cm.Tanh()
-        elif activation_name == 'sigmoid':
-            activation = cm.Sigmoid()
-        elif activation_name == 'relu':
-            activation = cm.ReLU()
+    def __get_act_from_string(self, act_string: str):
+        if act_string == 'tanh':
+            return cm.Tanh()
+        elif act_string == 'sigmoid':
+            return cm.Sigmoid()
+        elif act_string == 'relu':
+            return cm.ReLU()
         else:
-            raise TypeError(f'Unknown activation name {activation_name}')
-        return activation
+            return None
+
+    def convert_activation(self, data):
+        activation_data = data.get('activation')
+        nr_hidden_layers = len(data.get('size_hidden_layers'))
+        activations = []
+        if activation_data is None:
+            raise ValueError(f"Activation function cannot be None")
+        elif isinstance(activation_data, str):
+            for i in range(nr_hidden_layers):
+                activations.append(self.__get_act_from_string(activation_data))
+        elif isinstance(activations, Sequence):
+            for i in range(nr_hidden_layers):
+                activations.append(self.__get_act_from_string(activation_data[i]))
+        else:
+            raise TypeError(f'Unknown activation name {activation_data}')
+        return activations
 
     def convert_decay(self, data):
         config = data.get('decay')
@@ -167,28 +173,36 @@ class ParameterSequence:
 
     def convert_weights_initialization(self, data):
         config = data.get('weights_initialization')
+        nr_hidden_layers = len(data['size_hidden_layers']) + 1
         if config is None:
             raise ValueError(f"Weights initialization cannot be None!")
-        elif config == 'Normal':
-            return RandomNormalDefaultInitializer()
+        elif config[0] == 'Normal':
+            return nr_hidden_layers * [RandomNormalDefaultInitializer(*config[1:])]  # scale, seed
+        elif config[0] == 'FanOut':
+            sizes = data['size_hidden_layers'] + [data['output_dim']]
+            inits = []
+            for i in range(nr_hidden_layers):
+                inits.append(FanInitializer(sizes[i], seed=config[1]))
+            return inits
         elif config[0] == 'Uniform':
-            return RandomUniformInitializer(*config[1:])
+            return nr_hidden_layers * [RandomUniformInitializer(*config[1:])]
         else:
             raise TypeError(f"Unknown initialization strategy {config}")
 
     def convert_callbacks(self, data):
-        # callbacks = [TrainingCSVLogger(float_round_val=8)]
+        monitor = data.get('monitor')
+        # if monitor is None:
+        #     raise ValueError(f"Monitored metric cannot be None!")
+        # callbacks = [ModelMonitor(monitor, mode='min', return_best_result=True)]
         callbacks = []
-        reg_config = data.get('regularization')
-        if reg_config is not None:
-            reg_type, reg_vals = reg_config[0], reg_config[1:]
-            if reg_type == 'es':
-                callbacks.append(
-                    EarlyStopping(
-                        monitor=reg_vals[0], min_delta=reg_vals[1], patience=reg_vals[2],
-                        mode='min', return_best_result=False,
-                    )
+        reg_config = data.get('early_stopping')
+        if (reg_config is not None) and (reg_config != 'none'):
+            callbacks.append(
+                EarlyStopping(
+                    monitor=monitor, min_delta=reg_config[0], patience=reg_config[1],
+                    mode='min', return_best_result=False,
                 )
+            )
         return callbacks
 
 
@@ -231,7 +245,7 @@ class BaseSearch:
             cv_random_state=None, epoch_shuffle=True, *args, **kwargs
     ):
         print(f'Using comb = {comb}')
-        last_metric_values = []
+        best_metric_values = []
         for train_data, eval_data in self.cross_validator.split(
                 inputs, targets, shuffle=cv_shuffle, random_state=cv_random_state, *args, **kwargs
         ):
@@ -248,13 +262,16 @@ class BaseSearch:
             history = model.train(
                 train_dataloader, eval_dataloader, max_epochs=comb['max_epoch'], callbacks=callbacks
             )
+            # model_monitor: ModelMonitor = callbacks[0]  # todo Dependent from convert method
+            # best_metric_value = model_monitor.best_metric_value
             metric_values = history[f'Val_{self.scoring_metric.get_name()}']
-            last_metric_value = metric_values[len(history) - 1]
-            last_metric_values.append(last_metric_value)
+            best_metric_value = np.min(metric_values[:len(history)]).item()
+            # last_metric_value = metric_values[len(history) - 1]
+            best_metric_values.append(best_metric_value)
 
-        print(f'{len(last_metric_values)} last metric values for comb = {comb}')
-        mean_metric_value = np.mean(last_metric_values)
-        std_metric_value = np.std(last_metric_values)
+        print(f'{len(best_metric_values)} last metric values for comb = {comb}')
+        mean_metric_value = np.mean(best_metric_values)
+        std_metric_value = np.std(best_metric_values)
         return {
             'config': comb,
             'mean': mean_metric_value.item(),

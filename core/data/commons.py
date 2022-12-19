@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 
 
 def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True,
-              validation_size=None, dtype=np.float32):
+              shuffle_seed=0, validation_size=None, dtype=np.float32):
     """
     Reads the monks datasets
     :param name: name of the dataset
@@ -38,16 +38,13 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
         train_monk_dataset, eval_monk_dataset, train_labels, eval_labels = train_test_split(
             monk_dataset, labels, test_size=validation_size, random_state=0, shuffle=shuffle_once, stratify=labels
         )
-        train_monk_dataset = np.expand_dims(train_monk_dataset, axis=1)
-        eval_monk_dataset = np.expand_dims(eval_monk_dataset, axis=1)
-        train_labels = np.expand_dims(train_labels, axis=1)
-        eval_labels = np.expand_dims(eval_labels, axis=1)
         # We return arrays instead of an ArrayDataset to allow k-fold and other techniques
         return train_monk_dataset, train_labels, eval_monk_dataset, eval_labels
     else:
         if shuffle_once:
             indexes = list(range(len(monk_dataset)))
-            np.random.shuffle(indexes)
+            rng = np.random.default_rng(seed=shuffle_seed)
+            rng.shuffle(indexes)
             monk_dataset = monk_dataset[indexes]
             labels = labels[indexes]
 
@@ -58,7 +55,7 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
 
 def read_cup(
         use_internal_test_set=False, directory_path: str = '../datasets/cup',
-        internal_test_set_size=0.1, shuffle_once=True, dtype=np.float32,
+        internal_test_set_size=0.1, shuffle_once=True, shuffle_seed=0, dtype=np.float32,
 ):
     """
     Reads the CUP training and test set
@@ -116,7 +113,8 @@ def read_cup(
 
     if shuffle_once:
         indexes = np.arange(len(train_targets))
-        np.random.shuffle(indexes)
+        rng = np.random.default_rng(seed=shuffle_seed)
+        rng.shuffle(indexes)
         # todo maybe this is better with np.take(out=train_data/train_targets)
         train_data = train_data[indexes]
         train_targets = train_targets[indexes]

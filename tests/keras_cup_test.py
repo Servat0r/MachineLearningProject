@@ -1,5 +1,6 @@
 # A test with CUP data for checking correctness
 from __future__ import annotations
+import math
 import tensorflow as tf
 from tests.utils import *
 from core.utils.types import *
@@ -23,7 +24,7 @@ def keras_test_cup_once(
 ):
     # Read cup dataset
     train_data, train_targets, int_test_set_data, int_test_set_targets, cup_test_set_data = read_cup(
-        use_internal_test_set, directory_path, internal_test_set_size, shuffle_once, dtype
+        use_internal_test_set, directory_path, internal_test_set_size, shuffle_once, dtype=dtype
     )
 
     # Use Holdout split once
@@ -37,22 +38,31 @@ def keras_test_cup_once(
     # initializer = tf.keras.initializers.RandomUniform(-0.05, 0.05)
     model = tf.keras.Sequential()
     model.add(layers.Input(shape=(9,)))
+    fan_in_1, fan_in_2, fan_in_3 = 1 / math.sqrt(9), 1 / math.sqrt(16), 1 / math.sqrt(8)
+    print('Fan-Ins:', fan_in_1, fan_in_2, fan_in_3)
     model.add(
-        layers.Dense(16, activation='tanh',
-                     kernel_initializer=tf.keras.initializers.RandomUniform(-0.05, 0.05))
+        layers.Dense(
+            16, activation='sigmoid',
+            kernel_initializer=tf.keras.initializers.RandomUniform(-fan_in_1, fan_in_1),
+            kernel_regularizer=tf.keras.regularizers.L2(1e-4), bias_regularizer=tf.keras.regularizers.L2(1e-4),
+        ),
     )
     model.add(
         layers.Dense(
-            8, activation='tanh',
-            kernel_initializer=tf.keras.initializers.RandomUniform(-0.05, 0.05))
+            8, activation='sigmoid',
+            kernel_initializer=tf.keras.initializers.RandomUniform(-fan_in_2, fan_in_2),
+            kernel_regularizer=tf.keras.regularizers.L2(1e-4), bias_regularizer=tf.keras.regularizers.L2(1e-4),
+        ),
     )
     model.add(
         layers.Dense(
             2, activation='linear',
-            kernel_initializer=tf.keras.initializers.RandomUniform(-0.05, 0.05))
+            kernel_initializer=tf.keras.initializers.RandomUniform(-fan_in_3, fan_in_3),
+            kernel_regularizer=tf.keras.regularizers.L2(1e-4), bias_regularizer=tf.keras.regularizers.L2(1e-4),
+        ),
     )
 
-    optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3, momentum=0.0)
+    optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3, momentum=0.4)
     loss = tf.keras.losses.MeanSquaredError()
 
     model.compile(
@@ -62,17 +72,20 @@ def keras_test_cup_once(
         ]
     )
 
-    early_stopping = tf.keras.callbacks.EarlyStopping(min_delta=1e-4, patience=100)
+    early_stopping = tf.keras.callbacks.EarlyStopping(min_delta=1e-3, patience=100, restore_best_weights=True)
     history = model.fit(
-        train_data, train_targets, batch_size=8, epochs=500,
+        train_data, train_targets, batch_size=16, epochs=2000,
         validation_data=(eval_data, eval_targets), shuffle=True,
         callbacks=[early_stopping]
     )
     if early_stopping.stopped_epoch is not None and early_stopping.stopped_epoch > 0:
         stop_epoch = early_stopping.stopped_epoch
     else:
-        stop_epoch = 500
+        stop_epoch = 2000
     keras_plot_history(0, history, stop_epoch)
+    int_ts_predicted = model.predict(int_test_set_data)
+    means = np.mean(np.abs(int_ts_predicted - int_test_set_targets), axis=0)
+    print(f'Mean values predicted: {means}')
 
 
 if __name__ == '__main__':

@@ -45,9 +45,10 @@ class Softmax(Callable):
 
 class CategoricalCrossEntropy(Callable):
 
-    def __init__(self, clip_value: TReal = 1e-7):
+    def __init__(self, clip_value: TReal = 1e-7, clip=False):
         super(CategoricalCrossEntropy, self).__init__()
         self.clip_value = clip_value
+        self.clip = clip
 
     def __eq__(self, other):
         if not super(CategoricalCrossEntropy, self).__eq__(other) or not isinstance(other, CategoricalCrossEntropy):
@@ -56,19 +57,21 @@ class CategoricalCrossEntropy(Callable):
 
     def __call__(self, x: np.ndarray, truth: np.ndarray) -> np.ndarray:
         samples = len(x)
-        x_clipped = np.clip(x, self.clip_value, 1 - self.clip_value)
+        if self.clip:
+            x_clipped = np.clip(x, self.clip_value, 1 - self.clip_value)
+        else:
+            x_clipped = x
         correct_confidences = []
         trshape = truth.shape
         if len(trshape) == 1:  # (l,)
-            correct_confidences = x_clipped[range(samples), 0, truth]
-        elif len(trshape) == 3:  # (l, 1, n)
+            correct_confidences = x_clipped[range(samples), truth]
+        elif len(trshape) == 2:  # (l, n)
             filtered_x = x_clipped * truth
             correct_confidences = np.sum(filtered_x, axis=-1)
         negative_log_likelihoods = -np.log(correct_confidences)
         return negative_log_likelihoods
 
     def grad(self, x: np.ndarray, truth: np.ndarray):
-        # x_clip = - 1.0 / np.clip(x, self.clip_value, 1 - self.clip_value)   # todo maybe this clip should not occur
         x_clip = - 1.0 / x
         trshape = truth.shape
         if len(trshape) == 1:
@@ -96,6 +99,15 @@ class SquaredError(Callable):
 
     def grad(self, x: np.ndarray, truth: np.ndarray):
         return -2 * self.const * (truth - x)
+
+
+class MeanSquaredError(SquaredError):
+
+    def __call__(self, x: np.ndarray, truth: np.ndarray):
+        return self.const * np.mean(np.square(truth - x), axis=-1)
+
+    def grad(self, x: np.ndarray, truth: np.ndarray):
+        return -2 * self.const * (truth - x) / truth.shape[-1]
 
 
 def accuracy(predicted: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.ndarray:
@@ -172,6 +184,7 @@ __all__ = [
     'Softmax',
     'CategoricalCrossEntropy',
     'SquaredError',
+    'MeanSquaredError',
     'accuracy',
     'categorical_accuracy',
     'sparse_categorical_accuracy',
