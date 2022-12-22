@@ -37,17 +37,17 @@ def test_cup_once(
     model = cm.Model([
         cm.Input(),
         cm.Dense(
-            9, 16, cm.Sigmoid(), weights_initializer=cu.FanInitializer(16, seed=0),
+            9, 16, cm.Sigmoid(), weights_initializer=cu.RandomUniformInitializer(-0.05, 0.05, seed=20),  # cu.FanInitializer(16, seed=10),
             # biases_initializer=cu.RandomUniformInitializer(-0.01, 0.01),
             weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),
         cm.Dense(
-            16, 8, cm.Tanh(), weights_initializer=cu.FanInitializer(8, seed=0),
+            16, 8, cm.Sigmoid(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=20),  # cu.FanInitializer(8, seed=10),
             # biases_initializer=cu.RandomUniformInitializer(-0.01, 0.01),
             weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),
         cm.Linear(
-            8, 2, weights_initializer=cu.FanInitializer(2, seed=0),
+            8, 2, weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=20),  # cu.FanInitializer(2, seed=10),
             # biases_initializer=cu.RandomUniformInitializer(-0.01, 0.01),
             weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),

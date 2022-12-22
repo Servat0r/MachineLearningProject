@@ -269,13 +269,13 @@ class BaseSearch:
             # last_metric_value = metric_values[len(history) - 1]
             best_metric_values.append(best_metric_value)
 
-        print(f'{len(best_metric_values)} last metric values for comb = {comb}')
         mean_metric_value = np.mean(best_metric_values)
         std_metric_value = np.std(best_metric_values)
         return {
             'config': comb,
             'mean': mean_metric_value.item(),
             'std': std_metric_value.item(),
+            'values': best_metric_values,
         }
 
     @timeit
