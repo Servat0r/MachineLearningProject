@@ -33,7 +33,7 @@ def cup_grid_search(
     if save_all:
         grid_search.save_all(directory_path='../../results', file_name=f"results_MSE_{config_file_name}")
     else:
-        grid_search.save_best(save_best, directory_path='../../results', file_name=f"results_MSE_{config_file_name}")
+        grid_search.save_best(save_best, directory_path='../../results', file_name=f"results_{config_file_name}")
 
     print('Test Finished!')
 
