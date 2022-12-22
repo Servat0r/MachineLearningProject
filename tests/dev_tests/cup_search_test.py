@@ -66,6 +66,8 @@ def cup_sequential_search(
     with open(config_file_path, 'r') as fp:
         params_of_search = json.load(fp)
 
+    params_of_search = [data.get('config') for data in params_of_search]
+
     total_number_of_configurations = len(params_of_search)
     print(f"Sequential Search with {total_number_of_configurations} total number of configurations")
 
@@ -88,7 +90,7 @@ def cup_sequential_search(
     print('Test Finished!')
 
 
-if __name__ == '__main__':
+if __name__ == '__main___':
     name = sys.argv[1]
     if name == 'salvatore':
         json_file_name = sys.argv[2] if len(sys.argv) >= 3 else 'coarse_gs_1_salvatore.json'
