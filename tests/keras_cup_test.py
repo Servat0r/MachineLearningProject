@@ -31,7 +31,7 @@ def keras_test_cup_once(
     eval_data, eval_targets = None, None
     cross_validator = Holdout()
     for train_values, eval_values in cross_validator.split(train_data, train_targets, shuffle=True, random_state=0,
-                                                           validation_split_percentage=0.2):
+                                                           validation_split_percentage=0.25):
         train_data, train_targets = train_values
         eval_data, eval_targets = eval_values
 
@@ -39,6 +39,7 @@ def keras_test_cup_once(
     model = tf.keras.Sequential()
     model.add(layers.Input(shape=(9,)))
     fan_in_1, fan_in_2, fan_in_3 = 1 / math.sqrt(9), 1 / math.sqrt(16), 1 / math.sqrt(8)
+    fan_out_1, fan_out_2, fan_out_3 = 1 / math.sqrt(16), 1 / math.sqrt(8), 1 / math.sqrt(2)
     print('Fan-Ins:', fan_in_1, fan_in_2, fan_in_3)
     model.add(
         layers.Dense(
@@ -72,9 +73,9 @@ def keras_test_cup_once(
         ]
     )
 
-    early_stopping = tf.keras.callbacks.EarlyStopping(min_delta=1e-3, patience=100, restore_best_weights=True)
+    early_stopping = tf.keras.callbacks.EarlyStopping(min_delta=1e-5, patience=200, restore_best_weights=True)
     history = model.fit(
-        train_data, train_targets, batch_size=16, epochs=2000,
+        train_data, train_targets, batch_size=8, epochs=2000,
         validation_data=(eval_data, eval_targets), shuffle=True,
         callbacks=[early_stopping]
     )

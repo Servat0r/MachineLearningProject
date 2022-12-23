@@ -90,7 +90,7 @@ def cmd_cup_sequential_search(
         dir_path=typer.Option('search', help=_CUP_GS_DIR_PATH_HELP),
         file_path=typer.Option('coarse_gs_1_salvatore.json', help=_CUP_GS_FILE_PATH_HELP),
         metric=typer.Option('mee', help=_CUP_GS_METRIC_HELP),
-        cross_validator=typer.Option('holdout', help=_CUP_GS_CV_HELP),
+        cross_validator=typer.Option('kfold', help=_CUP_GS_CV_HELP),
         val_split=typer.Option(0.25, help=_CUP_GS_VAL_SPLIT_HELP),
         folds=typer.Option(10, help=_CUP_GS_FOLDS_HELP),
         save_all=typer.Option(True, help=_CUP_GS_SAVE_ALL_HELP),
@@ -104,19 +104,20 @@ def cmd_cup_sequential_search(
     in `save_dir_path`.
     """
     val_split, folds, save_all, save_best = float(val_split), int(folds), bool(save_all), int(save_best)
-    njobs = int(njobs) if njobs is not None else None
+    njobs = int(njobs)
+    njobs = njobs if njobs > 0 else None
     metric = __convert_metric(metric)
     cross_validator = __convert_cv(cross_validator, folds)
     if isinstance(cross_validator, cv.Holdout):
         cup_sequential_search(
             dir_path, file_path, metric, cross_validator, save_all,
             save_best, save_dir_path=save_dir_path, n_jobs=njobs,
-            validation_split_percentage=val_split,
+            dataset_dir_path='datasets/cup', validation_split_percentage=val_split,
         )
     else:
         cup_sequential_search(
-            dir_path, file_path, metric, cross_validator, save_all,
-            save_best, save_dir_path=save_dir_path, n_jobs=njobs,
+            dir_path, file_path, metric, cross_validator, save_all, save_best,
+            dataset_dir_path='datasets/cup', save_dir_path=save_dir_path, n_jobs=njobs,
         )
 
 

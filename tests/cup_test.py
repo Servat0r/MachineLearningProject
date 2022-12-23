@@ -71,8 +71,8 @@ def test_cup_once(
     plot_history(0, history, n_epochs=len(history))
 
     model.set_to_test()
-    int_ts_predicted = model.predict(int_test_set_data)
-    means = np.mean(np.abs(int_ts_predicted - int_test_set_targets), axis=0)
+    eval_predicted = model.predict(eval_data)
+    means = np.mean(np.abs(eval_predicted - eval_targets), axis=0)
     print(f'Mean values predicted: {means}')
 
     best_parameters = model_monitor.get_best_parameters()
@@ -81,8 +81,8 @@ def test_cup_once(
         model.set_parameters(best_parameters)
         print(f'The metric value for best model was of: {model_monitor.best_metric_value} at epoch {model_monitor.best_epoch}')
         model.set_to_test()
-        int_ts_predicted = model.predict(int_test_set_data)
-        means = np.mean(np.abs(int_ts_predicted - int_test_set_targets), axis=0)
+        eval_predicted = model.predict(eval_data)
+        means = np.mean(np.abs(eval_predicted - eval_targets), axis=0)
         print(f'Mean values predicted: {means}')
 
 
