@@ -47,9 +47,6 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
             rng.shuffle(indexes)
             monk_dataset = monk_dataset[indexes]
             labels = labels[indexes]
-
-        monk_dataset = np.expand_dims(monk_dataset, axis=1)
-        labels = np.expand_dims(labels, axis=1)
         return monk_dataset, labels, None, None
 
 

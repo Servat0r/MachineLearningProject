@@ -1,190 +1,151 @@
-from tests import *
-import core.metrics as cmt
+import os
+import typer
+from tests.monks_tests import *
+from tests.cup_search_test import *
 
 
-def base_tests(*test_nums: int):
-    if 0 in test_nums:
-        test_separated()
+app = typer.Typer()
 
 
-def fc_minibatch_model_tests(*test_nums: int):
-    if 0 in test_nums:
-        test_fully_connected_minibatch_model(
-            n_epochs=250, mb_size=10, func=arange_square_data, epoch_shuffle=True, func_args={'start': EVAL_START},
-        )
-    if 1 in test_nums:
-        test_fully_connected_minibatch_model(
-            n_epochs=250, mb_size=10, func=arange_square_data, epoch_shuffle=False, func_args={'start': EVAL_START},
-        )
+_MONK_PLOT_SAVE_DIR_PATH_HELP = "Relative path for the directory in which to save the resulting plots. " \
+                           "Defaults to 'results/monks'"
+_MONK_PLOT_LR_HELP = "Learning rate. Defaults to 1e-1."
+_MONK_PLOT_MOMENTUM_HELP = "Momentum. Defaults to 0."
 
-    if 2 in test_nums:
-        test_fully_connected_minibatch_model(
-            n_epochs=250, mb_size=10, func=randn_sqrt_data, epoch_shuffle=True, func_args={},
-        )
-    if 3 in test_nums:
-        test_fully_connected_minibatch_model(
-            n_epochs=250, mb_size=10, func=randn_sqrt_data, epoch_shuffle=False, func_args={},
-        )
+_CUP_GS_DIR_PATH_HELP = 'Path of the directory in which the file of the grid search is contained.'
+_CUP_GS_FILE_PATH_HELP = 'Name of the file for the grid search.'
+_CUP_GS_METRIC_HELP = "One of `mee`, `mse`, `rmse`, `mae` as metric for the grid search."
+_CUP_GS_CV_HELP = 'One of `holdout`, `kfold` as cross validator for the grid search.'
+_CUP_GS_VAL_SPLIT_HELP = 'Validation split percentage (as 0.<perc>) to use in Holdout split.'
+_CUP_GS_FOLDS_HELP = 'Number of folds of to use for KFold cross-validation.'
+_CUP_GS_SAVE_ALL_HELP = 'Whether or not to save all the configurations of the grid search.'
+_CUP_GS_SAVE_BEST_HELP = 'If specified, saves only the given number of models from the best ones.'
+_CUP_GS_SAVE_DIR_HELP = 'Relative path of the directory in which to save the results of the search.'
+_CUP_GS_NJOBS_HELP = 'Number of worker processes to launch. Defaults to `os.cpu_count()`.'
 
 
-def fc_minibatch_model_regularization(*test_nums: int):
-    if 0 in test_nums:
-        test_fully_connected_minibatch_model_with_regularizations(
-            n_epochs=250, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
-            start_plot_epoch=0, lr=1e-4, epoch_shuffle=True, func_args={'start': EVAL_START},
-        )
-    if 1 in test_nums:
-        test_fully_connected_minibatch_model_with_regularizations(
-            n_epochs=250, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
-            start_plot_epoch=0, lr=1e-4, epoch_shuffle=False, func_args={'start': EVAL_START},
-        )
+@app.command(name='monk')
+def monk(
+        number: int,
+        plot_dir_path=typer.Option('results/monks', help=_MONK_PLOT_SAVE_DIR_PATH_HELP),
+        lr=typer.Option(1e-1, help=_MONK_PLOT_LR_HELP),
+        momentum=typer.Option(0., help=_MONK_PLOT_MOMENTUM_HELP),
+):
+    """
+    Executes the MONK test specified by the `number` parameter.
+    :param number: Either 1, 2, or 3, specifying which MONK test to execute.
+    :param plot_dir_path: Directory in which to save the resulting plots.
+    :param lr: Learning rate (MUST be a float).
+    :param momentum: Momentum (MUST be a float).
+    """
+    if not 1 <= number <= 3:
+        raise ValueError(f"Illegal value for 'number': expected one of {{1, 2, 3}}, got {number}")
+    else:
+        lr, momentum = float(lr), float(momentum)
+        plot_save_paths = [
+            os.path.join(plot_dir_path, f"monk{number}_losses.png"),
+            os.path.join(plot_dir_path, f"monk{number}_accuracy.png"),
+        ]
+        if number == 1:
+            test_monk1(lr=lr, momentum=momentum, plot_save_paths=plot_save_paths, dir_path='datasets/monks')
+        elif number == 2:
+            test_monk2(lr=lr, momentum=momentum, plot_save_paths=plot_save_paths, dir_path='datasets/monks')
+        else:
+            test_monk3(lr=lr, momentum=momentum, plot_save_paths=plot_save_paths, dir_path='datasets/monks')
 
-    if 2 in test_nums:
-        test_fully_connected_minibatch_model_with_regularizations(
-            n_epochs=20, mb_size=10, func=randn_sqrt_data, l1_regularizer=1e-5,
-            l2_regularizer=1e-6, func_args={},
-        )
-    if 3 in test_nums:
-        test_fully_connected_minibatch_model_with_regularizations(
-            n_epochs=20, mb_size=10, func=randn_sqrt_data, epoch_shuffle=False,
-            l1_regularizer=1e-5, l2_regularizer=1e-6, func_args={},
-        )
 
-
-def fc_minibatch_model_regularization_lrdecay(*test_nums: int):
-    if 0 in test_nums:
-        test_fc_minibatch_model_with_regularizations_lrscheduler(
-            n_epochs=20, mb_size=10, func=randn_sqrt_data, lr=1e-3, momentum=0.,
-            # max_iterations = max_epochs * mb_size
-            # lr_scheduler=cm.LinearDecayScheduler(start_value=0.01, end_value=0.005, max_iterations=100*(N_SAMPLES//50)),
-            # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
-            lr_scheduler=cm.ExponentialDecayScheduler(start_value=1e-3, alpha=1e-3),
-            l1_regularizer=1e-5, l2_regularizer=1e-6,
+@app.command(name='cup-grid')
+def cmd_cup_grid_search(
+        dir_path=typer.Option('search', help=_CUP_GS_DIR_PATH_HELP),
+        file_path=typer.Option('coarse_gs_1_salvatore.json', help=_CUP_GS_FILE_PATH_HELP),
+        metric=typer.Option('mee', help=_CUP_GS_METRIC_HELP),
+        cross_validator=typer.Option('holdout', help=_CUP_GS_CV_HELP),
+        val_split=typer.Option(0.25, help=_CUP_GS_VAL_SPLIT_HELP),
+        folds=typer.Option(5, help=_CUP_GS_FOLDS_HELP),
+        save_all=typer.Option(True, help=_CUP_GS_SAVE_ALL_HELP),
+        save_best=typer.Option(0, help=_CUP_GS_SAVE_BEST_HELP),
+        save_dir_path=typer.Option('results', help=_CUP_GS_SAVE_DIR_HELP)
+):
+    """
+    Executes the grid search on the parameters specified in the given configuration file
+    and saves the results in the folder specified in `save_dir_path`.
+    """
+    val_split, folds, save_all, save_best = float(val_split), int(folds), bool(save_all), int(save_best)
+    metric = __convert_metric(metric)
+    cross_validator = __convert_cv(cross_validator, folds)
+    if isinstance(cross_validator, cv.Holdout):
+        cup_grid_search(
+            dir_path, file_path, metric, cross_validator, save_all, save_best, save_dir_path=save_dir_path,
+            dataset_dir_path='datasets/cup', validation_split_percentage=val_split
         )
-    if 1 in test_nums:
-        test_fc_minibatch_model_with_regularizations_lrscheduler(
-            n_epochs=20, mb_size=10, func=randn_sqrt_data, lr=1e-3, momentum=0., epoch_shuffle=False,
-            # max_iterations = max_epochs * mb_size
-            # lr_scheduler=cm.LinearDecayScheduler(start_value=0.01, end_value=0.005, max_iterations=100*(N_SAMPLES//50)),
-            # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
-            lr_scheduler=cm.ExponentialDecayScheduler(start_value=1e-3, alpha=1e-3),
-            l1_regularizer=1e-5, l2_regularizer=1e-6,
-        )
-
-    if 2 in test_nums:
-        test_fc_minibatch_model_with_regularizations_lrscheduler(
-            n_epochs=100, mb_size=10, func=arange_square_data, lr=1e-4, momentum=0.9,
-            # max_iterations = max_epochs * mb_size
-            lr_scheduler=cm.LinearDecayScheduler(
-                start_value=1e-4, end_value=1e-5, max_iterations=100, round_value=6,
-            ),
-            # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
-            # lr_scheduler=cm.ExponentialDecayScheduler(start_value=1e-3, alpha=1e-3),
-            l1_regularizer=1e-6, l2_regularizer=1e-7,
-            # arange_sine_data extra args for validation set
-            func_args={'start': EVAL_START},
-        )
-    if 3 in test_nums:
-        test_fc_minibatch_model_with_regularizations_lrscheduler(
-            n_epochs=150, mb_size=10, func=arange_square_data, lr=1e-4, momentum=0.9, epoch_shuffle=False,
-            # max_iterations = max_epochs * mb_size
-            lr_scheduler=cm.LinearDecayScheduler(
-                start_value=1e-4, end_value=1e-5, max_iterations=150, round_value=6,
-            ),
-            # lr_scheduler=cm.IterBasedDecayScheduler(start_value=0.01, decay=0.001),
-            # lr_scheduler=cm.ExponentialDecayScheduler(start_value=1e-3, alpha=1e-3),
-            l1_regularizer=1e-6, l2_regularizer=1e-7,
-            # arange_sine_data extra args for validation set
-            func_args={'start': EVAL_START},
+    else:
+        cup_grid_search(
+            dir_path, file_path, metric, cross_validator, save_all, save_best,
+            dataset_dir_path='datasets/cup', save_dir_path=save_dir_path,
         )
 
 
-def fc_minibatch_model_regularization_metrics(*test_nums: int):
-    if 0 in test_nums:
-        test_fully_connected_minibatch_regularization_metrics(
-            n_epochs=250, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
-            start_plot_epoch=0, lr=1e-4, epoch_shuffle=True, func_args={'start': EVAL_START},
-            metrics=[cmt.MEE(), cmt.MSE(), cmt.RMSE()],
+@app.command(name='cup-sequential')
+def cmd_cup_sequential_search(
+        dir_path=typer.Option('search', help=_CUP_GS_DIR_PATH_HELP),
+        file_path=typer.Option('coarse_gs_1_salvatore.json', help=_CUP_GS_FILE_PATH_HELP),
+        metric=typer.Option('mee', help=_CUP_GS_METRIC_HELP),
+        cross_validator=typer.Option('holdout', help=_CUP_GS_CV_HELP),
+        val_split=typer.Option(0.25, help=_CUP_GS_VAL_SPLIT_HELP),
+        folds=typer.Option(10, help=_CUP_GS_FOLDS_HELP),
+        save_all=typer.Option(True, help=_CUP_GS_SAVE_ALL_HELP),
+        save_best=typer.Option(0, help=_CUP_GS_SAVE_BEST_HELP),
+        save_dir_path=typer.Option('results', help=_CUP_GS_SAVE_DIR_HELP),
+        njobs=typer.Option(os.cpu_count(), help=_CUP_GS_NJOBS_HELP),
+):
+    """
+    Executes a sequential search (i.e., on the whole list of given configurations) of the
+    configurations specified in the given file and saves the results in the folder specified
+    in `save_dir_path`.
+    """
+    val_split, folds, save_all, save_best = float(val_split), int(folds), bool(save_all), int(save_best)
+    njobs = int(njobs) if njobs is not None else None
+    metric = __convert_metric(metric)
+    cross_validator = __convert_cv(cross_validator, folds)
+    if isinstance(cross_validator, cv.Holdout):
+        cup_sequential_search(
+            dir_path, file_path, metric, cross_validator, save_all,
+            save_best, save_dir_path=save_dir_path, n_jobs=njobs,
+            validation_split_percentage=val_split,
         )
-    if 1 in test_nums:
-        test_fully_connected_minibatch_regularization_metrics(
-            n_epochs=50, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
-            start_plot_epoch=0, lr=1e-4, epoch_shuffle=False, func_args={'start': EVAL_START},
-            metrics=[cmt.MEE(), cmt.MSE(), cmt.RMSE()],
-        )
-
-    if 2 in test_nums:
-        test_fully_connected_minibatch_regularization_metrics(
-            n_epochs=20, mb_size=10, func=randn_sqrt_data, l1_regularizer=1e-5,
-            l2_regularizer=1e-6, func_args={},
-            metrics=[cmt.MEE(), cmt.MSE(), cmt.RMSE()],
-        )
-    if 3 in test_nums:
-        test_fully_connected_minibatch_regularization_metrics(
-            n_epochs=20, mb_size=10, func=randn_sqrt_data, epoch_shuffle=False,
-            l1_regularizer=1e-5, l2_regularizer=1e-6, func_args={},
-            metrics=[cmt.MEE(), cmt.MSE(), cmt.RMSE()],
-        )
-
-
-def fc_minibatch_model_regularization_metrics_logging(*test_nums: int):
-    if 0 in test_nums:
-        test_fully_connected_regularization_metrics_logging(
-            n_epochs=100, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
-            start_plot_epoch=0, lr=1e-4, epoch_shuffle=True, func_args={'start': EVAL_START},
-            metrics=[cmt.MEE(), cmt.RMSE(), cmt.Timing()], train_log_file='train_log.csv', round_val=4,
-            include_mb=True,
-        )
-    if 1 in test_nums:
-        test_fully_connected_regularization_metrics_logging(
-            n_epochs=100, mb_size=10, func=arange_square_data, l1_regularizer=1e-6, l2_regularizer=1e-7,
-            start_plot_epoch=0, lr=1e-4, epoch_shuffle=False, func_args={'start': EVAL_START},
-            metrics=[cmt.MEE(), cmt.RMSE(), cmt.Timing()], train_log_file='train_log.csv',
-            round_val=8, include_mb=True,
-        )
-
-    if 2 in test_nums:
-        test_fully_connected_regularization_metrics_logging(
-            n_epochs=100, mb_size=10, func=randn_sqrt_data, l1_regularizer=1e-5,
-            l2_regularizer=1e-6, func_args={}, train_log_file='train_log.csv',
-            metrics=[cmt.MEE(), cmt.RMSE(), cmt.Timing()],
-            round_val=8, include_mb=True,
-        )
-    if 3 in test_nums:
-        test_fully_connected_regularization_metrics_logging(
-            n_epochs=100, mb_size=10, func=randn_sqrt_data, epoch_shuffle=False,
-            l1_regularizer=1e-5, l2_regularizer=1e-6, func_args={},
-            metrics=[cmt.MEE(), cmt.RMSE(), cmt.Timing()], train_log_file='train_log.csv',
-            round_val=8, include_mb=True,
+    else:
+        cup_sequential_search(
+            dir_path, file_path, metric, cross_validator, save_all,
+            save_best, save_dir_path=save_dir_path, n_jobs=njobs,
         )
 
 
-def fc_mb_model_checkpoint_backup(*test_nums: int):
-    if 0 in test_nums:
-        test_model_checkpoint_and_backup(
-            n_epochs=25, mb_size=10, func=arange_square_data, epoch_shuffle=True,
-            l1_regularizer=1e-6, l2_regularizer=1e-6, func_args={'start': EVAL_START},
-            metrics=[cmt.MEE(), cmt.RMSE()], round_val=8,
-        )
+def __convert_metric(name: str):
+    if name == 'mee':
+        return MEE()
+    elif name == 'mse':
+        return MSE()
+    elif name == 'rmse':
+        return RMSE()
+    elif name == 'mae':
+        return MAE()
+    else:
+        raise ValueError(f"Unknown metric '{name}'")
 
 
-def fc_early_stopping(*test_nums: int):
-    if 0 in test_nums:
-        test_early_stopping(
-            n_epochs=1000, mb_size=10, func=arange_square_data, epoch_shuffle=True,
-            l1_regularizer=0., l2_regularizer=0., lr=1e-4, func_args={'start': EVAL_START},
-            metrics=[cmt.MEE(), cmt.RMSE()], round_val=8, min_delta=0., mode='min',
-            monitor='Val_MEE', patience=20,
-        )
+def __convert_cv(name: str, folds: int):
+    if name == 'holdout':
+        return cv.Holdout()
+    elif name == 'kfold':
+        return cv.KFold(folds)
+    else:
+        raise ValueError(f"Unknown cross validator '{name}'")
+
+
+@app.command()
+def run_all():
+    print('Command under construction')
 
 
 if __name__ == '__main__':
-    # sbase_tests(0)
-    fc_minibatch_model_tests(0, 1)
-    # fc_minibatch_model_regularization(0, 1)
-    # fc_minibatch_model_regularization_lrdecay(0, 1)
-    # fc_minibatch_model_regularization_metrics(0, 1)
-    # fc_minibatch_model_regularization_metrics_logging(0)
-    # fc_mb_model_checkpoint_backup(0)
-    # fc_early_stopping(0)
-    exit(0)
+    app()

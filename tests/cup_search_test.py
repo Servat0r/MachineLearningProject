@@ -11,7 +11,8 @@ from core.model_selection.search import *
 def cup_grid_search(
         config_directory_name: str, config_file_name: str, metric: Metric = MEE(),
         cross_validator: cv.Validator = cv.Holdout(), save_all: bool = True,
-        save_best: int = None, *args, **kwargs
+        save_best: int = None, dataset_dir_path='../datasets/cup',
+        save_dir_path: str = '../results', *args, **kwargs
 ):
     config_file_path = os.path.join(config_directory_name, config_file_name)
     with open(config_file_path, 'r') as fp:
@@ -22,7 +23,7 @@ def cup_grid_search(
 
     # Read cup dataset
     train_data, train_targets, int_test_set_data, int_test_set_targets, cup_test_set_data = read_cup(
-        use_internal_test_set=True, directory_path='../../datasets/cup', internal_test_set_size=0.1, shuffle_once=True,
+        use_internal_test_set=True, directory_path=dataset_dir_path, internal_test_set_size=0.1, shuffle_once=True,
     )
 
     grid_search = GridSearch(params_of_search, metric, cross_validator)
@@ -31,9 +32,9 @@ def cup_grid_search(
     )
 
     if save_all:
-        grid_search.save_all(directory_path='../../results', file_name=f"results_{config_file_name}")
+        grid_search.save_all(directory_path=save_dir_path, file_name=f"results_{config_file_name}")
     else:
-        grid_search.save_best(save_best, directory_path='../../results', file_name=f"results_{config_file_name}")
+        grid_search.save_best(save_best, directory_path=save_dir_path, file_name=f"results_{config_file_name}")
 
     print('Test Finished!')
 
@@ -60,7 +61,8 @@ def get_best_models(
 def cup_sequential_search(
         config_directory_name: str, config_file_name: str, metric: Metric = MEE(),
         cross_validator: cv.Validator = cv.KFold(number_of_folds=5), save_all: bool = True,
-        save_best: int = None, n_jobs=os.cpu_count(), *args, **kwargs
+        save_best: int = None, save_dir_path='../results', dataset_dir_path='../datasets/cup',
+        n_jobs=os.cpu_count(), *args, **kwargs
 ):
     config_file_path = os.path.join(config_directory_name, config_file_name)
     with open(config_file_path, 'r') as fp:
@@ -73,7 +75,7 @@ def cup_sequential_search(
 
     # Read cup dataset
     train_data, train_targets, int_test_set_data, int_test_set_targets, cup_test_set_data = read_cup(
-        use_internal_test_set=True, directory_path='../../datasets/cup', internal_test_set_size=0.1, shuffle_once=True,
+        use_internal_test_set=True, directory_path=dataset_dir_path, internal_test_set_size=0.1, shuffle_once=True,
     )
 
     sequential_search = FixedCombSearch(params_of_search, metric, cross_validator)
@@ -83,9 +85,9 @@ def cup_sequential_search(
     )
 
     if save_all:
-        sequential_search.save_all(directory_path='../../results', file_name=f"results_{config_file_name}")
+        sequential_search.save_all(directory_path=save_dir_path, file_name=f"results_{config_file_name}")
     else:
-        sequential_search.save_best(save_best, directory_path='../../results', file_name=f"results_{config_file_name}")
+        sequential_search.save_best(save_best, directory_path=save_dir_path, file_name=f"results_{config_file_name}")
 
     print('Test Finished!')
 

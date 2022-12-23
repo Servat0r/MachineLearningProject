@@ -39,7 +39,10 @@ def get_monk_setup_hold_out(
         winit_low=-0.1, winit_high=0.1, dtype=np.float32,
 ):
     # Get datasets
-    train_data, train_labels, eval_data, eval_labels = read_monk(train_file, dirpath, shuffle, validation_size, dtype)
+    train_data, train_labels, eval_data, eval_labels = read_monk(
+        train_file, dirpath, shuffle_once=shuffle, shuffle_seed=0,
+        validation_size=validation_size, dtype=dtype
+    )
     test_data, test_labels, _, _ = read_monk(test_file, dirpath, validation_size=None)
     train_dataset = ArrayDataset(train_data, train_labels)
     eval_dataset = None if eval_data is None else ArrayDataset(eval_data, eval_labels)
@@ -60,6 +63,7 @@ def get_monk_setup_hold_out(
     return model, train_dataset, eval_dataset, test_dataset
 
 
+# todo add L2 lambda
 def test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr=1e-1, momentum=0., batch_size=1,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
@@ -100,11 +104,12 @@ def test_monk(
 def test_monk1(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
-        plot_save_paths=None, model_save_path=None,
+        plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK1_TRAIN, test_file=MONK1_TEST, hidden_sizes=MONK1_HIDDEN_SIZES,
         validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
+        dirpath=dir_path,
     )
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
@@ -115,11 +120,12 @@ def test_monk1(
 def test_monk2(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
-        plot_save_paths=None, model_save_path=None,
+        plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK2_TRAIN, test_file=MONK2_TEST, hidden_sizes=MONK2_HIDDEN_SIZES,
         validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
+        dirpath=dir_path,
     )
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
@@ -130,11 +136,12 @@ def test_monk2(
 def test_monk3(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
-        plot_save_paths=None, model_save_path=None,
+        plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK3_TRAIN, test_file=MONK3_TEST, hidden_sizes=MONK3_HIDDEN_SIZES,
         validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
+        dirpath=dir_path,
     )
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
