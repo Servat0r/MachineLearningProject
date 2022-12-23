@@ -3,7 +3,7 @@ from __future__ import annotations
 from tests.utils import *
 from core.utils.types import *
 from core.data import *
-from core.callbacks import InteractiveLogger, TrainingCSVLogger
+from core.callbacks import InteractiveLogger, TrainingCSVLogger, EarlyStopping
 from core.metrics import BinaryAccuracy
 import core.utils as cu
 import core.modules as cm
@@ -74,7 +74,8 @@ def test_monk(
 
     # Configure optional parameters for training and plotting
     metrics = [BinaryAccuracy()] if metrics is None else metrics
-    callbacks = [InteractiveLogger(), TrainingCSVLogger()] if callbacks is None else callbacks
+    callbacks = [] if callbacks is None else callbacks
+    callbacks.append(InteractiveLogger())
     metrics_to_plot = [['loss', 'Val_loss'], ['BinaryAccuracy', 'Val_BinaryAccuracy']] \
         if metrics_to_plot is None else metrics_to_plot
     plot_save_paths = ['../results/monks/monk1_losses.png', '../results/monks/monk1_accuracy.png'] \
@@ -97,7 +98,7 @@ def test_monk(
         os.makedirs(dirname, exist_ok=True)
         model.save(model_save_path, include_compile_objs=True, include_history=True)
     for metric, save_path, ylabel in zip(metrics_to_plot, plot_save_paths, ylabels):
-        plot_metrics(history, metric, save_path, n_epochs, ylabel=ylabel, makedirs=True)
+        plot_metrics(history, metric, save_path, len(history), ylabel=ylabel, makedirs=True)
     return history
 
 
@@ -105,12 +106,15 @@ def test_monk1(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
+        csv_save_path=None,
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK1_TRAIN, test_file=MONK1_TEST, hidden_sizes=MONK1_HIDDEN_SIZES,
         validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
         dirpath=dir_path,
     )
+    callbacks = [] if callbacks is None else callbacks
+    callbacks.append(TrainingCSVLogger(csv_save_path, 'monk1_log.csv'))
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
         metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
@@ -121,12 +125,15 @@ def test_monk2(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
+        csv_save_path=None,
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK2_TRAIN, test_file=MONK2_TEST, hidden_sizes=MONK2_HIDDEN_SIZES,
         validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
         dirpath=dir_path,
     )
+    callbacks = [] if callbacks is None else callbacks
+    callbacks.append(TrainingCSVLogger(csv_save_path, 'monk2_log.csv'))
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
         metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
@@ -137,12 +144,16 @@ def test_monk3(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
+        csv_save_path=None,
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK3_TRAIN, test_file=MONK3_TEST, hidden_sizes=MONK3_HIDDEN_SIZES,
         validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
         dirpath=dir_path,
     )
+    callbacks = [] if callbacks is None else callbacks
+    callbacks.append(TrainingCSVLogger(csv_save_path, 'monk3_log.csv'))
+    callbacks.append(EarlyStopping(monitor='Val_loss', min_delta=1e-2, patience=10))
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
         metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
@@ -153,14 +164,17 @@ if __name__ == '__main__':
     test_monk1(
         lr=1e-1, batch_size=1, shuffle=True, n_epochs=200, model_save_path='../results/monks/monk1_model.model',
         plot_save_paths=['../results/monks/monk1_losses.png', '../results/monks/monk1_accuracy.png'],
+        csv_save_path='../results/monks',
     )
     test_monk2(
         lr=1e-1, batch_size=1, shuffle=True, n_epochs=200, model_save_path='../results/monks/monk2_model.model',
         plot_save_paths=['../results/monks/monk2_losses.png', '../results/monks/monk2_accuracy.png'],
+        csv_save_path='../results/monks',
     )
     test_monk3(
         lr=1e-2, batch_size=2, shuffle=True, n_epochs=200, model_save_path='../results/monks/monk3_model.model',
         plot_save_paths=['../results/monks/monk3_losses.png', '../results/monks/monk3_accuracy.png'],
+        csv_save_path='../results/monks',
     )
 
 

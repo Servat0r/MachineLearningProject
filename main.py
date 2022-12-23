@@ -9,8 +9,8 @@ app = typer.Typer()
 
 _MONK_PLOT_SAVE_DIR_PATH_HELP = "Relative path for the directory in which to save the resulting plots. " \
                            "Defaults to 'results/monks'"
-_MONK_PLOT_LR_HELP = "Learning rate. Defaults to 1e-1."
-_MONK_PLOT_MOMENTUM_HELP = "Momentum. Defaults to 0."
+_MONK_PLOT_LR_HELP = "Learning rate. Defaults to 1e-1 for the first two MONK problems and 1e-2 for the third."
+_MONK_PLOT_MOMENTUM_HELP = "Momentum. Defaults to 0.0 (float)."
 
 _CUP_GS_DIR_PATH_HELP = 'Path of the directory in which the file of the grid search is contained.'
 _CUP_GS_FILE_PATH_HELP = 'Name of the file for the grid search.'
@@ -24,12 +24,28 @@ _CUP_GS_SAVE_DIR_HELP = 'Relative path of the directory in which to save the res
 _CUP_GS_NJOBS_HELP = 'Number of worker processes to launch. Defaults to `os.cpu_count()`.'
 
 
+default_monk_parameters = {
+    1: {
+        'lr': 1e-1,
+        'momentum': 0.0,
+    },
+    2: {
+        'lr': 1e-1,
+        'momentum': 0.0,
+    },
+    3: {
+        'lr': 1e-2,
+        'momentum': 0.0,
+    }
+}
+
+
 @app.command(name='monk')
 def monk(
         number: int,
         plot_dir_path=typer.Option('results/monks', help=_MONK_PLOT_SAVE_DIR_PATH_HELP),
-        lr=typer.Option(1e-1, help=_MONK_PLOT_LR_HELP),
-        momentum=typer.Option(0., help=_MONK_PLOT_MOMENTUM_HELP),
+        lr=typer.Option(None, help=_MONK_PLOT_LR_HELP),
+        momentum=typer.Option(None, help=_MONK_PLOT_MOMENTUM_HELP),
 ):
     """
     Executes the MONK test specified by the `number` parameter.
@@ -41,17 +57,35 @@ def monk(
     if not 1 <= number <= 3:
         raise ValueError(f"Illegal value for 'number': expected one of {{1, 2, 3}}, got {number}")
     else:
+        if lr is None:
+            lr = default_monk_parameters[number]['lr']
+        if momentum is None:
+            momentum = default_monk_parameters[number]['momentum']
+        print(lr, momentum, type(lr))
         lr, momentum = float(lr), float(momentum)
         plot_save_paths = [
             os.path.join(plot_dir_path, f"monk{number}_losses.png"),
             os.path.join(plot_dir_path, f"monk{number}_accuracy.png"),
         ]
+        model_save_path = os.path.join(plot_dir_path, f"monk{number}_model.model")
         if number == 1:
-            test_monk1(lr=lr, momentum=momentum, plot_save_paths=plot_save_paths, dir_path='datasets/monks')
+            test_monk1(
+                lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
+                dir_path='datasets/monks', model_save_path=model_save_path,
+                csv_save_path=plot_dir_path,
+            )
         elif number == 2:
-            test_monk2(lr=lr, momentum=momentum, plot_save_paths=plot_save_paths, dir_path='datasets/monks')
+            test_monk2(
+                lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
+                dir_path='datasets/monks', model_save_path=model_save_path,
+                csv_save_path=plot_dir_path,
+            )
         else:
-            test_monk3(lr=lr, momentum=momentum, plot_save_paths=plot_save_paths, dir_path='datasets/monks')
+            test_monk3(
+                lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
+                dir_path='datasets/monks', model_save_path=model_save_path,
+                csv_save_path=plot_dir_path,
+            )
 
 
 @app.command(name='cup-grid')

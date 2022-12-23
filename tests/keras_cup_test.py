@@ -43,23 +43,23 @@ def keras_test_cup_once(
     print('Fan-Ins:', fan_in_1, fan_in_2, fan_in_3)
     model.add(
         layers.Dense(
-            16, activation='sigmoid',
-            kernel_initializer=tf.keras.initializers.RandomUniform(-fan_in_1, fan_in_1),
-            kernel_regularizer=tf.keras.regularizers.L2(1e-4), bias_regularizer=tf.keras.regularizers.L2(1e-4),
+            16, activation='tanh',
+            kernel_initializer=tf.keras.initializers.RandomUniform(-fan_out_1, fan_out_1),
+            kernel_regularizer=tf.keras.regularizers.L2(1e-7), bias_regularizer=tf.keras.regularizers.L2(1e-7),
         ),
     )
     model.add(
         layers.Dense(
-            8, activation='sigmoid',
-            kernel_initializer=tf.keras.initializers.RandomUniform(-fan_in_2, fan_in_2),
-            kernel_regularizer=tf.keras.regularizers.L2(1e-4), bias_regularizer=tf.keras.regularizers.L2(1e-4),
+            8, activation='tanh',
+            kernel_initializer=tf.keras.initializers.RandomUniform(-fan_out_2, fan_out_2),
+            kernel_regularizer=tf.keras.regularizers.L2(1e-7), bias_regularizer=tf.keras.regularizers.L2(1e-7),
         ),
     )
     model.add(
         layers.Dense(
             2, activation='linear',
-            kernel_initializer=tf.keras.initializers.RandomUniform(-fan_in_3, fan_in_3),
-            kernel_regularizer=tf.keras.regularizers.L2(1e-4), bias_regularizer=tf.keras.regularizers.L2(1e-4),
+            kernel_initializer=tf.keras.initializers.RandomUniform(-fan_out_3, fan_out_3),
+            kernel_regularizer=tf.keras.regularizers.L2(1e-7), bias_regularizer=tf.keras.regularizers.L2(1e-7),
         ),
     )
 

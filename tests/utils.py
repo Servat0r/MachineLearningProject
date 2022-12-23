@@ -186,12 +186,16 @@ def keras_plot_history(start_epoch, history, n_epochs):
 
 def plot_metrics(
         history, metrics_names, save_path, n_epochs=None, xlabel='Epochs', ylabel='Metrics', makedirs=True,
+        styles=None,
 ):
     n_epochs = len(history) if n_epochs is None else n_epochs
     epochs = np.arange(n_epochs)
+    styles = styles if styles is not None else ['solid', 'dashed']
+    i = 0
     for metric_name, metric_vals in history.items():
         if metric_name in metrics_names:
-            plt.plot(epochs, metric_vals[:n_epochs], label=metric_name)
+            plt.plot(epochs, metric_vals[:n_epochs], linestyle=styles[i], label=metric_name)
+            i += 1
     plt.legend()
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
