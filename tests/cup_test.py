@@ -23,7 +23,7 @@ def test_cup_once(
     eval_data, eval_targets = None, None
     cross_validator = Holdout()
     for train_values, eval_values in cross_validator.split(train_data, train_targets, shuffle=True, random_state=0,
-                                                           validation_split_percentage=0.2):
+                                                           validation_split_percentage=0.25):
         train_data, train_targets = train_values
         eval_data, eval_targets = eval_values
 
@@ -37,19 +37,19 @@ def test_cup_once(
     model = cm.Model([
         cm.Input(),
         cm.Dense(
-            9, 16, cm.Sigmoid(), weights_initializer=cu.RandomUniformInitializer(-0.05, 0.05, seed=20),  # cu.FanInitializer(16, seed=10),
+            9, 16, cm.Sigmoid(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=0),  # cu.FanInitializer(16, seed=10),
             # biases_initializer=cu.RandomUniformInitializer(-0.01, 0.01),
-            weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
+            # weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),
         cm.Dense(
-            16, 8, cm.Sigmoid(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=20),  # cu.FanInitializer(8, seed=10),
+            16, 8, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=0),  # cu.FanInitializer(8, seed=10),
             # biases_initializer=cu.RandomUniformInitializer(-0.01, 0.01),
-            weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
+            # weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),
         cm.Linear(
-            8, 2, weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=20),  # cu.FanInitializer(2, seed=10),
+            8, 2, weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=0),  # cu.FanInitializer(2, seed=10),
             # biases_initializer=cu.RandomUniformInitializer(-0.01, 0.01),
-            weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
+            # weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),
     ])
     # lr_decay_scheduler=cm.LinearDecayScheduler(1e-3, 1e-4, 1000, 8),
@@ -62,13 +62,15 @@ def test_cup_once(
     model_monitor = ModelMonitor(monitor='Val_MEE', mode='min', return_best_result=True)
     history = model.train(
         train_dataloader, eval_dataloader, max_epochs=2000, callbacks=[
-            EarlyStopping(monitor='Val_MEE', mode='min', min_delta=1e-4, patience=100, return_best_result=True),
+            EarlyStopping(monitor='Val_MEE', mode='min', min_delta=1e-5, patience=200, return_best_result=True),
             InteractiveLogger(), TrainingCSVLogger(train_file_name='cup_train_log.csv'), model_monitor
         ]
     )
     last_mse_value = history['Val_MEE'][len(history)-1]
     print(last_mse_value)
-    plot_history(0, history, n_epochs=len(history))
+    plot_metrics(history, ['loss', 'Val_loss'], './loss.png', len(history), ylabel='Loss')
+    plot_metrics(history, ['MEE', 'Val_MEE'], './MEE.png', len(history), ylabel='MEE')
+    # plot_history(0, history, n_epochs=len(history))
 
     model.set_to_test()
     eval_predicted = model.predict(eval_data)
