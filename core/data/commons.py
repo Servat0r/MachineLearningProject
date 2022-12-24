@@ -102,7 +102,9 @@ def read_cup(
         train_targets = pd.read_csv(original_train_set_path, sep=',',
                                     names=column_names, skiprows=range(7), usecols=range(11, 12))
 
-    cup_test_set_data = pd.read_csv(test_set_path, sep=',', names=column_names[: -2], skiprows=range(7))
+    cup_test_set_data = pd.read_csv(
+        test_set_path, sep=',', names=column_names[: -2], skiprows=range(7), usecols=range(1, 10)
+    )
 
     train_data = train_data.to_numpy(dtype=dtype)
     train_targets = train_targets.to_numpy(dtype=dtype)

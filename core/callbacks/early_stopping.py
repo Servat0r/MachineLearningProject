@@ -51,20 +51,21 @@ class EarlyStopping(Callback):
 
     def _main(self, model, epoch, logs=None):
         target_metric = logs.get(self.monitor, None)
-        if self.last_value_recorded is None:
-            self.last_value_recorded = target_metric
-        if self.return_best_result and ((self.best_model is None) or self._is_better(target_metric)):
-            self.best_model = copy.deepcopy(model)
-            self.best_epoch = epoch
-            self.best_metric_value = target_metric
-        if self._is_improving(target_metric):
-            self.last_value_recorded = target_metric
-            self.elapsed_patience_epochs = 0
-        else:
-            self.elapsed_patience_epochs += 1
-            if self.elapsed_patience_epochs > self.patience:
-                model.stop_training = True
-                print(f'{type(self).__name__} stopped training at epoch {epoch}')
+        if target_metric is not None:
+            if self.last_value_recorded is None:
+                self.last_value_recorded = target_metric
+            if self.return_best_result and ((self.best_model is None) or self._is_better(target_metric)):
+                self.best_model = copy.deepcopy(model)
+                self.best_epoch = epoch
+                self.best_metric_value = target_metric
+            if self._is_improving(target_metric):
+                self.last_value_recorded = target_metric
+                self.elapsed_patience_epochs = 0
+            else:
+                self.elapsed_patience_epochs += 1
+                if self.elapsed_patience_epochs > self.patience:
+                    model.stop_training = True
+                    print(f'{type(self).__name__} stopped training at epoch {epoch}')
 
     def _is_better(self, target_metric):
         """

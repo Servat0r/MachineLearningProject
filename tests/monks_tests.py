@@ -76,11 +76,20 @@ def test_monk(
     metrics = [BinaryAccuracy()] if metrics is None else metrics
     callbacks = [] if callbacks is None else callbacks
     callbacks.append(InteractiveLogger())
-    metrics_to_plot = [['loss', 'Val_loss'], ['BinaryAccuracy', 'Val_BinaryAccuracy']] \
-        if metrics_to_plot is None else metrics_to_plot
+    if metrics_to_plot is None:
+        metrics_to_plot = [
+            {
+                'loss': "Training",
+                'Val_loss': "Test",
+            },
+            {
+                'BinaryAccuracy': "Training",
+                'Val_BinaryAccuracy': "Test",
+            }
+        ]
     plot_save_paths = ['../results/monks/monk1_losses.png', '../results/monks/monk1_accuracy.png'] \
         if plot_save_paths is None else plot_save_paths
-    ylabels = ['Loss', 'Accuracy'] if ylabels is None else ylabels
+    ylabels = ['Loss (MSE)', 'BinaryAccuracy'] if ylabels is None else ylabels
 
     # Configure train and validation dataloaders
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -162,7 +171,7 @@ def test_monk3(
 
 if __name__ == '__main__':
     test_monk1(
-        lr=1e-1, batch_size=1, shuffle=True, n_epochs=200, model_save_path='../results/monks/monk1_model.model',
+        lr=0.2, batch_size=1, shuffle=True, n_epochs=100, model_save_path='../results/monks/monk1_model.model',
         plot_save_paths=['../results/monks/monk1_losses.png', '../results/monks/monk1_accuracy.png'],
         csv_save_path='../results/monks',
     )

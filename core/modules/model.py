@@ -212,6 +212,7 @@ class Model:
         """
         validation_set_exists = eval_dataloader is not None
         callbacks = [] if callbacks is None else callbacks
+        callbacks = [callbacks] if isinstance(callbacks, Callback) else callbacks
         minibatch_number = train_dataloader.get_batch_number()
         train_minibatch_losses = np.zeros(minibatch_number)
 
@@ -383,7 +384,7 @@ class Model:
             # Now update history with validation data
             self.history.after_evaluate(self, epoch, logs=metric_logs['validation'])
 
-    def predict(self, x: np.ndarray):
+    def predict(self, x: np.ndarray, callbacks: Callback | Sequence[Callback] = None):
         """
         Utility method for better readability when using model for predictions
         """

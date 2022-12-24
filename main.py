@@ -26,7 +26,7 @@ _CUP_GS_NJOBS_HELP = 'Number of worker processes to launch. Defaults to `os.cpu_
 
 default_monk_parameters = {
     1: {
-        'lr': 1e-1,
+        'lr': 0.2,
         'momentum': 0.0,
     },
     2: {

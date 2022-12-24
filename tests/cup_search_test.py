@@ -92,7 +92,7 @@ def cup_sequential_search(
     print('Test Finished!')
 
 
-if __name__ == '__main___':
+if __name__ == '__main__':
     name = sys.argv[1]
     if name == 'salvatore':
         json_file_name = sys.argv[2] if len(sys.argv) >= 3 else 'coarse_gs_1_salvatore.json'
