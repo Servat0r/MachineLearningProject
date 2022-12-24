@@ -1,0 +1,5 @@
+Elapsed time = 20.9176462 seconds
+Available cores: 16
+System: Windows
+Machine: AMD64
+Processor: Intel64 Family 6 Model 165 Stepping 2, GenuineIntel

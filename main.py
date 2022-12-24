@@ -90,8 +90,8 @@ def monk(
 
 @app.command(name='cup-grid')
 def cmd_cup_grid_search(
+        file_paths: list[str],
         dir_path=typer.Option('search', help=_CUP_GS_DIR_PATH_HELP),
-        file_path=typer.Option('coarse_gs_1_salvatore.json', help=_CUP_GS_FILE_PATH_HELP),
         metric=typer.Option('mee', help=_CUP_GS_METRIC_HELP),
         cross_validator=typer.Option('holdout', help=_CUP_GS_CV_HELP),
         val_split=typer.Option(0.25, help=_CUP_GS_VAL_SPLIT_HELP),
@@ -107,22 +107,24 @@ def cmd_cup_grid_search(
     val_split, folds, save_all, save_best = float(val_split), int(folds), bool(save_all), int(save_best)
     metric = __convert_metric(metric)
     cross_validator = __convert_cv(cross_validator, folds)
-    if isinstance(cross_validator, cv.Holdout):
-        cup_grid_search(
-            dir_path, file_path, metric, cross_validator, save_all, save_best, save_dir_path=save_dir_path,
-            dataset_dir_path='datasets/cup', validation_split_percentage=val_split
-        )
-    else:
-        cup_grid_search(
-            dir_path, file_path, metric, cross_validator, save_all, save_best,
-            dataset_dir_path='datasets/cup', save_dir_path=save_dir_path,
-        )
+    print(file_paths)
+    for file_path in file_paths:
+        if isinstance(cross_validator, cv.Holdout):
+            cup_grid_search(
+                dir_path, file_path, metric, cross_validator, save_all, save_best, save_dir_path=save_dir_path,
+                dataset_dir_path='datasets/cup', validation_split_percentage=val_split
+            )
+        else:
+            cup_grid_search(
+                dir_path, file_path, metric, cross_validator, save_all, save_best,
+                dataset_dir_path='datasets/cup', save_dir_path=save_dir_path,
+            )
 
 
 @app.command(name='cup-sequential')
 def cmd_cup_sequential_search(
+        file_paths: list[str],
         dir_path=typer.Option('search', help=_CUP_GS_DIR_PATH_HELP),
-        file_path=typer.Option('coarse_gs_1_salvatore.json', help=_CUP_GS_FILE_PATH_HELP),
         metric=typer.Option('mee', help=_CUP_GS_METRIC_HELP),
         cross_validator=typer.Option('kfold', help=_CUP_GS_CV_HELP),
         val_split=typer.Option(0.25, help=_CUP_GS_VAL_SPLIT_HELP),
@@ -134,7 +136,7 @@ def cmd_cup_sequential_search(
 ):
     """
     Executes a sequential search (i.e., on the whole list of given configurations) of the
-    configurations specified in the given file and saves the results in the folder specified
+    configurations specified in the given files and saves the results in the folder specified
     in `save_dir_path`.
     """
     val_split, folds, save_all, save_best = float(val_split), int(folds), bool(save_all), int(save_best)
@@ -142,17 +144,19 @@ def cmd_cup_sequential_search(
     njobs = njobs if njobs > 0 else None
     metric = __convert_metric(metric)
     cross_validator = __convert_cv(cross_validator, folds)
-    if isinstance(cross_validator, cv.Holdout):
-        cup_sequential_search(
-            dir_path, file_path, metric, cross_validator, save_all,
-            save_best, save_dir_path=save_dir_path, n_jobs=njobs,
-            dataset_dir_path='datasets/cup', validation_split_percentage=val_split,
-        )
-    else:
-        cup_sequential_search(
-            dir_path, file_path, metric, cross_validator, save_all, save_best,
-            dataset_dir_path='datasets/cup', save_dir_path=save_dir_path, n_jobs=njobs,
-        )
+    print(file_paths)
+    for file_path in file_paths:
+        if isinstance(cross_validator, cv.Holdout):
+            cup_sequential_search(
+                dir_path, file_path, metric, cross_validator, save_all,
+                save_best, save_dir_path=save_dir_path, n_jobs=njobs,
+                dataset_dir_path='datasets/cup', validation_split_percentage=val_split,
+            )
+        else:
+            cup_sequential_search(
+                dir_path, file_path, metric, cross_validator, save_all, save_best,
+                dataset_dir_path='datasets/cup', save_dir_path=save_dir_path, n_jobs=njobs,
+            )
 
 
 def __convert_metric(name: str):
