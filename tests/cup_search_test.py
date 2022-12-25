@@ -28,7 +28,8 @@ def cup_grid_search(
 
     grid_search = GridSearch(params_of_search, metric, cross_validator)
     grid_search.search(
-        train_data, train_targets, cv_shuffle=True, cv_random_state=0, epoch_shuffle=True, *args, **kwargs
+        train_data, train_targets, cv_shuffle=True, cv_random_state=0, epoch_shuffle=True,
+        search_stats_file=f"grid_search_stats_{config_file_name}.txt", *args, **kwargs
     )
 
     if save_all:
@@ -80,8 +81,8 @@ def cup_sequential_search(
 
     sequential_search = FixedCombSearch(params_of_search, metric, cross_validator)
     sequential_search.search(
-        train_data, train_targets, cv_shuffle=True, cv_random_state=0,
-        epoch_shuffle=True, n_jobs=n_jobs, *args, **kwargs
+        train_data, train_targets, cv_shuffle=True, cv_random_state=0, epoch_shuffle=True,
+        n_jobs=n_jobs, search_stats_file=f"sequential_search_stats_{config_file_name}.txt", *args, **kwargs
     )
 
     if save_all:

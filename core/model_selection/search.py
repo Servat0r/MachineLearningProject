@@ -11,6 +11,7 @@ from core.data import *
 import numpy as np
 import os
 import json
+from time import perf_counter
 
 
 def cross_product(inp: dict):
@@ -265,9 +266,9 @@ class BaseSearch:
             # model_monitor: ModelMonitor = callbacks[0]  # todo Dependent from convert method
             # best_metric_value = model_monitor.best_metric_value
             metric_values = history[f'Val_{self.scoring_metric.get_name()}']
-            best_metric_value = np.min(metric_values[:len(history)]).item()
-            # last_metric_value = metric_values[len(history) - 1]
-            best_metric_values.append(best_metric_value)
+            # best_metric_value = np.min(metric_values[:len(history)]).item()
+            last_metric_value = metric_values[len(history) - 1].item()
+            best_metric_values.append(last_metric_value)
 
         mean_metric_value = np.mean(best_metric_values)
         std_metric_value = np.std(best_metric_values)
@@ -278,14 +279,14 @@ class BaseSearch:
             'values': best_metric_values,
         }
 
-    @timeit
     def search(
             self, inputs: np.ndarray, targets: np.ndarray, cv_shuffle=True,
             cv_random_state=None, epoch_shuffle=True, n_jobs: int = os.cpu_count(),
-            *args, **kwargs
+            search_stats_file='search.txt', *args, **kwargs
     ):
         parameters_sequence = self.setup_parameters()
         hyperpar_comb = parameters_sequence.get_configs(self.parameters)
+        current_time = perf_counter()
         if n_jobs is None:
             print('Doing Sequential Search')
             for comb in hyperpar_comb:
@@ -301,6 +302,10 @@ class BaseSearch:
                     cv_random_state, epoch_shuffle, *args, **kwargs
                 ) for comb in hyperpar_comb
             )
+        current_time = perf_counter() - current_time
+        with open(search_stats_file, 'w') as fp:
+            print(f"Elapsed time for search: {current_time}", file=fp)
+            print(f"Number of workers used: {n_jobs}", file=fp)
         self.results = sorted(self.results, key=lambda x: x['mean'])
 
     def save_best(self, number: int, directory_path: str = '.', file_name: str = 'best_results.json'):

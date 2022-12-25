@@ -32,6 +32,7 @@ def model_training_cup(
     # Create model, optimizer, loss and callbacks and compile model
     best_configuration = configurations[0]['config']
     # We are ignoring the EarlyStopping here
+    callbacks = []
     model, optimizer, loss, callbacks = ParameterList().convert(best_configuration)
     model.compile(optimizer, loss, metrics=[MEE()])
 
