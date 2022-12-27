@@ -153,38 +153,10 @@ class TrainingCSVLogger(BaseCSVLogger):
             print(*values, sep=self.separator, file=self.fp, flush=True)
 
 
-class TestCSVLogger(BaseCSVLogger):
-    """
-    Test loops-tailored csv logger. It logs the results for each test example
-    (e.g., for usage with blind test sets).
-    todo this logger actually needs to be tested!
-    """
-
-    def __init__(self, file_path: str = 'test_log.csv', overwrite=True, separator=','):
-        super(TestCSVLogger, self).__init__(file_path, overwrite, separator)
-        self.next_example_num = 0  # Next example num
-
-    def before_test_cycle(self, model, logs=None):
-        if logs is None:
-            raise ValueError(f"Cannot log with no metrics!")
-        self.open()
-        print('example', *logs.keys(), sep=self.separator, file=self.fp)
-        # If logger is serialized after this method call, it will not print headers again
-        self.overwrite = False
-
-    def after_test_cycle(self, model, logs=None):
-        self.close()
-        print('CSV Logging for test cycle has ended')
-
-    def after_test_batch(self, model, logs=None):
-        for example, values in enumerate(zip(*logs.values())):
-            print(example + self.next_example_num, *values, sep=self.separator, file=self.fp)
-            self.next_example_num += 1
-
-
 class InteractiveLogger(Callback):
     """
-    Interactive logger to stdout.
+    Interactive logger to stdout: for each epoch,
+    it prints to stdout all current logs.
     """
     def __init__(self):
         super(InteractiveLogger, self).__init__()
@@ -206,6 +178,5 @@ class InteractiveLogger(Callback):
 
 __all__ = [
     'TrainingCSVLogger',
-    'TestCSVLogger',
     'InteractiveLogger',
 ]

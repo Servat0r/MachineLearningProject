@@ -384,7 +384,7 @@ class Model:
             # Now update history with validation data
             self.history.after_evaluate(self, epoch, logs=metric_logs['validation'])
 
-    def predict(self, x: np.ndarray, callbacks: Callback | Sequence[Callback] = None):
+    def predict(self, x: np.ndarray):
         """
         Utility method for better readability when using model for predictions
         """
