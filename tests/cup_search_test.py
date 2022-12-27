@@ -62,7 +62,7 @@ def get_best_models(
 
 def cup_sequential_search(
         config_directory_name: str, config_file_name: str, metric: Metric = MEE(),
-        cross_validator: cv.Validator = cv.KFold(number_of_folds=5), save_all: bool = True,
+        cross_validator: cv.Validator = cv.KFold(number_of_folds=17), save_all: bool = True,
         save_best: int = None, save_dir_path='../results', dataset_dir_path='../datasets/cup',
         n_jobs=os.cpu_count(), *args, **kwargs
 ):
@@ -94,18 +94,3 @@ def cup_sequential_search(
 
     print('Test Finished!')
 
-
-if __name__ == '__main__':
-    name = sys.argv[1]
-    if name == 'salvatore':
-        json_file_name = sys.argv[2] if len(sys.argv) >= 3 else 'coarse_gs_1_salvatore.json'
-        print(f"Searching on {json_file_name} ...")
-        # cup_grid_search('../../search', json_file_name, save_all=True, validation_split_percentage=0.25)
-        cup_sequential_search('../../search', json_file_name, save_all=True, cross_validator=cv.KFold(10))
-    elif name == 'gaetano':
-        # cup_grid_search('../../search', 'coarse_gs_1_gaetano.json', save_all=True, validation_split_percentage=0.25)
-        # cup_grid_search('../../search', 'coarse_gs_2_gaetano.json', save_all=True, validation_split_percentage=0.25)
-        # cup_grid_search('../../search', 'coarse_gs_3_gaetano.json', save_all=True, validation_split_percentage=0.25)
-        cup_grid_search('../../search', 'coarse_gs_4_gaetano.json', save_all=True, validation_split_percentage=0.25)
-    elif name == 'alberto':
-        pass

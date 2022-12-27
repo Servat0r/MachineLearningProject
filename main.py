@@ -128,7 +128,7 @@ def cmd_cup_sequential_search(
         metric=typer.Option('mee', help=_CUP_GS_METRIC_HELP),
         cross_validator=typer.Option('kfold', help=_CUP_GS_CV_HELP),
         val_split=typer.Option(0.25, help=_CUP_GS_VAL_SPLIT_HELP),
-        folds=typer.Option(10, help=_CUP_GS_FOLDS_HELP),
+        folds=typer.Option(17, help=_CUP_GS_FOLDS_HELP),
         save_all=typer.Option(True, help=_CUP_GS_SAVE_ALL_HELP),
         save_best=typer.Option(0, help=_CUP_GS_SAVE_BEST_HELP),
         save_dir_path=typer.Option('results', help=_CUP_GS_SAVE_DIR_HELP),

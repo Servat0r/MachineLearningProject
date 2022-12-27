@@ -2,7 +2,6 @@ from itertools import product
 from joblib import Parallel, delayed
 import core.modules as cm
 from core.utils.types import *
-from core.utils.speedtests import timeit
 from core.utils.initializers import RandomUniformInitializer, RandomNormalDefaultInitializer, FanInitializer
 from core.metrics import Metric
 from core.callbacks import Callback, EarlyStopping

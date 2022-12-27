@@ -1,0 +1,40 @@
+{
+    "size_hidden_layers": [[8, 8]],
+    "input_dim": [9],
+    "output_dim": [2],
+    "activation": [
+        "tanh",
+        "sigmoid",
+        ["tanh", "sigmoid"],
+        ["sigmoid", "tanh"]
+    ],
+    "learning_rate": [
+        1e-2,
+        1e-3
+    ],
+    "momentum": [
+        0.0,
+        0.4,
+        0.8
+    ],
+    "regularization": [
+        ["l2", 1e-6],
+        ["l2", 1e-7]
+    ],
+    "monitor": ["Val_MEE"],
+    "early_stopping": ["none"],
+    "weights_initialization": [
+        ["Uniform", -0.5, 0.5, 0],
+        ["FanOut", 0]
+    ],
+    "max_epoch": [500],
+    "minibatch_size": [
+        8,
+        16
+    ],
+    "decay": [
+        "none",
+        ["linear", 1e-1, 8],
+        ["linear", 1e-2, 8]
+    ]
+}

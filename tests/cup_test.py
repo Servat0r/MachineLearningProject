@@ -10,6 +10,9 @@ import core.modules as cm
 from core.model_selection import Holdout
 
 
+MAX_EPOCHS = 500
+
+
 def test_cup_once(
         use_internal_test_set=True, directory_path: str = '../datasets/cup',
         internal_test_set_size=0.1, shuffle_once=True, dtype=np.float32,
@@ -37,12 +40,17 @@ def test_cup_once(
     model = cm.Model([
         cm.Input(),
         cm.Dense(
-            9, 16, cm.Sigmoid(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=0),  # cu.FanInitializer(16, seed=10),
+            9, 8, cm.Sigmoid(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=0),  # cu.FanInitializer(16, seed=10),
             # biases_initializer=cu.RandomUniformInitializer(-0.01, 0.01),
             # weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),
         cm.Dense(
-            16, 8, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=0),  # cu.FanInitializer(8, seed=10),
+            8, 8, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=0),  # cu.FanInitializer(8, seed=10),
+            # biases_initializer=cu.RandomUniformInitializer(-0.01, 0.01),
+            # weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
+        ),
+        cm.Dense(
+            8, 8, cm.Tanh(), weights_initializer=cu.RandomUniformInitializer(-0.5, 0.5, seed=0),  # cu.FanInitializer(8, seed=10),
             # biases_initializer=cu.RandomUniformInitializer(-0.01, 0.01),
             # weights_regularizer=cm.L2Regularizer(1e-7), biases_regularizer=cm.L2Regularizer(1e-7),
         ),
@@ -61,7 +69,7 @@ def test_cup_once(
 
     model_monitor = ModelMonitor(monitor='Val_MEE', mode='min', return_best_result=True)
     history = model.train(
-        train_dataloader, eval_dataloader, max_epochs=2000, callbacks=[
+        train_dataloader, eval_dataloader, max_epochs=MAX_EPOCHS, callbacks=[
             EarlyStopping(monitor='Val_MEE', mode='min', min_delta=1e-5, patience=200, return_best_result=True),
             InteractiveLogger(), TrainingCSVLogger(train_file_name='cup_train_log.csv'), model_monitor
         ]

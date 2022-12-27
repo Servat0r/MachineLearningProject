@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import copy
+from core.utils.types import *
 from .base import *
 
 
@@ -110,6 +111,17 @@ class ModelMonitor(Callback):
 
     def get_best_value(self):
         return self.best_metric_value
+
+
+# todo completare!
+class TestSetMonitor(Callback):
+    """
+    A callback that monitors test set data during training.
+    """
+    def __init__(
+            self, test_set_data: np.ndarray, test_set_targets: np.ndarray,
+    ):
+        ...
 
 
 __all__ = [
