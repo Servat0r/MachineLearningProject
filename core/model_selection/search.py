@@ -2,7 +2,7 @@ from itertools import product
 from joblib import Parallel, delayed
 import core.modules as cm
 from core.utils.types import *
-from core.utils.initializers import RandomUniformInitializer, RandomNormalDefaultInitializer, FanInitializer
+from core.utils.initializers import *
 from core.metrics import Metric
 from core.callbacks import Callback, EarlyStopping
 import core.model_selection.validation as cv
@@ -227,8 +227,19 @@ class ParameterList(ParameterSequence):
 
 
 class BaseSearch:
+    """
+    Base class representing a search over a hyperparameter(s) space.
+    """
 
     def __init__(self, parameters, scoring: Metric, cross_validator: cv.Validator = None):
+        """
+        :param parameters: An object (dict, list, ..., depending on the specific class)
+        that is used for generating all the needed configurations.
+        :param scoring: A metric used to evaluate each configuration performance and sort
+        all them at the end.
+        :param cross_validator: Validator to be used for splitting and iterating over
+        training and validation data, e.g. Holdout or KFold. Defaults to None.
+        """
         self.parameters = parameters
         self.scoring_metric = scoring
         self.cross_validator = cross_validator if cross_validator is not None else cv.Holdout()
@@ -244,6 +255,9 @@ class BaseSearch:
             inputs: np.ndarray, targets: np.ndarray, cv_shuffle=True,
             cv_random_state=None, epoch_shuffle=True, *args, **kwargs
     ):
+        """
+        Main loop of the search.
+        """
         print(f'Using comb = {comb}')
         best_metric_values = []
         for train_data, eval_data in self.cross_validator.split(
@@ -283,6 +297,25 @@ class BaseSearch:
             cv_random_state=None, epoch_shuffle=True, n_jobs: int = os.cpu_count(),
             search_stats_file='search.txt', *args, **kwargs
     ):
+        """
+        Main searching method.
+        :param inputs: Input data (development set).
+        :param targets: Input targets (development set).
+        :param cv_shuffle: Passed to the underlying cross validator
+        split() method each time.
+        :param cv_random_state: Passed to the underlying cross validator
+        split() method each time.
+        :param epoch_shuffle: Passed to the training DataLoaders for each
+        training cycle.
+        :param n_jobs: If None, performs the search sequentially. Otherwise,
+        n_jobs workers (subprocesses) are used.
+        :param search_stats_file: Path of the file in which to write common
+        statistics about the search. Defaults to 'search.txt'.
+        :param args: Extra positional arguments to be passed to the cross
+        validator.
+        :param kwargs: Extra keyword arguments to be passed to the cross
+        validator.
+        """
         parameters_sequence = self.setup_parameters()
         hyperpar_comb = parameters_sequence.get_configs(self.parameters)
         current_time = perf_counter()
@@ -307,7 +340,10 @@ class BaseSearch:
             print(f"Number of workers used: {n_jobs}", file=fp)
         self.results = sorted(self.results, key=lambda x: x['mean'])
 
-    def save_best(self, number: int, directory_path: str = '.', file_name: str = 'best_results.json'):
+    def save_best(
+            self, number: int, directory_path: str = '.',
+            file_name: str = 'best_results.json'
+    ):
         results = self.results[:number]
         file_path = os.path.join(directory_path, file_name)
         with open(file_path, 'w') as fp:
@@ -319,12 +355,20 @@ class BaseSearch:
 
 
 class GridSearch(BaseSearch):
+    """
+    Grid Search: __init__ method accepts a dict of the form {str:list}
+    as first parameter and cycles over all the possible combinations.
+    """
 
     def setup_parameters(self) -> ParameterSequence:
         return ParameterGrid()
 
 
 class FixedCombSearch(BaseSearch):
+    """
+    A search performed on all the configurations in a list of them
+    given as first parameter in __init__.
+    """
 
     def setup_parameters(self) -> ParameterSequence:
         return ParameterList()

@@ -6,6 +6,13 @@ from core.modules.regularization import *
 
 
 class Layer:
+    """
+    Base class representing a layer in a neural network.
+    Its forward() and backward() methods define respectively
+    the logic for propagating input values to the next layer
+    and the one for backpropagation for updating weights and
+    biases.
+    """
 
     def __init__(self, frozen=False):
         """
@@ -150,6 +157,9 @@ class Layer:
 
 
 class Input(Layer):
+    """
+    Input layer, i.e. a layer that simply loads data into the network.
+    """
 
     def __init__(self, frozen=False):
         super(Input, self).__init__(frozen=frozen)

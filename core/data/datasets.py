@@ -4,6 +4,10 @@ from ..utils import *
 
 
 class BaseDataset:
+    """
+    The BaseDataset class defines the common interface for
+    accessing data for training.
+    """
 
     @abstractmethod
     def __init__(self):

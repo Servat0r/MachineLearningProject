@@ -4,6 +4,14 @@ from core.utils.types import *
 
 
 class Metric(Callable):
+    """
+    Base class for training/validation metrics.
+    A Metric is a Callable that is used to calculate a function
+    over the predicted and real data during training/validation.
+    Metrics can also have an internal state, that is updated
+    by the update() method, and may return result values both
+    for an entire epoch or a train/eval/test batch.
+    """
 
     def __init__(self, dtype=np.float32):
         self.name = self.default_name()
@@ -32,6 +40,9 @@ class Metric(Callable):
         return str(type(self).__name__)
 
     def get_name(self):
+        """
+        The name that is used to identify the metric outside, e.g. in a History object.
+        """
         return self.name
 
     def set_name(self, name: str):
@@ -42,6 +53,10 @@ class Metric(Callable):
 
 
 class FunctionMetric(Metric):
+    """
+    A Metric that wraps an existing function.
+    Base class for MSE, MEE, MAE, RMSE.
+    """
 
     def __init__(self, func: Callable[[np.ndarray, np.ndarray], np.ndarray],
                  batch_reduction: Callable[[np.ndarray], np.ndarray] = None,

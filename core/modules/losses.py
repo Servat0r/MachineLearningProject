@@ -6,7 +6,7 @@ from .layers import Dense, Layer, Linear
 
 class Loss:
     """
-    Loss "Layer", representing the endpoint of the NN as a graph for computing gradients.
+    Base class for losses.
     """
     REDUCTIONS = {'none', 'mean', 'sum'}
 
@@ -58,7 +58,8 @@ class Loss:
 
 class CrossEntropyLoss(Loss):
     """
-    Categorical Cross Entropy Loss. Note that this class does NOT include a Softmax layer.
+    Categorical Cross Entropy Loss (both Sparse and not).
+    Note that this class does NOT include a Softmax layer.
     """
     def __init__(self, clip_value: TReal = 1e-7, reduction='mean', dtype=np.float32):
         super(CrossEntropyLoss, self).__init__(reduction=reduction, dtype=dtype)
@@ -83,7 +84,7 @@ class CrossEntropyLoss(Loss):
 
 class MSELoss(Loss):
     """
-    Mean Squared Error Loss over a batch of training examples.
+    Mean Squared Error Loss.
     """
 
     def __init__(self, const=1.0, reduction='mean', mean_over_input_dimension=False, dtype=np.float32):
