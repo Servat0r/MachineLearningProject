@@ -4,8 +4,10 @@ import copy
 from .base import *
 
 
-# todo add model.get_parameters(copy=True) after each epoch and restore best results at the end
 class EarlyStopping(Callback):
+    """
+    EarlyStopping regularization strategy.
+    """
 
     def __init__(self, monitor='Val_loss', min_delta=0, patience=0, mode='min', return_best_result=False):
         """

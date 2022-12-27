@@ -3,7 +3,7 @@ from __future__ import annotations
 from tests.utils import *
 from core.utils.types import *
 from core.data import *
-from core.callbacks import InteractiveLogger, TrainingCSVLogger, EarlyStopping, ModelMonitor
+from core.callbacks import InteractiveLogger, TrainingCSVLogger, EarlyStopping
 from core.metrics import MEE, RMSE, MSE, MAE
 import core.utils as cu
 import core.modules as cm
@@ -67,33 +67,21 @@ def test_cup_once(
     # Compile and execute
     model.compile(optimizer, loss, metrics=[MEE(), MAE(), RMSE(), MSE(const=1.0)])
 
-    model_monitor = ModelMonitor(monitor='Val_MEE', mode='min', return_best_result=True)
     history = model.train(
         train_dataloader, eval_dataloader, max_epochs=MAX_EPOCHS, callbacks=[
             EarlyStopping(monitor='Val_MEE', mode='min', min_delta=1e-5, patience=200, return_best_result=True),
-            InteractiveLogger(), TrainingCSVLogger(train_file_name='cup_train_log.csv'), model_monitor
+            InteractiveLogger(), TrainingCSVLogger(train_file_name='cup_train_log.csv')
         ]
     )
     last_mse_value = history['Val_MEE'][len(history)-1]
     print(last_mse_value)
     plot_metrics(history, ['loss', 'Val_loss'], './loss.png', len(history), ylabel='Loss')
     plot_metrics(history, ['MEE', 'Val_MEE'], './MEE.png', len(history), ylabel='MEE')
-    # plot_history(0, history, n_epochs=len(history))
 
     model.set_to_test()
     eval_predicted = model.predict(eval_data)
     means = np.mean(np.abs(eval_predicted - eval_targets), axis=0)
     print(f'Mean values predicted: {means}')
-
-    best_parameters = model_monitor.get_best_parameters()
-    if best_parameters:
-        print('Now switching to best model')
-        model.set_parameters(best_parameters)
-        print(f'The metric value for best model was of: {model_monitor.best_metric_value} at epoch {model_monitor.best_epoch}')
-        model.set_to_test()
-        eval_predicted = model.predict(eval_data)
-        means = np.mean(np.abs(eval_predicted - eval_targets), axis=0)
-        print(f'Mean values predicted: {means}')
 
 
 if __name__ == '__main__':

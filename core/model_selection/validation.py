@@ -10,10 +10,24 @@ class Validator:
     """
     def split(self, inputs: np.ndarray, targets: np.ndarray, shuffle=True,
               random_state=None) -> Generator[tuple[np.ndarray, np.ndarray]]:
+        """
+        Returns a generator that is used to cycle over the training data
+        for generating training-validation sets from a common development
+        one each time.
+        :param inputs: Input data (development set).
+        :param targets: Input targets (development set).
+        :param shuffle: If True, shuffles the data according to an internal
+        policy (e.g. by using train_test_split for Holdout). Defaults to True.
+        :param random_state: If an integer, uses it as seed for shuffling.
+        Defaults to None.
+        """
         pass
 
 
 class KFold(Validator):
+    """
+    K-fold cross validation schema.
+    """
 
     def __init__(self, number_of_folds: int):
         self.number_of_folds = number_of_folds
@@ -57,6 +71,9 @@ class KFold(Validator):
 
 
 class Holdout(Validator):
+    """
+    Holdout validation schema.
+    """
 
     def split(
             self, inputs: np.ndarray, targets: np.ndarray, shuffle=True,

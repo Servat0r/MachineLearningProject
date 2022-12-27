@@ -16,6 +16,7 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
     :param name: name of the dataset
     :param directory_path: Path of the directory of MONKS datasets.
     :param shuffle_once: If True, shuffles the dataset before returning. Defaults to True.
+    :param shuffle_seed: Seed for shuffling the dataset. Defaults to 0.
     :param validation_size: If not None, splits the dataset into a train and validation one
     with given validation size. Defaults to None.
     :param dtype: Numpy datatype to which datasets input will be transformed.
@@ -33,7 +34,6 @@ def read_monk(name, directory_path: str = '../datasets/monks', shuffle_once=True
     monk_dataset = OneHotEncoder().fit_transform(monk_dataset).toarray().astype(dtype)
     labels = labels.to_numpy()[:, np.newaxis]
 
-    # todo here we are excluding TEST data (refactor for using HoldOut?)
     if validation_size is not None:
         train_monk_dataset, eval_monk_dataset, train_labels, eval_labels = train_test_split(
             monk_dataset, labels, test_size=validation_size, random_state=0, shuffle=shuffle_once, stratify=labels
@@ -55,7 +55,23 @@ def read_cup(
         internal_test_set_size=0.1, shuffle_once=True, shuffle_seed=0, dtype=np.float32,
 ):
     """
-    Reads the CUP training and test set
+    Reads the CUP training and test set.
+    :param use_internal_test_set: If True, loads and returns also Internal Test Set.
+    If True and:
+     - internal test set and development set CSV files are not existing, splits thw whole
+     dataset into development and internal test set according to :param internal_test_set_size
+     and saves them as CSV files;
+     - internal test and development sets CSV files exist, loads them;
+     - development set file exists and internal test set file is missing, detaches a portion
+     of development set to be used as internal test set.
+    Defaults to False.
+    :param directory_path: Relative path of the directory containing CUP dataset.
+    :param internal_test_set_size: Relative size of the internal test set w.r.t. the whole dataset.
+    It has effect only if :param sue_internal_test_set = True and internal test set needs to be
+    created or detached. Defaults to 0.1.
+    :param shuffle_once: If True, shuffles training set before returning. Defaults to True.
+    :param shuffle_seed: Seed for shuffling the dataset. Defaults to 0.
+    :param dtype: Numpy datatype in which data shall be returned. Defaults to numpy.float32.
     :return: CUP training data, CUP training targets and CUP test data (as numpy ndarray)
     """
     # read the dataset

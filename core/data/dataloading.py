@@ -8,6 +8,12 @@ from time import perf_counter
 
 
 class DataLoader(Iterable):
+    """
+    The DataLoader class provides a convenient way to iterate over a dataset according
+    to a given batch size and to handle random shuffling of the dataset at the end of
+    each epoch. A DataLoader for training (and optionally validation) data is required
+    in Model.train().
+    """
 
     @property
     def logger_name(self):
