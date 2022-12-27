@@ -113,18 +113,47 @@ class ModelMonitor(Callback):
         return self.best_metric_value
 
 
-# todo completare!
 class TestSetMonitor(Callback):
     """
     A callback that monitors test set data during training.
     """
     def __init__(
             self, test_set_data: np.ndarray, test_set_targets: np.ndarray,
+            metrics, max_epochs: int, dtype=np.float32
     ):
-        ...
+        self.logbook = {metric.get_name(): np.zeros(max_epochs, dtype=dtype) for metric in metrics}
+        self.logbook['loss'] = np.zeros(max_epochs, dtype=dtype)
+        self.metrics = copy.deepcopy(metrics)
+        self.test_set_data = test_set_data
+        self.test_set_targets = test_set_targets
+        self.epoch = 0
+        self.max_epochs = max_epochs
+
+    def __len__(self):
+        return self.epoch
+
+    def after_training_epoch(self, model, epoch, logs=None):
+        model.set_to_eval(detach_history=False)
+        test_set_net_output = model.forward(self.test_set_data)
+        # Calculate metrics values
+        for metric in self.metrics:
+            metric.before_batch()
+            self.logbook[metric.get_name()][epoch] = metric.update(test_set_net_output, self.test_set_targets)
+            metric.after_batch()
+        # Calculate loss value
+        data_loss, regularization_loss = model.loss.forward(
+            test_set_net_output, self.test_set_targets, layers=model.layers
+        )
+        self.logbook['loss'][epoch] = data_loss + regularization_loss
+        # Update current epoch
+        self.epoch = epoch + 1
+
+    def __getitem__(self, item):
+        return self.logbook[item]
 
 
 __all__ = [
     'OptimizerMonitor',
     'ModelMonitor',
+    'TestSetMonitor',
 ]
