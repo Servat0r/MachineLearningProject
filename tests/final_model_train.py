@@ -3,7 +3,7 @@ from __future__ import annotations
 from tests.utils import *
 from core.utils.types import *
 from core.data import *
-from core.callbacks import InteractiveLogger, TrainingCSVLogger
+from core.callbacks import InteractiveLogger, TrainingCSVLogger, TestSetMonitor
 from core.metrics import MEE
 from time import perf_counter
 import json
@@ -31,10 +31,14 @@ def model_training_cup(
 
     # Create model, optimizer, loss and callbacks and compile model
     best_configuration = configurations[0]['config']
-    # We are ignoring the EarlyStopping here
-    callbacks = []
     model, optimizer, loss, callbacks = ParameterList().convert(best_configuration)
     model.compile(optimizer, loss, metrics=[MEE()])
+
+    test_set_monitor = TestSetMonitor(
+        int_test_set_data, int_test_set_targets, metrics=[MEE()], max_epochs=best_configuration['max_epoch']
+    )
+    callbacks = [] if callbacks is None else callbacks
+    callbacks.append(test_set_monitor)
 
     # O togliamo la Early Stopping dalle callbacks o facciamo un CSVLogger analogo per test
     logging_callbacks = [
@@ -46,13 +50,11 @@ def model_training_cup(
 
     # Create datasets and dataloaders
     train_dataset = ArrayDataset(train_data, train_targets)
-    test_dataset = ArrayDataset(int_test_set_data, int_test_set_targets)
     train_dataloader = DataLoader(train_dataset, batch_size=best_configuration['minibatch_size'], shuffle=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=len(test_dataset))
 
     crt = perf_counter()
     history = model.train(
-        train_dataloader, test_dataloader, max_epochs=best_configuration['max_epoch'], callbacks=callbacks,
+        train_dataloader, max_epochs=best_configuration['max_epoch'], callbacks=callbacks,
     )
     crt = perf_counter() - crt
     # Save time and other system info
@@ -64,6 +66,20 @@ def model_training_cup(
         print(f"Machine: {uname.machine}", file=fp)
         print(f"Processor: {uname.processor}", file=fp)
 
+    # Plot Loss curve
+    plot_data(
+        os.path.join(dir_path, 'cup_loss.png'), history['loss'], 'Development Set',
+        test_data=test_set_monitor['loss'], test_plot_label='Internal Test Set',
+        n_epochs=len(history), ylabel='Loss (MSE)',
+    )
+
+    # Plot MEE curve
+    plot_data(
+        os.path.join(dir_path, 'cup_MEE.png'), history['MEE'], 'Development Set',
+        test_data=test_set_monitor['MEE'], test_plot_label='Internal Test Set',
+        n_epochs=len(history), ylabel='Mean Euclidean Error (MEE)',
+    )
+    """
     plot_metrics(
         history, {
             'loss': 'Development Set',
@@ -77,6 +93,7 @@ def model_training_cup(
             'Val_MEE': 'Internal Test Set',
         }, os.path.join(dir_path, 'cup_MEE.png'),
         len(history), ylabel='Mean Euclidean Error (MEE)')
+    """
 
     # Set to test, then save model
     model.set_to_test()

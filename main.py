@@ -1,7 +1,7 @@
-import os
 import typer
 from tests.monks_tests import *
 from tests.cup_search_test import *
+from tests.final_model_train import *
 
 
 app = typer.Typer()
@@ -22,6 +22,13 @@ _CUP_GS_SAVE_ALL_HELP = 'Whether or not to save all the configurations of the gr
 _CUP_GS_SAVE_BEST_HELP = 'If specified, saves only the given number of models from the best ones.'
 _CUP_GS_SAVE_DIR_HELP = 'Relative path of the directory in which to save the results of the search.'
 _CUP_GS_NJOBS_HELP = 'Number of worker processes to launch. Defaults to `os.cpu_count()`.'
+
+_CUP_FINAL_DATASET_PATH = 'Path of the directory in which the CUP dataset is contained.'
+_CUP_FINAL_CONFIG_FILE_PATH = 'Relative path of the json file that contains the final model configuration.'
+_CUP_FINAL_RESULTS_DIR_PATH = 'Relative path of the folder in which to store the results (model, plots, logs).'
+_CUP_FINAL_TRAIN_CSV_FNAME = 'Name of the CSV file for training data logging.'
+_CUP_FINAL_BLIND_TS_FNAME = 'Name of the CSV file that will contain the blind test set predictions.'
+_CUP_FINAL_MODEL_SAVE_PATH = 'Name of the .model file that will contain the serialized final model.'
 
 
 default_monk_parameters = {
@@ -181,9 +188,29 @@ def __convert_cv(name: str, folds: int):
         raise ValueError(f"Unknown cross validator '{name}'")
 
 
-@app.command()
-def run_all():
-    print('Command under construction')
+@app.command(name='final-train')
+def final_train(
+        dataset_dir_path: str = typer.Option('datasets/cup', help=_CUP_FINAL_DATASET_PATH),
+        config_file_path: str = typer.Option(
+            'results/results_best_2perc_models.json', help=_CUP_FINAL_CONFIG_FILE_PATH
+        ),
+        results_dir_path: str = typer.Option('results', help=_CUP_FINAL_RESULTS_DIR_PATH),
+        training_csv_log_file_name: str = typer.Option('final_model_train_log.csv', help=_CUP_FINAL_TRAIN_CSV_FNAME),
+        blind_test_set_results_name: str = typer.Option('blind_test_set_predictions.csv', help=_CUP_FINAL_BLIND_TS_FNAME),
+        final_model_save_path: str = typer.Option('final_model.model', help=_CUP_FINAL_MODEL_SAVE_PATH),
+):
+    """
+    Executes training of the final selected model by loading its configuration from the results
+    file of the cross-validation on the best models. After training, both the plots of the loss
+    and the MEE on the development and internal test sets and the final model (as pickle file)
+    are saved.
+    """
+    model_training_cup(
+        dataset_dir_path, config_file_path=config_file_path, dir_path=results_dir_path,
+        training_csv_log_file_name=training_csv_log_file_name,
+        blind_test_set_results_name=blind_test_set_results_name,
+        final_model_save_path=final_model_save_path
+    )
 
 
 if __name__ == '__main__':

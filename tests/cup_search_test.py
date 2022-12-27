@@ -23,7 +23,8 @@ def cup_grid_search(
 
     # Read cup dataset
     train_data, train_targets, int_test_set_data, int_test_set_targets, cup_test_set_data = read_cup(
-        use_internal_test_set=True, directory_path=dataset_dir_path, internal_test_set_size=0.1, shuffle_once=True,
+        use_internal_test_set=True, directory_path=dataset_dir_path, internal_test_set_size=0.1,
+        shuffle_once=True, shuffle_seed=0,
     )
 
     grid_search = GridSearch(params_of_search, metric, cross_validator)

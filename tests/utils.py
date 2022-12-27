@@ -186,8 +186,8 @@ def keras_plot_history(start_epoch, history, n_epochs):
 
 
 def plot_metrics(
-        history, metrics_names: list | dict, save_path, n_epochs=None, xlabel='Epochs', ylabel='Metrics', makedirs=True,
-        styles=None,
+        history, metrics_names: list | dict, save_path, n_epochs=None,
+        xlabel='Epochs', ylabel='Metrics', makedirs=True, styles=None,
 ):
     n_epochs = len(history) if n_epochs is None else n_epochs
     epochs = np.arange(n_epochs)
@@ -201,6 +201,30 @@ def plot_metrics(
             else:
                 plt.plot(epochs, metric_vals[:n_epochs], linestyle=styles[i], label=metrics_names[metric_name])
             i += 1
+    plt.legend()
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.grid(visible=True, which='major')
+    if makedirs:
+        # Create directory for saving plot file
+        dirname = os.path.dirname(save_path)
+        os.makedirs(dirname, exist_ok=True)
+    plt.savefig(save_path)
+    plt.show()
+
+
+def plot_data(
+        save_path, train_data, train_plot_label, eval_data=None,
+        eval_plot_label=None, test_data=None, test_plot_label=None,
+        n_epochs=None, xlabel='Epochs', ylabel='Metrics', makedirs=True, styles=None,
+):
+    epochs = np.arange(n_epochs)
+    styles = styles if styles is not None else ['solid', 'dotted', 'dashed']
+    plt.plot(epochs, train_data[:n_epochs], linestyle=styles[0], label=train_plot_label)
+    if eval_data is not None:
+        plt.plot(epochs, eval_data[:n_epochs], linestyle=styles[1], label=(eval_plot_label or 'Validation Set'))
+    if test_data is not None:
+        plt.plot(epochs, test_data[:n_epochs], linestyle=styles[2], label=(test_plot_label or 'Test Set'))
     plt.legend()
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
