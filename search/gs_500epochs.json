@@ -36,8 +36,8 @@
     ],
     "max_epoch": [500],
     "minibatch_size": [
-        8,
-        16
+        32,
+        64
     ],
     "decay": [
         "none",
