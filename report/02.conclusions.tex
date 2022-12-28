@@ -1,0 +1,19 @@
+\section{Conclusions}
+
+\subsection{Final Remarks}
+Thanks to monks-3 dataset we proved experimentally that adding regularization prevents overfitting controlling model complexity.
+
+\paragraph{}
+As far as CUP dataset is concerned we suspect that the function to fit is a deterministic one perturbed with a Gaussian noise of mean 0 and variance one since that is basically what separates our fit from an accurate prediction. Indeed we claim that it is not possible to fit those points with an MME loss of less than 1 since we compared our results with Keras' and it was not able to provide us with a better prediction.
+
+\subsection{Machines}
+Almost all the experiments were launched on several identical machines running Debian 9 on an Intel i3-4130, 3.40GHz CPU. We (manually) parallelized our grid searches taking advantages of those twenty machines that we could access remotely through SSH.
+ 
+\subsection{Agreement}
+We agree to the disclosure and publication of my name, and of the results with preliminary and final ranking.
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "report"
+%%% End:

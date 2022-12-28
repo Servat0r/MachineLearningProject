@@ -1,0 +1,38 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{cleveref}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{geometry}
+
+\geometry{a4paper, left=30mm, right=30mm}
+
+\setlength\parindent{0pt}
+
+\title{Neural Network Implementation}
+\author{Lorenzo Beretta, \texttt{loribere@gmail.com}\\
+  Riccardo Zanotto, \texttt{riccardo.zanotto@sns.it}
+  \and Project A of ML course (654AA), A.Y. 2018-19}
+\date{30th May 2019}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  We developed a type (A) project implementing a neural network in python and exploiting the linear algebra library numpy. We structured our code abstracting over every hyper-parameter in a highly modular fashion. We chose the best topology and parameters through cross validation, finally we assessed our model over an internal test.  
+\end{abstract}
+
+\input{00.intro}
+
+\input{01.experiments}
+
+\input{02.conclusions}
+
+
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
