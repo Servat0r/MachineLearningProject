@@ -1,0 +1,44 @@
+\section{Introduction}
+
+Our goal is to realize a Neural Network model simulator and apply it to the given problem sets: the 3 monks classification problems and the ML cup regression, trying of course to make it as much predictive as possible over the test set.
+
+We implemented a feed-forward multi-layer perceptron (actually used just one hidden layer) supporting standard back propagation and several versions of gradient descent: multi-batched, single-batched, with or without momentum and employing various loss and activation functions.
+
+Our main assumption to predict the ML cup blind test values was that the underlying function was smooth and compact supported, so that we could expect to really learn it using a standard fully connected MLP. Moreover observing the data and trying to fit them with various models we realized that output data had been perturbed by some noise and then we paid careful attention not to commit overfitting. 
+
+\section{Method}
+
+\subsection{Code}
+
+We implemented our NN in \texttt{Python 2.7.13} and relied on the \texttt{numpy} library for linear algebra operations that are paramount in back propagation algorithm. We put some effort in keeping our code as much parametric as possible in those features that we deemed as relevant for the model definition so that we would have been able to adapt it along the way.
+
+\paragraph{}
+In file \texttt{network.py} you can find the class Network that is basically a list of Layer class objects and a pair of activation functions (one internal and one for the last layer, often required to be different). This class implements feed-forward and propagate-back methods exploiting the homonym Layer methods as building blocks, thus enhancing code modularity. The Layer class is composed of a numpy matrix, a bias array, an activation function and a parameter devoted to regularization. We chose to initialize layers using a normal distribution of mean 0 and variance 1 for each entry as advised in literature although different choices (like flat 0-symmetric distributions) did not make any real differences in terms of accuracy or loss.
+
+\paragraph{}
+In file \texttt{gradient\_descent.py} we implemented \texttt{gradient\_descent} procedure keeping it parametric in batch size so that we could make more trials over different batch sizes. We implemented also momentum heuristic keeping it parametric in $\beta$ so that we could tune it or even shut it down during our model development.
+Finally we chose to regularize our model adding to the loss function the squared norm of weights multiplied by $\lambda$ (\texttt{mu} in code, since lambda is a python keyword) as a penalty term. As far as stopping criterion is concerned at a first glance we deferred its implementation and then found it unworthy since our learning plots always stabilized after 2000 epochs, hence it was sufficient to manually insert that threshold.
+
+\paragraph{}
+In file \texttt{utility.py} we defined a class DiffFunction representing a function and its derivative, so that we could easily initialize our networks. Then we coded 4 different activation functions (\texttt{tanh}, \texttt{softMax}, \texttt{softPlus}, \texttt{reLU}, \texttt{identity}) and 4 different loss functions (\texttt{crossEntropy}, \texttt{binaryCrossEntropy}, \texttt{euclideanLoss}, \texttt{squaredLoss}) belonging to that class. At the end of the file you can find a couple of accuracy evaluators and some I/O formatting related procedures employed in experiments.
+
+\subsection{Preprocessing}
+
+Our first attempt did not encode monks inputs one-hot and it was way harder to achieve the 100\% accuracy, easily conquered later exploiting the suggested preprocessing. We analyzed cup input data finding that they were normalized yet, indeed they are distributed exactly as a normal distribution of mean 0 and variance 1, so we did not apply any transformation. Cup output was always less than 30 in norm thus we regarded a normalization as useless. Only our last model employed a little input preprocessing: we fed not only inputs but even their pairwise products. Apart from that we did not employ any tricky preprocessing as in monks case.
+
+\subsection{Validation Scheme}
+
+Monks dataset was endowed of an explicit test set to finally assess the model performance, we just separated a random fraction (25\%) of the training set for validation purposes. In cup dataset instead we needed to randomly separate an internal test set (10\%) by ourselves, thus you can find 2 different files attached: cup.test and cup.train. We separated them in the beginning in order to keep test strictly apart. During our cross validation we further split the training set between train (75\%) and validation (25\%). It is worth noting that we did not employ a k-fold approach but sticked to sample a random validation for every trial, then we took the average loss (or accuracy) over those sampling (usually 10, since variance was low enough).
+
+\subsection{Trials Pursued}
+
+Monks started working with 100\% accuracy immediately after adopting one-hot encoding, we had just to pay some attention to regularization for the 3rd set.
+
+\paragraph{}
+Cup dataset was trickier and it required us to try the heuristics described above (and in deeper details in experiments section) first manually trying to guess the right order of magnitude for parameters and then with a more exhaustive grid search. Once found the best possible NN model we tried to slightly modify our approach trying to filter out the noise: we trained a batch of 20 networks separately and ranked them for increasing loss on validation, took the bests and averaged their feed-forward results on test set assessing that this performed slightly better than each one taken separately. In the end we tried the pairwise products input preprocessing, combined with the previous heuristic, finding that it performed again slightly better. 
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "report"
+%%% End:
