@@ -1,2 +1,0 @@
-Elapsed time for search: 14462.918170300001
-Number of workers used: 8
