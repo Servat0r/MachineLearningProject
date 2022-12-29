@@ -354,7 +354,7 @@ class Linear(Layer):
             transposed_input = np.expand_dims(self.input, axis=2)
             expanded_delta_vals = np.expand_dims(delta_vals, axis=1)
             # Calculate update to layer's weights and biases
-            self.delta_weights = transposed_input * expanded_delta_vals
+            self.delta_weights = transposed_input @ expanded_delta_vals
             self.delta_biases = delta_vals.copy()
 
             # Apply reductions if requested
