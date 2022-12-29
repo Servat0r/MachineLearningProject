@@ -80,7 +80,7 @@ class Model:
 
     def save_parameters(self, fpath: str):
         with open(fpath, 'wb') as fp:
-            pickle.dump(self.get_parameters(), fp)  # todo if we introduce multithreading, copy -> True
+            pickle.dump(self.get_parameters(), fp)
 
     def load_parameters(self, fpath: str):
         with open(fpath, 'rb') as fp:

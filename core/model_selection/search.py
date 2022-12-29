@@ -276,10 +276,7 @@ class BaseSearch:
             history = model.train(
                 train_dataloader, eval_dataloader, max_epochs=comb['max_epoch'], callbacks=callbacks
             )
-            # model_monitor: ModelMonitor = callbacks[0]  # todo Dependent from convert method
-            # best_metric_value = model_monitor.best_metric_value
             metric_values = history[f'Val_{self.scoring_metric.get_name()}']
-            # best_metric_value = np.min(metric_values[:len(history)]).item()
             last_metric_value = metric_values[len(history) - 1].item()
             best_metric_values.append(last_metric_value)
 

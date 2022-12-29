@@ -52,6 +52,7 @@ default_monk_parameters = {
 @app.command(name='monk')
 def monk(
         number: int,
+        num_iterations: int = typer.Option(5, help='Number of trainings to execute'),
         plot_dir_path=typer.Option('results/monks', help=_MONK_PLOT_SAVE_DIR_PATH_HELP),
         lr=typer.Option(None, help=_MONK_PLOT_LR_HELP),
         momentum=typer.Option(None, help=_MONK_PLOT_MOMENTUM_HELP),
@@ -60,6 +61,7 @@ def monk(
     """
     Executes the MONK test specified by the `number` parameter.
     :param number: Either 1, 2, or 3, specifying which MONK test to execute.
+    :param num_iterations: Number of training cycles to execute.
     :param plot_dir_path: Directory in which to save the resulting plots.
     :param lr: Learning rate (MUST be a float).
     :param momentum: Momentum (MUST be a float).
@@ -75,6 +77,7 @@ def monk(
             momentum = default_monk_parameters[number]['momentum']
         print(lr, momentum, type(lr))
         lr, momentum, l2_lambda = float(lr), float(momentum), float(l2_lambda)
+        num_iterations = int(num_iterations)
         plot_save_paths = [
             os.path.join(plot_dir_path, f"monk{number}_losses.png"),
             os.path.join(plot_dir_path, f"monk{number}_accuracy.png"),
@@ -84,20 +87,32 @@ def monk(
             test_monk1(
                 lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
                 dir_path='datasets/monks', model_save_path=model_save_path,
-                csv_save_path=plot_dir_path, batch_size=1
+                csv_save_path=plot_dir_path, batch_size=2, num_iterations=num_iterations,
             )
         elif number == 2:
             test_monk2(
                 lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
                 dir_path='datasets/monks', model_save_path=model_save_path,
-                csv_save_path=plot_dir_path, batch_size=1
+                csv_save_path=plot_dir_path, batch_size=2, num_iterations=num_iterations,
             )
         else:
+            metrics_to_plot = [
+                # Here we are using MSE metric as it corresponds to data loss (i.e., without the penalty term)
+                {
+                    'MSE': "Training",
+                    'Val_MSE': "Test",
+                },
+                {
+                    'BinaryAccuracy': "Training",
+                    'Val_BinaryAccuracy': "Test",
+                }
+            ]
             test_monk3(
-                lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
-                dir_path='datasets/monks', model_save_path=model_save_path,
-                csv_save_path=plot_dir_path, l2_lambda=l2_lambda, batch_size=2
-            )
+                    lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
+                    dir_path='datasets/monks', model_save_path=model_save_path,
+                    csv_save_path=plot_dir_path, l2_lambda=l2_lambda, batch_size=2,
+                    num_iterations=num_iterations, metrics_to_plot=metrics_to_plot,
+                )
 
 
 @app.command(name='cup-grid')

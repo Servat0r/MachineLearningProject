@@ -3,8 +3,8 @@ from __future__ import annotations
 from tests.utils import *
 from core.utils.types import *
 from core.data import *
-from core.callbacks import InteractiveLogger, TrainingCSVLogger, EarlyStopping
-from core.metrics import BinaryAccuracy
+from core.callbacks import InteractiveLogger, TrainingCSVLogger
+from core.metrics import BinaryAccuracy, MSE
 import core.utils as cu
 import core.modules as cm
 
@@ -86,7 +86,6 @@ def get_monk_setup_hold_out(
     return model, train_dataset, eval_dataset, test_dataset
 
 
-# todo add L2 lambda
 def test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr=1e-1, momentum=0., batch_size=1,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
@@ -96,7 +95,7 @@ def test_monk(
     loss = cm.MSELoss(const=1., reduction='mean')
 
     # Configure optional parameters for training and plotting
-    metrics = [BinaryAccuracy()] if metrics is None else metrics
+    metrics = [BinaryAccuracy(), MSE()] if metrics is None else metrics
     callbacks = [] if callbacks is None else callbacks
     callbacks.append(InteractiveLogger())
     if metrics_to_plot is None:
@@ -138,57 +137,60 @@ def test_monk1(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
-        csv_save_path=None,
+        csv_save_path=None, num_iterations=5,
 ):
-    model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
-        train_file=MONK1_TRAIN, test_file=MONK1_TEST, hidden_sizes=MONK1_HIDDEN_SIZES,
-        validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
-        dirpath=dir_path,
-    )
-    callbacks = [] if callbacks is None else callbacks
-    callbacks.append(TrainingCSVLogger(csv_save_path, 'monk1_log.csv'))
-    return test_monk(
-        model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
-        metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
-    )
+    for i in range(num_iterations):
+        model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
+            train_file=MONK1_TRAIN, test_file=MONK1_TEST, hidden_sizes=MONK1_HIDDEN_SIZES,
+            validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
+            dirpath=dir_path,
+        )
+        callbacks = [] if callbacks is None else callbacks
+        callbacks.append(TrainingCSVLogger(csv_save_path, f'monk1_log_{i}.csv'))
+        test_monk(
+            model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
+            metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
+        )
 
 
 def test_monk2(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
-        csv_save_path=None,
+        csv_save_path=None, num_iterations=5,
 ):
-    model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
-        train_file=MONK2_TRAIN, test_file=MONK2_TEST, hidden_sizes=MONK2_HIDDEN_SIZES,
-        validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
-        dirpath=dir_path,
-    )
-    callbacks = [] if callbacks is None else callbacks
-    callbacks.append(TrainingCSVLogger(csv_save_path, 'monk2_log.csv'))
-    return test_monk(
-        model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
-        metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
-    )
+    for i in range(num_iterations):
+        model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
+            train_file=MONK2_TRAIN, test_file=MONK2_TEST, hidden_sizes=MONK2_HIDDEN_SIZES,
+            validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
+            dirpath=dir_path,
+        )
+        callbacks = [] if callbacks is None else callbacks
+        callbacks.append(TrainingCSVLogger(csv_save_path, f'monk2_log_{i}.csv'))
+        test_monk(
+            model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
+            metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
+        )
 
 
 def test_monk3(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
-        csv_save_path=None, l2_lambda=0.,
+        csv_save_path=None, l2_lambda=0., num_iterations=5,
 ):
-    model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
-        train_file=MONK3_TRAIN, test_file=MONK3_TEST, hidden_sizes=MONK3_HIDDEN_SIZES,
-        validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
-        dirpath=dir_path, l2_lambda=l2_lambda
-    )
-    callbacks = [] if callbacks is None else callbacks
-    callbacks.append(TrainingCSVLogger(csv_save_path, 'monk3_log.csv'))
-    return test_monk(
-        model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
-        metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
-    )
+    for i in range(num_iterations):
+        model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
+            train_file=MONK3_TRAIN, test_file=MONK3_TEST, hidden_sizes=MONK3_HIDDEN_SIZES,
+            validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
+            dirpath=dir_path, l2_lambda=l2_lambda
+        )
+        callbacks = [] if callbacks is None else callbacks
+        callbacks.append(TrainingCSVLogger(csv_save_path, f'monk3_log_{i}.csv'))
+        test_monk(
+            model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
+            metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
+        )
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ from tests.utils import *
 from core.utils.types import *
 from core.data import *
 from core.callbacks import InteractiveLogger, TrainingCSVLogger, TestSetMonitor
-from core.metrics import MEE
+from core.metrics import MEE, MSE
 from time import perf_counter
 import json
 import platform
@@ -32,10 +32,12 @@ def model_training_cup(
     # Create model, optimizer, loss and callbacks and compile model
     best_configuration = configurations[0]['config']
     model, optimizer, loss, callbacks = ParameterList().convert(best_configuration)
-    model.compile(optimizer, loss, metrics=[MEE()])
+    model.compile(optimizer, loss, metrics=[MEE(), MSE()])
 
     test_set_monitor = TestSetMonitor(
-        int_test_set_data, int_test_set_targets, metrics=[MEE()], max_epochs=best_configuration['max_epoch']
+        int_test_set_data, int_test_set_targets, metrics=[MEE(), MSE()],
+        # MSE is for extracting data loss WITHOUT the penalty term
+        max_epochs=best_configuration['max_epoch']
     )
     callbacks = [] if callbacks is None else callbacks
     callbacks.append(test_set_monitor)
@@ -80,26 +82,11 @@ def model_training_cup(
     )
 
     # Save Test Set log
-    ts_loss_data, ts_mee_data = test_set_monitor['loss'], test_set_monitor['MEE']
+    ts_loss_data, ts_mee_data, ts_mse_data = test_set_monitor['loss'], test_set_monitor['MEE'], test_set_monitor['MSE']
     with open(os.path.join(dir_path, 'internal_test_set_log.csv'), 'w') as fp:
-        print('loss', 'MEE', file=fp, sep=',')
+        print('loss', 'MEE', 'MSE', file=fp, sep=',')
         for i in range(len(test_set_monitor)):
-            print(ts_loss_data[i], ts_mee_data[i], sep=',', file=fp)
-    """
-    plot_metrics(
-        history, {
-            'loss': 'Development Set',
-            'Val_loss': 'Internal Test Set',
-        }, os.path.join(dir_path, 'cup_loss.png'),
-        len(history), ylabel='Loss (MSE)'
-    )
-    plot_metrics(
-        history, {
-            'MEE': 'Development Set',
-            'Val_MEE': 'Internal Test Set',
-        }, os.path.join(dir_path, 'cup_MEE.png'),
-        len(history), ylabel='Mean Euclidean Error (MEE)')
-    """
+            print(ts_loss_data[i], ts_mee_data[i], ts_mse_data[i], sep=',', file=fp)
 
     # Set to test, then save model
     model.set_to_test()
