@@ -35,7 +35,7 @@ MONK3_OUTSIZE = 1
 def get_monk_setup_hold_out(
         dirpath: str = '../datasets/monks', train_file=MONK1_TRAIN, test_file=MONK1_TEST,
         in_size=MONK1_INSIZE, hidden_sizes=MONK1_HIDDEN_SIZES, out_size=MONK1_OUTSIZE,
-        validation_size=None, grad_reduction='mean', shuffle=True,
+        validation_size=None, grad_reduction='mean', l2_lambda=0., shuffle=True,
         winit_low=-0.1, winit_high=0.1, dtype=np.float32,
 ):
     # Get datasets
@@ -49,16 +49,39 @@ def get_monk_setup_hold_out(
     test_dataset = ArrayDataset(test_data, test_labels)
     layers = [cm.Input()]
     sizes = [in_size] + list(hidden_sizes)
-    for i in range(len(sizes)-1):
-        p, q = sizes[i], sizes[i+1]
+    if l2_lambda > 0.:
+        for i in range(len(sizes)-1):
+            p, q = sizes[i], sizes[i+1]
+            layers.append(
+                cm.Dense(
+                    p, q, cm.Tanh(), cu.RandomUniformInitializer(winit_low, winit_high),
+                    weights_regularizer=cm.L2Regularizer(l2_lambda),
+                    biases_regularizer=cm.L2Regularizer(l2_lambda),
+                    gradients_reduction=grad_reduction
+                )
+            )
         layers.append(
-            cm.Dense(p, q, cm.Tanh(),
+            cm.Dense(
+                sizes[-1], out_size, cm.Sigmoid(),
+                cu.RandomUniformInitializer(winit_low, winit_high),
+                weights_regularizer=cm.L2Regularizer(l2_lambda),
+                biases_regularizer=cm.L2Regularizer(l2_lambda),
+                gradients_reduction=grad_reduction
+            )
+        )
+    else:
+        for i in range(len(sizes)-1):
+            p, q = sizes[i], sizes[i+1]
+            layers.append(
+                cm.Dense(p, q, cm.Tanh(),
+                         cu.RandomUniformInitializer(winit_low, winit_high), gradients_reduction=grad_reduction)
+            )
+        layers.append(
+            cm.Dense(sizes[-1], out_size, cm.Sigmoid(),
                      cu.RandomUniformInitializer(winit_low, winit_high), gradients_reduction=grad_reduction)
         )
-    layers.append(
-        cm.Dense(sizes[-1], out_size, cm.Sigmoid(),
-                 cu.RandomUniformInitializer(winit_low, winit_high), gradients_reduction=grad_reduction)
-    )
+    # Binary classifier output processer
+    layers.append(cm.BinaryClassifier())
     model = cm.Model(layers)
     return model, train_dataset, eval_dataset, test_dataset
 
@@ -153,16 +176,15 @@ def test_monk3(
         validation_size=None, lr=1e-1, momentum=0., reduction='mean', batch_size=1, shuffle=True,
         n_epochs=100, metrics=None, callbacks=None, metrics_to_plot=None, ylabels=None,
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
-        csv_save_path=None,
+        csv_save_path=None, l2_lambda=0.,
 ):
     model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
         train_file=MONK3_TRAIN, test_file=MONK3_TEST, hidden_sizes=MONK3_HIDDEN_SIZES,
         validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
-        dirpath=dir_path,
+        dirpath=dir_path, l2_lambda=l2_lambda
     )
     callbacks = [] if callbacks is None else callbacks
     callbacks.append(TrainingCSVLogger(csv_save_path, 'monk3_log.csv'))
-    callbacks.append(EarlyStopping(monitor='Val_loss', min_delta=1e-2, patience=10))
     return test_monk(
         model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
         metrics, callbacks, metrics_to_plot, ylabels, plot_save_paths, model_save_path,
@@ -183,7 +205,7 @@ if __name__ == '__main__':
     test_monk3(
         lr=1e-2, batch_size=2, shuffle=True, n_epochs=200, model_save_path='../results/monks/monk3_model.model',
         plot_save_paths=['../results/monks/monk3_losses.png', '../results/monks/monk3_accuracy.png'],
-        csv_save_path='../results/monks',
+        csv_save_path='../results/monks', l2_lambda=1e-5,
     )
 
 

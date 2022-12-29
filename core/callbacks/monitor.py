@@ -62,7 +62,7 @@ class TestSetMonitor(Callback):
     """
     def __init__(
             self, test_set_data: np.ndarray, test_set_targets: np.ndarray,
-            metrics, max_epochs: int, dtype=np.float32
+            metrics, max_epochs: int, dtype=np.float32, raw_outputs=False,
     ):
         self.logbook = {metric.get_name(): np.zeros(max_epochs, dtype=dtype) for metric in metrics}
         self.logbook['loss'] = np.zeros(max_epochs, dtype=dtype)
@@ -71,13 +71,20 @@ class TestSetMonitor(Callback):
         self.test_set_targets = test_set_targets
         self.epoch = 0
         self.max_epochs = max_epochs
+        # If raw_outputs is True, monitor will use model.raw_output()
+        # to test on the unprocessed output.
+        self.raw_outputs = raw_outputs
 
     def __len__(self):
         return self.epoch
 
     def after_training_epoch(self, model, epoch, logs=None):
         model.set_to_eval(detach_history=False)
-        test_set_net_output = model.forward(self.test_set_data)
+        if self.raw_outputs:
+            model.forward(self.test_set_data)
+            test_set_net_output = model.raw_output()
+        else:
+            test_set_net_output = model.forward(self.test_set_data)
         # Calculate metrics values
         for metric in self.metrics:
             metric.before_batch()

@@ -584,6 +584,39 @@ class Dense(Layer):
         }
 
 
+class OutputProcess(Layer):
+    """
+    Base class for a layer whose purpose is to post-process "raw" network
+    output to a certain format, e.g. 0 or 1 for binary classification.
+    """
+    @abstractmethod
+    def process(self, x: np.ndarray) -> np.ndarray:
+        pass
+
+    def is_trainable(self) -> bool:
+        return False
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        y = x.copy()  # cannot alterate "raw" output in-place
+        self.input = x
+        self.output = x
+        return self.process(y)  # this is the output that an external user sees
+
+    def backward(self, delta_vals: np.ndarray):
+        return delta_vals  # no training is performed here
+
+
+class BinaryClassifier(OutputProcess):
+    """
+    An OutputProcess layer that accepts arrays of shape (l, 1)
+    and turns convert each value to 1 if >= 0.5 and 0 otherwise.
+    """
+    def process(self, x: np.ndarray) -> np.ndarray:
+        x[x >= 0.5] = 1.0
+        x[x < 0.5] = 0.0
+        return x
+
+
 __all__ = [
     'Layer',
     'Input',
@@ -594,4 +627,6 @@ __all__ = [
     'Tanh',
     'ReLU',
     'SoftmaxLayer',
+    'OutputProcess',
+    'BinaryClassifier',
 ]

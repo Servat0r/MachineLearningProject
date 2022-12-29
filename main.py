@@ -9,8 +9,10 @@ app = typer.Typer()
 
 _MONK_PLOT_SAVE_DIR_PATH_HELP = "Relative path for the directory in which to save the resulting plots. " \
                            "Defaults to 'results/monks'"
-_MONK_PLOT_LR_HELP = "Learning rate. Defaults to 1e-1 for the first two MONK problems and 1e-2 for the third."
-_MONK_PLOT_MOMENTUM_HELP = "Momentum. Defaults to 0.0 (float)."
+_MONK_PLOT_LR_HELP = "Learning rate. Defaults to 0.5 for the first MONK problem, 0.1 for the second and " \
+                     "1e-2 for the third."
+_MONK_PLOT_MOMENTUM_HELP = "Momentum (float)."
+_MONK_PLOT_L2_LAMBDA_HELP = "L2-regularization lambda (float). Used only for MONK-3."
 
 _CUP_GS_DIR_PATH_HELP = 'Path of the directory in which the file of the grid search is contained.'
 _CUP_GS_FILE_PATH_HELP = 'Name of the file for the grid search.'
@@ -33,7 +35,7 @@ _CUP_FINAL_MODEL_SAVE_PATH = 'Name of the .model file that will contain the seri
 
 default_monk_parameters = {
     1: {
-        'lr': 0.2,
+        'lr': 0.5,
         'momentum': 0.0,
     },
     2: {
@@ -53,6 +55,7 @@ def monk(
         plot_dir_path=typer.Option('results/monks', help=_MONK_PLOT_SAVE_DIR_PATH_HELP),
         lr=typer.Option(None, help=_MONK_PLOT_LR_HELP),
         momentum=typer.Option(None, help=_MONK_PLOT_MOMENTUM_HELP),
+        l2_lambda: float = typer.Option(1e-5, help=_MONK_PLOT_L2_LAMBDA_HELP),
 ):
     """
     Executes the MONK test specified by the `number` parameter.
@@ -60,6 +63,8 @@ def monk(
     :param plot_dir_path: Directory in which to save the resulting plots.
     :param lr: Learning rate (MUST be a float).
     :param momentum: Momentum (MUST be a float).
+    :param l2_lambda: L2-regularization lambda value (MUST be a float).
+    Used ONLY for MONK-3. Defaults to 0.0.
     """
     if not 1 <= number <= 3:
         raise ValueError(f"Illegal value for 'number': expected one of {{1, 2, 3}}, got {number}")
@@ -69,7 +74,7 @@ def monk(
         if momentum is None:
             momentum = default_monk_parameters[number]['momentum']
         print(lr, momentum, type(lr))
-        lr, momentum = float(lr), float(momentum)
+        lr, momentum, l2_lambda = float(lr), float(momentum), float(l2_lambda)
         plot_save_paths = [
             os.path.join(plot_dir_path, f"monk{number}_losses.png"),
             os.path.join(plot_dir_path, f"monk{number}_accuracy.png"),
@@ -79,19 +84,19 @@ def monk(
             test_monk1(
                 lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
                 dir_path='datasets/monks', model_save_path=model_save_path,
-                csv_save_path=plot_dir_path,
+                csv_save_path=plot_dir_path, batch_size=1
             )
         elif number == 2:
             test_monk2(
                 lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
                 dir_path='datasets/monks', model_save_path=model_save_path,
-                csv_save_path=plot_dir_path,
+                csv_save_path=plot_dir_path, batch_size=1
             )
         else:
             test_monk3(
                 lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
                 dir_path='datasets/monks', model_save_path=model_save_path,
-                csv_save_path=plot_dir_path,
+                csv_save_path=plot_dir_path, l2_lambda=l2_lambda, batch_size=2
             )
 
 

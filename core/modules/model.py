@@ -178,6 +178,9 @@ class Model:
             current_delta_vals = layer.backward(current_delta_vals)
         return current_delta_vals
 
+    def raw_output(self):
+        return self.layers[-1].output
+
     def compile(self, optimizer: Optimizer, loss: Loss, metrics: Metric | Sequence[Metric] = None):
         """
         Configures the model for training.
@@ -329,7 +332,8 @@ class Model:
         # (Training) metrics 'callback'
         for metric in self.train_metrics:
             metric.before_batch()
-        net_output = self.forward(input_minibatch)
+        self.forward(input_minibatch)
+        net_output = self.raw_output()
         if isinstance(self.loss, RegularizedLoss):
             data_loss_value, regularization_loss_value = self.loss(net_output, target_minibatch, layers=self.layers)
         else:
@@ -367,7 +371,8 @@ class Model:
             # Validation metrics 'callback'
             for validation_metric in self.validation_metrics:
                 validation_metric.before_batch()
-            net_output = self.forward(input_eval)
+            self.forward(input_eval)
+            net_output = self.raw_output()
             if isinstance(self.loss, RegularizedLoss):
                 data_loss_value, regularization_loss_value = self.loss(net_output, target_eval, layers=self.layers)
             else:
