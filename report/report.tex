@@ -10,17 +10,21 @@
 \setlength\parindent{0pt}
 
 \title{Neural Network Implementation}
-\author{Lorenzo Beretta, \texttt{loribere@gmail.com}\\
-  Riccardo Zanotto, \texttt{riccardo.zanotto@sns.it}
-  \and Project A of ML course (654AA), A.Y. 2018-19}
-\date{30th May 2019}
+\author{Salvatore Correnti, \texttt{s.correnti@studenti.unipi.it}\\
+  Alberto L'Episcopo, \texttt{a.lepiscopo1@studenti.unipi.it}\\
+  Gaetano Nicassio, \texttt{g.nicassio??@studenti.unipi.it}
+  \and Project A of ML course (654AA), A.Y. 2022-23}
+\date{31th December 2022}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-  Adesso scrivo questa frase e salvo i cambiamenti. Si vedrà su github? Dubito.
-  We developed a type (A) project implementing a neural network in python and exploiting the linear algebra library numpy. We structured our code abstracting over every hyper-parameter in a highly modular fashion. We chose the best topology and parameters through cross validation, finally we assessed our model over an internal test.  
+  The aim of this report is to illustrate the implementation and testing of a framework for creation and usage of basic Neural Networks.
+  We have implemented this framework in Python by exploiting the NumPy numerical library, with a focus on modularity and extensibility of the code.
+  We have used the MONK and the ML-CUP22 datasets for testing this framework against respectively classification and regression problems.
+  Model selection is implemented as a Grid Search with Holdout and K-fold as validation techniques.
+ 
 \end{abstract}
 
 \input{00.intro}
