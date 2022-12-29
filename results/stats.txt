@@ -1,4 +1,4 @@
-Elapsed time = 51.4462452 seconds
+Elapsed time = 9.3085106 seconds
 Available cores: 16
 System: Windows
 Machine: AMD64
