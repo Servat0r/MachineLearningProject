@@ -40,7 +40,6 @@ def model_training_cup(
     callbacks = [] if callbacks is None else callbacks
     callbacks.append(test_set_monitor)
 
-    # O togliamo la Early Stopping dalle callbacks o facciamo un CSVLogger analogo per test
     logging_callbacks = [
         InteractiveLogger(), TrainingCSVLogger(
             train_directory_path=dir_path, train_file_name=training_csv_log_file_name,
@@ -79,6 +78,13 @@ def model_training_cup(
         test_data=test_set_monitor['MEE'], test_plot_label='Internal Test Set',
         n_epochs=len(history), ylabel='Mean Euclidean Error (MEE)',
     )
+
+    # Save Test Set log
+    ts_loss_data, ts_mee_data = test_set_monitor['loss'], test_set_monitor['MEE']
+    with open(os.path.join(dir_path, 'internal_test_set_log.csv'), 'w') as fp:
+        print('loss', 'MEE', file=fp, sep=',')
+        for i in range(len(test_set_monitor)):
+            print(ts_loss_data[i], ts_mee_data[i], sep=',', file=fp)
     """
     plot_metrics(
         history, {
