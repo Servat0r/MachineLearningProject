@@ -1,0 +1,57 @@
+\documentclass[12pt, letterpaper]{article}  % it must be at least 11 pt or more if you like (here we used 12 for clarity of the demo), and change article with report
+\usepackage[letterpaper, top=3.71cm, bottom=3.20cm, left=2.86cm, right=2.86cm]{geometry}
+%top = 2.44 (header in doc) + 1.27
+% bottom 1.42 (footer in doc) + 1.78
+\usepackage[utf8]{inputenc}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{todonotes}
+\usepackage{cleveref}
+\usepackage{subfig}
+
+\setlength\parindent{0pt}
+
+
+% aggiungo qualcosa allo schema se non l'hai espanso
+% ok
+% chattare su overleaf pero è divertente
+% questo resta nel file che consegnamo a micheli
+% esatto ahahahah
+% però dov'e lo schema?
+% anzi no, guarda i vari 00.intro.tex, 01.experiments ecc. qua c'è solo l'abstract
+\setlength\parindent{0pt}
+
+\title{\vspace{-2cm}\textbf{Machine Learning Project Report}}
+\author{\small{Salvatore Correnti.}
+        \small{Computer Science (Artificial Intelligence). \underline{s.correnti@studenti.unipi.it}.} \\ \small{Alberto L'Episcopo.}
+        \small{Computer Science. \underline{a.lepiscopo1@studenti.unipi.it}.} \\\small{Gaetano Nicassio.}
+        \small{Computer Science (Artificial Intelligence). \underline{g.nicassio??@studenti.unipi.it}.} \\  % put your   % put your Master Degree (and curriculum) here
+        \small{ML course (654AA), Academic Year: 2022-2023} \\
+        \small{Date: \today} \\
+        \small{Type of project: \textbf{A} \textit{(Python)}}
+}
+
+\renewcommand\refname{} %remove this line to automatically show the bibliography header
+
+\newcommand{\salvo}[1]{\texttt{#1}}
+\newcommand{\bb}[1]{\mathbb{#1}}
+
+\begin{document}
+\nocite{*}  % comment this line to list only the articles you really cite
+\date{}
+\maketitle
+
+\begin{abstract}
+  The aim of this report is to illustrate the implementation and testing of a framework for creation and usage of basic Neural Networks.
+  We have implemented this framework in Python by exploiting the NumPy numerical library, with a focus on modularity and extensibility of the code.
+  We have used the MONK and the ML-CUP22 datasets for testing this framework against respectively classification and regression problems.
+  Model selection is implemented as a Grid Search with Holdout validation followed by a sequential search on the best models with K-fold validation.
+\end{abstract}
+
+\input{00.intro}
+\input{01.experiments}
+\input{02.conclusions}
+
+\noindent Note: please \textbf{do not} use footnotes in your report!
+\end{document}
