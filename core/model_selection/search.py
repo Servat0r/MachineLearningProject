@@ -262,6 +262,7 @@ class BaseSearch:
         """
         print(f'Using comb = {comb}')
         best_metric_values = []
+        train_metric_values = []
         test_set_values = []
         for train_data, eval_data in self.cross_validator.split(
                 inputs, targets, shuffle=cv_shuffle, random_state=cv_random_state, *args, **kwargs
@@ -280,6 +281,7 @@ class BaseSearch:
                 train_dataloader, eval_dataloader, max_epochs=comb['max_epoch'], callbacks=callbacks
             )
             metric_values = history[f'Val_{self.scoring_metric.get_name()}']
+            train_metric_values.append(history[self.scoring_metric.get_name()][len(history) - 1].item())
             last_metric_value = metric_values[len(history) - 1].item()
             best_metric_values.append(last_metric_value)
             if (test_set_data is not None) and (test_set_targets is not None):
@@ -290,12 +292,17 @@ class BaseSearch:
 
         mean_metric_value = np.mean(best_metric_values)
         std_metric_value = np.std(best_metric_values)
+        train_metric_mean = np.mean(train_metric_values)
+        test_metric_mean = np.mean(test_set_values)
         return {
             'config': comb,
             'mean': mean_metric_value.item(),
             'std': std_metric_value.item(),
             'values': best_metric_values,
             'test_values': test_set_values,
+            'train_values': train_metric_values,
+            'train_mean': train_metric_mean,
+            'test_mean': test_metric_mean,
         }
 
     def search(
