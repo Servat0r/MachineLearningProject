@@ -1,0 +1,49 @@
+{
+    "minibatch_size": [256],
+    "size_hidden_layers": [
+        [32, 16],
+        [16, 16],
+        [16, 8]
+    ],
+    "input_dim": [9],
+    "output_dim": [2],
+    "activation": [
+        "tanh",
+        ["tanh", "sigmoid"]
+    ],
+    "learning_rate": [
+        1e-2,
+        9e-3,
+        8e-3,
+        7e-3,
+        6e-3,
+        5e-3
+    ],
+    "momentum": [
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8
+    ],
+    "regularization": [
+        ["l2", 1e-5],
+        ["l2", 8e-6],
+        ["l2", 6e-6],
+        ["l2", 4e-6],
+        ["l2", 2e-6],
+        ["l2", 1e-6],
+        ["l2", 8e-7],
+        ["l2", 6e-7]
+    ],
+    "monitor": ["Val_MEE"],
+    "early_stopping": ["none"],
+    "weights_initialization": [
+        ["Uniform", -0.7, 0.7, null]
+    ],
+    "max_epoch": [500],
+    "decay": [
+        "none",
+        ["linear", 1e-1, null]
+    ]
+}

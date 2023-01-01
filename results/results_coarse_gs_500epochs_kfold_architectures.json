@@ -1,0 +1,4850 @@
+[
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4549729824066162,
+    "std": 0.029067787434585143,
+    "values": [
+      1.4735082387924194,
+      1.477481722831726,
+      1.4139289855957031
+    ],
+    "test_values": [
+      1.5088891983032227,
+      1.4540117979049683,
+      1.389441967010498
+    ],
+    "train_values": [
+      1.2230498790740967,
+      1.2887755632400513,
+      1.2527590990066528
+    ],
+    "train_mean": 1.2548615137736003,
+    "test_mean": 1.450780987739563
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4564650853474934,
+    "std": 0.04486826584667575,
+    "values": [
+      1.484533667564392,
+      1.4917142391204834,
+      1.393147349357605
+    ],
+    "test_values": [
+      1.4612311124801636,
+      1.4249911308288574,
+      1.3676906824111938
+    ],
+    "train_values": [
+      1.2857413291931152,
+      1.3150670528411865,
+      1.3025767803192139
+    ],
+    "train_mean": 1.3011283874511719,
+    "test_mean": 1.4179709752400715
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.464796543121338,
+    "std": 0.066326942206298,
+    "values": [
+      1.4829871654510498,
+      1.5353926420211792,
+      1.3760098218917847
+    ],
+    "test_values": [
+      1.474393367767334,
+      1.4898149967193604,
+      1.3590909242630005
+    ],
+    "train_values": [
+      1.2299667596817017,
+      1.229701280593872,
+      1.2595362663269043
+    ],
+    "train_mean": 1.2397347688674927,
+    "test_mean": 1.441099762916565
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4688032070795696,
+    "std": 0.0641352968300698,
+    "values": [
+      1.4748365879058838,
+      1.5441619157791138,
+      1.387411117553711
+    ],
+    "test_values": [
+      1.4606332778930664,
+      1.4402238130569458,
+      1.373536229133606
+    ],
+    "train_values": [
+      1.2267628908157349,
+      1.2121634483337402,
+      1.2306797504425049
+    ],
+    "train_mean": 1.2232020298639934,
+    "test_mean": 1.424797773361206
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4689560731252034,
+    "std": 0.047723968918756576,
+    "values": [
+      1.4714672565460205,
+      1.5261096954345703,
+      1.4092912673950195
+    ],
+    "test_values": [
+      1.4522639513015747,
+      1.4525457620620728,
+      1.3942097425460815
+    ],
+    "train_values": [
+      1.2782034873962402,
+      1.3318145275115967,
+      1.3518295288085938
+    ],
+    "train_mean": 1.3206158479054768,
+    "test_mean": 1.433006485303243
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4727187554041545,
+    "std": 0.050463789445480946,
+    "values": [
+      1.5077621936798096,
+      1.5090380907058716,
+      1.4013559818267822
+    ],
+    "test_values": [
+      1.4551547765731812,
+      1.4447135925292969,
+      1.377684473991394
+    ],
+    "train_values": [
+      1.3150672912597656,
+      1.3296512365341187,
+      1.3458648920059204
+    ],
+    "train_mean": 1.3301944732666016,
+    "test_mean": 1.4258509476979573
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4727402130762737,
+    "std": 0.038771585035651306,
+    "values": [
+      1.4806519746780396,
+      1.5157727003097534,
+      1.4217959642410278
+    ],
+    "test_values": [
+      1.5107309818267822,
+      1.4748997688293457,
+      1.4106205701828003
+    ],
+    "train_values": [
+      1.2419860363006592,
+      1.2561835050582886,
+      1.2909927368164062
+    ],
+    "train_mean": 1.263054092725118,
+    "test_mean": 1.4654171069463093
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4736121495564778,
+    "std": 0.040420930013645495,
+    "values": [
+      1.5050548315048218,
+      1.4992344379425049,
+      1.416547179222107
+    ],
+    "test_values": [
+      1.4261598587036133,
+      1.4206963777542114,
+      1.3614938259124756
+    ],
+    "train_values": [
+      1.3083235025405884,
+      1.337753415107727,
+      1.332979679107666
+    ],
+    "train_mean": 1.3263521989186604,
+    "test_mean": 1.4027833541234334
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4742825428644817,
+    "std": 0.04071451592414168,
+    "values": [
+      1.4948476552963257,
+      1.5105758905410767,
+      1.4174240827560425
+    ],
+    "test_values": [
+      1.4395196437835693,
+      1.41816246509552,
+      1.3543673753738403
+    ],
+    "train_values": [
+      1.2049427032470703,
+      1.2462645769119263,
+      1.282762885093689
+    ],
+    "train_mean": 1.2446567217508953,
+    "test_mean": 1.4040164947509766
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4749922355016072,
+    "std": 0.03332657301846589,
+    "values": [
+      1.477026343345642,
+      1.5147536993026733,
+      1.4331966638565063
+    ],
+    "test_values": [
+      1.4916108846664429,
+      1.458654761314392,
+      1.3732985258102417
+    ],
+    "train_values": [
+      1.2821731567382812,
+      1.3094027042388916,
+      1.3110618591308594
+    ],
+    "train_mean": 1.3008792400360107,
+    "test_mean": 1.4411880572636921
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4756251573562622,
+    "std": 0.04301601109979718,
+    "values": [
+      1.4993765354156494,
+      1.5122517347335815,
+      1.4152472019195557
+    ],
+    "test_values": [
+      1.5185365676879883,
+      1.5263137817382812,
+      1.397705316543579
+    ],
+    "train_values": [
+      1.2034189701080322,
+      1.253472089767456,
+      1.2666170597076416
+    ],
+    "train_mean": 1.2411693731943767,
+    "test_mean": 1.4808518886566162
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4756781657536824,
+    "std": 0.04904445144033114,
+    "values": [
+      1.4815534353256226,
+      1.5325915813446045,
+      1.4128894805908203
+    ],
+    "test_values": [
+      1.5180660486221313,
+      1.462792992591858,
+      1.3841058015823364
+    ],
+    "train_values": [
+      1.2180116176605225,
+      1.2176213264465332,
+      1.2698936462402344
+    ],
+    "train_mean": 1.2351755301157634,
+    "test_mean": 1.4549882809321086
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4771661361058552,
+    "std": 0.03073853939882987,
+    "values": [
+      1.489495038986206,
+      1.5071027278900146,
+      1.4349006414413452
+    ],
+    "test_values": [
+      1.4351774454116821,
+      1.4860392808914185,
+      1.4454667568206787
+    ],
+    "train_values": [
+      1.226503849029541,
+      1.2056853771209717,
+      1.2374053001403809
+    ],
+    "train_mean": 1.2231981754302979,
+    "test_mean": 1.4555611610412598
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.478853702545166,
+    "std": 0.031657485711921056,
+    "values": [
+      1.4856200218200684,
+      1.5137975215911865,
+      1.4371435642242432
+    ],
+    "test_values": [
+      1.486714243888855,
+      1.4259029626846313,
+      1.413478970527649
+    ],
+    "train_values": [
+      1.3384736776351929,
+      1.3615450859069824,
+      1.3808906078338623
+    ],
+    "train_mean": 1.3603031237920125,
+    "test_mean": 1.4420320590337117
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.480839769045512,
+    "std": 0.05103706283528667,
+    "values": [
+      1.4782662391662598,
+      1.544594168663025,
+      1.419658899307251
+    ],
+    "test_values": [
+      1.4412368535995483,
+      1.4431737661361694,
+      1.351583480834961
+    ],
+    "train_values": [
+      1.2640869617462158,
+      1.2984586954116821,
+      1.3031466007232666
+    ],
+    "train_mean": 1.2885640859603882,
+    "test_mean": 1.4119980335235596
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4808504978815715,
+    "std": 0.048197399388377526,
+    "values": [
+      1.494551658630371,
+      1.5318245887756348,
+      1.4161752462387085
+    ],
+    "test_values": [
+      1.4351497888565063,
+      1.4749873876571655,
+      1.3004838228225708
+    ],
+    "train_values": [
+      1.163565754890442,
+      1.2070865631103516,
+      1.1745954751968384
+    ],
+    "train_mean": 1.1817492643992107,
+    "test_mean": 1.4035403331120808
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4813262224197388,
+    "std": 0.019548739880152106,
+    "values": [
+      1.4845006465911865,
+      1.5035228729248047,
+      1.455955147743225
+    ],
+    "test_values": [
+      1.5336148738861084,
+      1.4773824214935303,
+      1.4004125595092773
+    ],
+    "train_values": [
+      1.2173051834106445,
+      1.2270233631134033,
+      1.2519972324371338
+    ],
+    "train_mean": 1.2321085929870605,
+    "test_mean": 1.4704699516296387
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4813467661539714,
+    "std": 0.04113585609587981,
+    "values": [
+      1.504698395729065,
+      1.5158149003982544,
+      1.4235270023345947
+    ],
+    "test_values": [
+      1.4886200428009033,
+      1.5088990926742554,
+      1.4130151271820068
+    ],
+    "train_values": [
+      1.2427780628204346,
+      1.2571606636047363,
+      1.2928216457366943
+    ],
+    "train_mean": 1.2642534573872883,
+    "test_mean": 1.4701780875523884
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4823577801386516,
+    "std": 0.03584386276045789,
+    "values": [
+      1.461706280708313,
+      1.532774806022644,
+      1.4525922536849976
+    ],
+    "test_values": [
+      1.4741711616516113,
+      1.4231854677200317,
+      1.3455328941345215
+    ],
+    "train_values": [
+      1.1907131671905518,
+      1.230345606803894,
+      1.260058045387268
+    ],
+    "train_mean": 1.2270389397939045,
+    "test_mean": 1.4142965078353882
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.485123872756958,
+    "std": 0.021552931761269906,
+    "values": [
+      1.5034468173980713,
+      1.497057318687439,
+      1.4548674821853638
+    ],
+    "test_values": [
+      1.450231909751892,
+      1.3827900886535645,
+      1.3766552209854126
+    ],
+    "train_values": [
+      1.3210142850875854,
+      1.3281140327453613,
+      1.3412351608276367
+    ],
+    "train_mean": 1.3301211595535278,
+    "test_mean": 1.4032257397969563
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4854557911554973,
+    "std": 0.03562288299313213,
+    "values": [
+      1.510779619216919,
+      1.5105100870132446,
+      1.4350776672363281
+    ],
+    "test_values": [
+      1.5230209827423096,
+      1.4762042760849,
+      1.3641554117202759
+    ],
+    "train_values": [
+      1.2932894229888916,
+      1.2891852855682373,
+      1.313929796218872
+    ],
+    "train_mean": 1.2988015015920003,
+    "test_mean": 1.4544602235158284
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4858647584915161,
+    "std": 0.0745921740044991,
+    "values": [
+      1.4977667331695557,
+      1.5706868171691895,
+      1.3891407251358032
+    ],
+    "test_values": [
+      1.4350075721740723,
+      1.445440411567688,
+      1.378089427947998
+    ],
+    "train_values": [
+      1.1967263221740723,
+      1.2655662298202515,
+      1.25048828125
+    ],
+    "train_mean": 1.2375936110814412,
+    "test_mean": 1.4195124705632527
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4861132701237996,
+    "std": 0.042849954657046906,
+    "values": [
+      1.4613837003707886,
+      1.5463895797729492,
+      1.4505665302276611
+    ],
+    "test_values": [
+      1.4674206972122192,
+      1.5004994869232178,
+      1.4157382249832153
+    ],
+    "train_values": [
+      1.286452054977417,
+      1.2902171611785889,
+      1.3426264524459839
+    ],
+    "train_mean": 1.3064318895339966,
+    "test_mean": 1.4612194697062175
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4861948887507122,
+    "std": 0.032969529485245966,
+    "values": [
+      1.4580367803573608,
+      1.5324581861495972,
+      1.4680896997451782
+    ],
+    "test_values": [
+      1.4843413829803467,
+      1.4734389781951904,
+      1.3217853307724
+    ],
+    "train_values": [
+      1.28036630153656,
+      1.3089876174926758,
+      1.3516757488250732
+    ],
+    "train_mean": 1.3136765559514363,
+    "test_mean": 1.426521897315979
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.48663330078125,
+    "std": 0.06555376368378135,
+    "values": [
+      1.4836146831512451,
+      1.5683866739273071,
+      1.4078985452651978
+    ],
+    "test_values": [
+      1.4621702432632446,
+      1.542116641998291,
+      1.450441598892212
+    ],
+    "train_values": [
+      1.1457206010818481,
+      1.1957380771636963,
+      1.1621299982070923
+    ],
+    "train_mean": 1.167862892150879,
+    "test_mean": 1.4849094947179158
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4871979554494221,
+    "std": 0.0490478080653138,
+    "values": [
+      1.4526094198226929,
+      1.5565619468688965,
+      1.4524224996566772
+    ],
+    "test_values": [
+      1.4329774379730225,
+      1.4772833585739136,
+      1.3967618942260742
+    ],
+    "train_values": [
+      1.3501691818237305,
+      1.3706904649734497,
+      1.3805793523788452
+    ],
+    "train_mean": 1.367146333058675,
+    "test_mean": 1.4356742302576702
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4889062643051147,
+    "std": 0.040326103535418746,
+    "values": [
+      1.526350975036621,
+      1.507435917854309,
+      1.432931900024414
+    ],
+    "test_values": [
+      1.51011323928833,
+      1.464763879776001,
+      1.4239996671676636
+    ],
+    "train_values": [
+      1.2525415420532227,
+      1.2461001873016357,
+      1.3310723304748535
+    ],
+    "train_mean": 1.2765713532765706,
+    "test_mean": 1.4662922620773315
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4894468386967976,
+    "std": 0.03810750673476997,
+    "values": [
+      1.5207312107086182,
+      1.5118077993392944,
+      1.4358015060424805
+    ],
+    "test_values": [
+      1.434101939201355,
+      1.4491589069366455,
+      1.3824546337127686
+    ],
+    "train_values": [
+      1.245227575302124,
+      1.2593005895614624,
+      1.2847044467926025
+    ],
+    "train_mean": 1.2630775372187297,
+    "test_mean": 1.4219051599502563
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.491055687268575,
+    "std": 0.04369426706026403,
+    "values": [
+      1.4933929443359375,
+      1.543363094329834,
+      1.4364110231399536
+    ],
+    "test_values": [
+      1.4759950637817383,
+      1.4249802827835083,
+      1.378128170967102
+    ],
+    "train_values": [
+      1.281699299812317,
+      1.312707781791687,
+      1.3322032690048218
+    ],
+    "train_mean": 1.3088701168696086,
+    "test_mean": 1.4263678391774495
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4912818670272827,
+    "std": 0.04421413292810867,
+    "values": [
+      1.4591705799102783,
+      1.5538023710250854,
+      1.4608726501464844
+    ],
+    "test_values": [
+      1.5455013513565063,
+      1.4645037651062012,
+      1.45685613155365
+    ],
+    "train_values": [
+      1.2473199367523193,
+      1.2601439952850342,
+      1.2854872941970825
+    ],
+    "train_mean": 1.2643170754114788,
+    "test_mean": 1.4889537493387859
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4918627341588337,
+    "std": 0.035563619356199935,
+    "values": [
+      1.501294493675232,
+      1.5299304723739624,
+      1.4443632364273071
+    ],
+    "test_values": [
+      1.4185031652450562,
+      1.429620623588562,
+      1.382592797279358
+    ],
+    "train_values": [
+      1.2148494720458984,
+      1.200835108757019,
+      1.2464356422424316
+    ],
+    "train_mean": 1.2207067410151164,
+    "test_mean": 1.4102388620376587
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4921040534973145,
+    "std": 0.059222591706766595,
+    "values": [
+      1.5054762363433838,
+      1.5570200681686401,
+      1.4138158559799194
+    ],
+    "test_values": [
+      1.5761770009994507,
+      1.4369926452636719,
+      1.4245394468307495
+    ],
+    "train_values": [
+      1.1664679050445557,
+      1.1892037391662598,
+      1.207792043685913
+    ],
+    "train_mean": 1.1878212292989094,
+    "test_mean": 1.479236364364624
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4924022356669109,
+    "std": 0.022843757656497703,
+    "values": [
+      1.4928698539733887,
+      1.5201432704925537,
+      1.46419358253479
+    ],
+    "test_values": [
+      1.4312422275543213,
+      1.4459913969039917,
+      1.4360567331314087
+    ],
+    "train_values": [
+      1.3568544387817383,
+      1.4010593891143799,
+      1.4029533863067627
+    ],
+    "train_mean": 1.386955738067627,
+    "test_mean": 1.4377634525299072
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.492850661277771,
+    "std": 0.04298745061496481,
+    "values": [
+      1.4835928678512573,
+      1.5495141744613647,
+      1.445444941520691
+    ],
+    "test_values": [
+      1.4445654153823853,
+      1.486027479171753,
+      1.401662826538086
+    ],
+    "train_values": [
+      1.2467949390411377,
+      1.2493832111358643,
+      1.2795888185501099
+    ],
+    "train_mean": 1.2585889895757039,
+    "test_mean": 1.4440852403640747
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4931054910024006,
+    "std": 0.03006230987713056,
+    "values": [
+      1.4946210384368896,
+      1.52914297580719,
+      1.4555524587631226
+    ],
+    "test_values": [
+      1.4670144319534302,
+      1.4581003189086914,
+      1.3706430196762085
+    ],
+    "train_values": [
+      1.376486897468567,
+      1.369876503944397,
+      1.3844935894012451
+    ],
+    "train_mean": 1.376952330271403,
+    "test_mean": 1.43191925684611
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4932082096735637,
+    "std": 0.014376537044713724,
+    "values": [
+      1.477427363395691,
+      1.5122004747390747,
+      1.4899967908859253
+    ],
+    "test_values": [
+      1.5251535177230835,
+      1.4826046228408813,
+      1.409000277519226
+    ],
+    "train_values": [
+      1.1730239391326904,
+      1.2075883150100708,
+      1.1833686828613281
+    ],
+    "train_mean": 1.1879936456680298,
+    "test_mean": 1.4722528060277302
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4932417472203572,
+    "std": 0.01599040100710348,
+    "values": [
+      1.4842722415924072,
+      1.5157042741775513,
+      1.4797487258911133
+    ],
+    "test_values": [
+      1.4857341051101685,
+      1.4253798723220825,
+      1.4055389165878296
+    ],
+    "train_values": [
+      1.3551790714263916,
+      1.3952957391738892,
+      1.3899545669555664
+    ],
+    "train_mean": 1.380143125851949,
+    "test_mean": 1.4388842980066936
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4935893615086873,
+    "std": 0.03028008681357002,
+    "values": [
+      1.4911186695098877,
+      1.5318483114242554,
+      1.457801103591919
+    ],
+    "test_values": [
+      1.437211275100708,
+      1.444633960723877,
+      1.4176292419433594
+    ],
+    "train_values": [
+      1.3354270458221436,
+      1.3621443510055542,
+      1.3746135234832764
+    ],
+    "train_mean": 1.3573949734369914,
+    "test_mean": 1.4331581592559814
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4938502311706543,
+    "std": 0.030025269536944194,
+    "values": [
+      1.491305947303772,
+      1.531829595565796,
+      1.458415150642395
+    ],
+    "test_values": [
+      1.4593485593795776,
+      1.4294986724853516,
+      1.370551347732544
+    ],
+    "train_values": [
+      1.2549738883972168,
+      1.2547216415405273,
+      1.274777889251709
+    ],
+    "train_mean": 1.2614911397298176,
+    "test_mean": 1.419799526532491
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.493903676668803,
+    "std": 0.021308783309052108,
+    "values": [
+      1.487274408340454,
+      1.5226768255233765,
+      1.4717597961425781
+    ],
+    "test_values": [
+      1.4786961078643799,
+      1.4565215110778809,
+      1.4711107015609741
+    ],
+    "train_values": [
+      1.3075551986694336,
+      1.3074350357055664,
+      1.3172564506530762
+    ],
+    "train_mean": 1.3107488950093586,
+    "test_mean": 1.4687761068344116
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4948785702387493,
+    "std": 0.02690427570051889,
+    "values": [
+      1.4817299842834473,
+      1.5323736667633057,
+      1.4705320596694946
+    ],
+    "test_values": [
+      1.5243568420410156,
+      1.422991394996643,
+      1.4546091556549072
+    ],
+    "train_values": [
+      1.3158459663391113,
+      1.3222482204437256,
+      1.3378517627716064
+    ],
+    "train_mean": 1.3253153165181477,
+    "test_mean": 1.467319130897522
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.495129942893982,
+    "std": 0.03695185000666812,
+    "values": [
+      1.5194424390792847,
+      1.5230340957641602,
+      1.442913293838501
+    ],
+    "test_values": [
+      1.4817767143249512,
+      1.4297902584075928,
+      1.391448974609375
+    ],
+    "train_values": [
+      1.3384404182434082,
+      1.317765474319458,
+      1.353071928024292
+    ],
+    "train_mean": 1.3364259401957195,
+    "test_mean": 1.434338649113973
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4968267679214478,
+    "std": 0.029985218259378416,
+    "values": [
+      1.471502423286438,
+      1.5389453172683716,
+      1.4800325632095337
+    ],
+    "test_values": [
+      1.4724828004837036,
+      1.4361149072647095,
+      1.426050066947937
+    ],
+    "train_values": [
+      1.3143730163574219,
+      1.3308197259902954,
+      1.3709077835083008
+    ],
+    "train_mean": 1.3387001752853394,
+    "test_mean": 1.44488259156545
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4969870646794636,
+    "std": 0.03374400320684805,
+    "values": [
+      1.4995354413986206,
+      1.5369817018508911,
+      1.4544440507888794
+    ],
+    "test_values": [
+      1.451416015625,
+      1.459138035774231,
+      1.4374322891235352
+    ],
+    "train_values": [
+      1.3709816932678223,
+      1.3789315223693848,
+      1.3968092203140259
+    ],
+    "train_mean": 1.3822408119837444,
+    "test_mean": 1.4493287801742554
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4972561995188396,
+    "std": 0.04069301419415846,
+    "values": [
+      1.4782254695892334,
+      1.553806185722351,
+      1.459736943244934
+    ],
+    "test_values": [
+      1.4598811864852905,
+      1.501214861869812,
+      1.4135851860046387
+    ],
+    "train_values": [
+      1.340015172958374,
+      1.3737791776657104,
+      1.3914741277694702
+    ],
+    "train_mean": 1.3684228261311848,
+    "test_mean": 1.4582270781199138
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4975439707438152,
+    "std": 0.032928218306923475,
+    "values": [
+      1.470896601676941,
+      1.5439409017562866,
+      1.4777944087982178
+    ],
+    "test_values": [
+      1.579224705696106,
+      1.5653029680252075,
+      1.3804408311843872
+    ],
+    "train_values": [
+      1.0964381694793701,
+      1.0827345848083496,
+      1.0900191068649292
+    ],
+    "train_mean": 1.0897306203842163,
+    "test_mean": 1.508322834968567
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4981603225072224,
+    "std": 0.02623391861618146,
+    "values": [
+      1.4868170022964478,
+      1.5344232320785522,
+      1.4732407331466675
+    ],
+    "test_values": [
+      1.4794772863388062,
+      1.4818426370620728,
+      1.4103420972824097
+    ],
+    "train_values": [
+      1.3648542165756226,
+      1.3502699136734009,
+      1.384364366531372
+    ],
+    "train_mean": 1.366496165593465,
+    "test_mean": 1.4572206735610962
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.498489538828532,
+    "std": 0.043900375747243196,
+    "values": [
+      1.4937041997909546,
+      1.554489016532898,
+      1.4472754001617432
+    ],
+    "test_values": [
+      1.5078314542770386,
+      1.464835524559021,
+      1.4220834970474243
+    ],
+    "train_values": [
+      1.2891680002212524,
+      1.3058034181594849,
+      1.3370819091796875
+    ],
+    "train_mean": 1.3106844425201416,
+    "test_mean": 1.4649168252944946
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4986482461293538,
+    "std": 0.034255421109684527,
+    "values": [
+      1.4982664585113525,
+      1.5407919883728027,
+      1.4568862915039062
+    ],
+    "test_values": [
+      1.4646013975143433,
+      1.4402705430984497,
+      1.4152666330337524
+    ],
+    "train_values": [
+      1.1553025245666504,
+      1.144413948059082,
+      1.2013969421386719
+    ],
+    "train_mean": 1.167037804921468,
+    "test_mean": 1.4400461912155151
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4986722469329834,
+    "std": 0.050981698772501804,
+    "values": [
+      1.5236835479736328,
+      1.5447287559509277,
+      1.4276044368743896
+    ],
+    "test_values": [
+      1.432752251625061,
+      1.3997647762298584,
+      1.3536289930343628
+    ],
+    "train_values": [
+      1.2308824062347412,
+      1.2696267366409302,
+      1.2783986330032349
+    ],
+    "train_mean": 1.2596359252929688,
+    "test_mean": 1.395382006963094
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.499497652053833,
+    "std": 0.03484331238827915,
+    "values": [
+      1.524300217628479,
+      1.523970603942871,
+      1.450222134590149
+    ],
+    "test_values": [
+      1.4233665466308594,
+      1.475866675376892,
+      1.3884162902832031
+    ],
+    "train_values": [
+      1.2919939756393433,
+      1.3196979761123657,
+      1.3032289743423462
+    ],
+    "train_mean": 1.3049736420313518,
+    "test_mean": 1.4292165040969849
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.4995339314142864,
+    "std": 0.019773838624336834,
+    "values": [
+      1.5065548419952393,
+      1.519465684890747,
+      1.4725812673568726
+    ],
+    "test_values": [
+      1.487951397895813,
+      1.4664310216903687,
+      1.440840244293213
+    ],
+    "train_values": [
+      1.2919899225234985,
+      1.2866356372833252,
+      1.3326332569122314
+    ],
+    "train_mean": 1.3037529389063518,
+    "test_mean": 1.4650742212931316
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5000640551249187,
+    "std": 0.04522124713036382,
+    "values": [
+      1.527571201324463,
+      1.536310076713562,
+      1.436310887336731
+    ],
+    "test_values": [
+      1.4902502298355103,
+      1.5258485078811646,
+      1.4262453317642212
+    ],
+    "train_values": [
+      1.2407416105270386,
+      1.2331620454788208,
+      1.1958158016204834
+    ],
+    "train_mean": 1.223239819208781,
+    "test_mean": 1.480781356493632
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5003501176834106,
+    "std": 0.029722265992369303,
+    "values": [
+      1.4824851751327515,
+      1.5422333478927612,
+      1.4763318300247192
+    ],
+    "test_values": [
+      1.503968358039856,
+      1.4303972721099854,
+      1.4092130661010742
+    ],
+    "train_values": [
+      1.3519272804260254,
+      1.3708423376083374,
+      1.39786696434021
+    ],
+    "train_mean": 1.373545527458191,
+    "test_mean": 1.447859565416972
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5004268089930217,
+    "std": 0.047318366947232064,
+    "values": [
+      1.4809714555740356,
+      1.5656040906906128,
+      1.4547048807144165
+    ],
+    "test_values": [
+      1.5092732906341553,
+      1.4277522563934326,
+      1.3762626647949219
+    ],
+    "train_values": [
+      1.3151699304580688,
+      1.332136869430542,
+      1.3259801864624023
+    ],
+    "train_mean": 1.3244289954503377,
+    "test_mean": 1.43776273727417
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5007344086964924,
+    "std": 0.01992443203587051,
+    "values": [
+      1.5042600631713867,
+      1.5231821537017822,
+      1.4747610092163086
+    ],
+    "test_values": [
+      1.5378711223602295,
+      1.4756667613983154,
+      1.477777361869812
+    ],
+    "train_values": [
+      1.1859302520751953,
+      1.210317611694336,
+      1.2229026556015015
+    ],
+    "train_mean": 1.206383506457011,
+    "test_mean": 1.497105081876119
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5013143221537273,
+    "std": 0.028189945584124337,
+    "values": [
+      1.4898079633712769,
+      1.540123701095581,
+      1.4740113019943237
+    ],
+    "test_values": [
+      1.4666355848312378,
+      1.4810594320297241,
+      1.3918136358261108
+    ],
+    "train_values": [
+      1.345589518547058,
+      1.3729634284973145,
+      1.412563681602478
+    ],
+    "train_mean": 1.377038876215617,
+    "test_mean": 1.4465028842290242
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5018671751022339,
+    "std": 0.04619523736768246,
+    "values": [
+      1.5116482973098755,
+      1.5529162883758545,
+      1.4410369396209717
+    ],
+    "test_values": [
+      1.502099633216858,
+      1.5061613321304321,
+      1.3861535787582397
+    ],
+    "train_values": [
+      1.1617727279663086,
+      1.1471556425094604,
+      1.1906778812408447
+    ],
+    "train_mean": 1.1665354172388713,
+    "test_mean": 1.4648048480351765
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5019042094548543,
+    "std": 0.023304111613583627,
+    "values": [
+      1.5081666707992554,
+      1.5267945528030396,
+      1.470751404762268
+    ],
+    "test_values": [
+      1.4685392379760742,
+      1.475887656211853,
+      1.4039359092712402
+    ],
+    "train_values": [
+      1.372300386428833,
+      1.396986722946167,
+      1.4240574836730957
+    ],
+    "train_mean": 1.397781531016032,
+    "test_mean": 1.4494542678197224
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5020790100097656,
+    "std": 0.061574232931880905,
+    "values": [
+      1.4717042446136475,
+      1.5879424810409546,
+      1.4465903043746948
+    ],
+    "test_values": [
+      1.509827733039856,
+      1.516987919807434,
+      1.4212181568145752
+    ],
+    "train_values": [
+      1.17588472366333,
+      1.1565457582473755,
+      1.1595532894134521
+    ],
+    "train_mean": 1.163994590441386,
+    "test_mean": 1.482677936553955
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5025965770085652,
+    "std": 0.04447468781154616,
+    "values": [
+      1.5063852071762085,
+      1.5550734996795654,
+      1.4463310241699219
+    ],
+    "test_values": [
+      1.4433223009109497,
+      1.4886068105697632,
+      1.364186406135559
+    ],
+    "train_values": [
+      1.2352564334869385,
+      1.2648075819015503,
+      1.2197083234786987
+    ],
+    "train_mean": 1.2399241129557292,
+    "test_mean": 1.4320385058720906
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.502663215001424,
+    "std": 0.040997756660743276,
+    "values": [
+      1.5105894804000854,
+      1.5484404563903809,
+      1.4489597082138062
+    ],
+    "test_values": [
+      1.4607558250427246,
+      1.4413684606552124,
+      1.4213948249816895
+    ],
+    "train_values": [
+      1.1532484292984009,
+      1.134408950805664,
+      1.1666629314422607
+    ],
+    "train_mean": 1.1514401038487752,
+    "test_mean": 1.4411730368932087
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5039196809132893,
+    "std": 0.015202246342058334,
+    "values": [
+      1.503326654434204,
+      1.5228279829025269,
+      1.4856044054031372
+    ],
+    "test_values": [
+      1.4743971824645996,
+      1.451255202293396,
+      1.4482841491699219
+    ],
+    "train_values": [
+      1.3113638162612915,
+      1.3549569845199585,
+      1.372673749923706
+    ],
+    "train_mean": 1.346331516901652,
+    "test_mean": 1.4579788446426392
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5039891004562378,
+    "std": 0.04422907379074872,
+    "values": [
+      1.5272058248519897,
+      1.5426803827285767,
+      1.442081093788147
+    ],
+    "test_values": [
+      1.4820812940597534,
+      1.5142353773117065,
+      1.4230871200561523
+    ],
+    "train_values": [
+      1.2345900535583496,
+      1.2543678283691406,
+      1.2676823139190674
+    ],
+    "train_mean": 1.2522133986155193,
+    "test_mean": 1.4731345971425374
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5055804252624512,
+    "std": 0.06210455891724662,
+    "values": [
+      1.5371053218841553,
+      1.5608116388320923,
+      1.418824315071106
+    ],
+    "test_values": [
+      1.4741865396499634,
+      1.4725630283355713,
+      1.4101855754852295
+    ],
+    "train_values": [
+      1.255755066871643,
+      1.2658569812774658,
+      1.2763617038726807
+    ],
+    "train_mean": 1.26599125067393,
+    "test_mean": 1.4523117144902546
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5059154033660889,
+    "std": 0.05989390338630219,
+    "values": [
+      1.5282119512557983,
+      1.5655348300933838,
+      1.4239994287490845
+    ],
+    "test_values": [
+      1.4443943500518799,
+      1.4863003492355347,
+      1.447268009185791
+    ],
+    "train_values": [
+      1.3250398635864258,
+      1.330400824546814,
+      1.3668594360351562
+    ],
+    "train_mean": 1.340766708056132,
+    "test_mean": 1.4593209028244019
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5060206254323323,
+    "std": 0.025122809540119296,
+    "values": [
+      1.515408992767334,
+      1.5310018062591553,
+      1.4716510772705078
+    ],
+    "test_values": [
+      1.5042742490768433,
+      1.4990472793579102,
+      1.3500299453735352
+    ],
+    "train_values": [
+      1.1570148468017578,
+      1.1867793798446655,
+      1.1947866678237915
+    ],
+    "train_mean": 1.179526964823405,
+    "test_mean": 1.4511171579360962
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5071695645650227,
+    "std": 0.04298670187141877,
+    "values": [
+      1.5048421621322632,
+      1.5609424114227295,
+      1.4557241201400757
+    ],
+    "test_values": [
+      1.5059928894042969,
+      1.4842116832733154,
+      1.4284757375717163
+    ],
+    "train_values": [
+      1.3346078395843506,
+      1.3703038692474365,
+      1.3975805044174194
+    ],
+    "train_mean": 1.367497404416402,
+    "test_mean": 1.4728934367497761
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5073354641596477,
+    "std": 0.04469275806997743,
+    "values": [
+      1.5328361988067627,
+      1.544669508934021,
+      1.4445006847381592
+    ],
+    "test_values": [
+      1.5170719623565674,
+      1.4973064661026,
+      1.3826812505722046
+    ],
+    "train_values": [
+      1.1280632019042969,
+      1.142279028892517,
+      1.1640074253082275
+    ],
+    "train_mean": 1.1447832187016804,
+    "test_mean": 1.465686559677124
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5077539682388306,
+    "std": 0.03290752446022862,
+    "values": [
+      1.4844363927841187,
+      1.5542922019958496,
+      1.4845333099365234
+    ],
+    "test_values": [
+      1.484735369682312,
+      1.5336647033691406,
+      1.4176514148712158
+    ],
+    "train_values": [
+      1.1953821182250977,
+      1.2064592838287354,
+      1.2219891548156738
+    ],
+    "train_mean": 1.2079435189565022,
+    "test_mean": 1.4786838293075562
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5077999830245972,
+    "std": 0.04819480709056493,
+    "values": [
+      1.5016120672225952,
+      1.5696765184402466,
+      1.4521113634109497
+    ],
+    "test_values": [
+      1.53680419921875,
+      1.5135080814361572,
+      1.455969214439392
+    ],
+    "train_values": [
+      1.156151533126831,
+      1.186704397201538,
+      1.2104179859161377
+    ],
+    "train_mean": 1.184424638748169,
+    "test_mean": 1.5020938316980998
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.507885217666626,
+    "std": 0.02816302399524738,
+    "values": [
+      1.5197334289550781,
+      1.5348920822143555,
+      1.4690301418304443
+    ],
+    "test_values": [
+      1.453972578048706,
+      1.5867729187011719,
+      1.388255000114441
+    ],
+    "train_values": [
+      1.231343150138855,
+      1.2183281183242798,
+      1.218259572982788
+    ],
+    "train_mean": 1.2226436138153076,
+    "test_mean": 1.476333498954773
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5079018274943035,
+    "std": 0.04186128239269694,
+    "values": [
+      1.5242537260055542,
+      1.5490007400512695,
+      1.4504510164260864
+    ],
+    "test_values": [
+      1.4765708446502686,
+      1.4572112560272217,
+      1.3941924571990967
+    ],
+    "train_values": [
+      1.310027837753296,
+      1.302894115447998,
+      1.355698823928833
+    ],
+    "train_mean": 1.322873592376709,
+    "test_mean": 1.4426581859588623
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5087721347808838,
+    "std": 0.03355217969099147,
+    "values": [
+      1.5192461013793945,
+      1.543614387512207,
+      1.4634559154510498
+    ],
+    "test_values": [
+      1.4851465225219727,
+      1.4764320850372314,
+      1.4050170183181763
+    ],
+    "train_values": [
+      1.3929340839385986,
+      1.3993761539459229,
+      1.4227485656738281
+    ],
+    "train_mean": 1.4050196011861165,
+    "test_mean": 1.4555318752924602
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5090497732162476,
+    "std": 0.053972873734567196,
+    "values": [
+      1.4980179071426392,
+      1.57997465133667,
+      1.4491567611694336
+    ],
+    "test_values": [
+      1.483438491821289,
+      1.4473371505737305,
+      1.4347089529037476
+    ],
+    "train_values": [
+      1.3185762166976929,
+      1.3276273012161255,
+      1.3605797290802002
+    ],
+    "train_mean": 1.3355944156646729,
+    "test_mean": 1.4551615317662556
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5100502967834473,
+    "std": 0.052649593034740746,
+    "values": [
+      1.5329172611236572,
+      1.5599828958511353,
+      1.4372507333755493
+    ],
+    "test_values": [
+      1.4946577548980713,
+      1.5203702449798584,
+      1.3697885274887085
+    ],
+    "train_values": [
+      1.1386312246322632,
+      1.1138217449188232,
+      1.182795524597168
+    ],
+    "train_mean": 1.1450828313827515,
+    "test_mean": 1.4616055091222127
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5101426442464192,
+    "std": 0.05012776355637054,
+    "values": [
+      1.5281379222869873,
+      1.5605278015136719,
+      1.4417622089385986
+    ],
+    "test_values": [
+      1.5343202352523804,
+      1.438748836517334,
+      1.4025501012802124
+    ],
+    "train_values": [
+      1.155203938484192,
+      1.1475951671600342,
+      1.1971598863601685
+    ],
+    "train_mean": 1.166652997334798,
+    "test_mean": 1.4585397243499756
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.510348121325175,
+    "std": 0.02617261393750574,
+    "values": [
+      1.5137712955474854,
+      1.5405539274215698,
+      1.4767191410064697
+    ],
+    "test_values": [
+      1.5390225648880005,
+      1.582979679107666,
+      1.4766793251037598
+    ],
+    "train_values": [
+      1.1912614107131958,
+      1.2090682983398438,
+      1.2008726596832275
+    ],
+    "train_mean": 1.2004007895787556,
+    "test_mean": 1.5328938563664753
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.510355552037557,
+    "std": 0.03764733218186499,
+    "values": [
+      1.4899299144744873,
+      1.5631486177444458,
+      1.4779881238937378
+    ],
+    "test_values": [
+      1.4525907039642334,
+      1.4966670274734497,
+      1.4255692958831787
+    ],
+    "train_values": [
+      1.3664960861206055,
+      1.3711345195770264,
+      1.3980321884155273
+    ],
+    "train_mean": 1.3785542647043865,
+    "test_mean": 1.4582756757736206
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5113982359568279,
+    "std": 0.03731795425867233,
+    "values": [
+      1.4939024448394775,
+      1.5632665157318115,
+      1.4770257472991943
+    ],
+    "test_values": [
+      1.4295899868011475,
+      1.5091431140899658,
+      1.411166787147522
+    ],
+    "train_values": [
+      1.2851283550262451,
+      1.2651088237762451,
+      1.300947904586792
+    ],
+    "train_mean": 1.2837283611297607,
+    "test_mean": 1.4499666293462117
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5133559703826904,
+    "std": 0.04118842110330957,
+    "values": [
+      1.4977922439575195,
+      1.569749116897583,
+      1.4725265502929688
+    ],
+    "test_values": [
+      1.5327703952789307,
+      1.4802643060684204,
+      1.421627402305603
+    ],
+    "train_values": [
+      1.24431312084198,
+      1.281728982925415,
+      1.3133351802825928
+    ],
+    "train_mean": 1.2797924280166626,
+    "test_mean": 1.4782207012176514
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5161548058191936,
+    "std": 0.06434044925739803,
+    "values": [
+      1.515051007270813,
+      1.5955015420913696,
+      1.437911868095398
+    ],
+    "test_values": [
+      1.4617254734039307,
+      1.5081058740615845,
+      1.479671835899353
+    ],
+    "train_values": [
+      1.2479908466339111,
+      1.2546159029006958,
+      1.307101845741272
+    ],
+    "train_mean": 1.2699028650919597,
+    "test_mean": 1.4831677277882893
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5173483689626057,
+    "std": 0.023523296058894583,
+    "values": [
+      1.532242774963379,
+      1.535662293434143,
+      1.4841400384902954
+    ],
+    "test_values": [
+      1.461976170539856,
+      1.4589074850082397,
+      1.3788539171218872
+    ],
+    "train_values": [
+      1.4121809005737305,
+      1.3631950616836548,
+      1.4209985733032227
+    ],
+    "train_mean": 1.398791511853536,
+    "test_mean": 1.433245857556661
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5182875792185466,
+    "std": 0.03137861733760792,
+    "values": [
+      1.5026195049285889,
+      1.562077283859253,
+      1.4901659488677979
+    ],
+    "test_values": [
+      1.49971604347229,
+      1.458883285522461,
+      1.4380980730056763
+    ],
+    "train_values": [
+      1.2945420742034912,
+      1.3316916227340698,
+      1.3972303867340088
+    ],
+    "train_mean": 1.34115469455719,
+    "test_mean": 1.465565800666809
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5189565817515056,
+    "std": 0.0487430223138996,
+    "values": [
+      1.5006648302078247,
+      1.5856600999832153,
+      1.4705448150634766
+    ],
+    "test_values": [
+      1.44919753074646,
+      1.378358006477356,
+      1.3818877935409546
+    ],
+    "train_values": [
+      1.2232353687286377,
+      1.222212553024292,
+      1.2749824523925781
+    ],
+    "train_mean": 1.2401434580485027,
+    "test_mean": 1.40314777692159
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.522128939628601,
+    "std": 0.047261035528676484,
+    "values": [
+      1.5375066995620728,
+      1.5707699060440063,
+      1.4581102132797241
+    ],
+    "test_values": [
+      1.4749369621276855,
+      1.4541404247283936,
+      1.4104818105697632
+    ],
+    "train_values": [
+      1.4228363037109375,
+      1.4110584259033203,
+      1.4478026628494263
+    ],
+    "train_mean": 1.4272324641545613,
+    "test_mean": 1.4465197324752808
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5228280226389568,
+    "std": 0.03855983261423807,
+    "values": [
+      1.5117113590240479,
+      1.5746206045150757,
+      1.4821521043777466
+    ],
+    "test_values": [
+      1.4456658363342285,
+      1.5473761558532715,
+      1.4604548215866089
+    ],
+    "train_values": [
+      1.2636873722076416,
+      1.2775615453720093,
+      1.2928359508514404
+    ],
+    "train_mean": 1.2780282894770305,
+    "test_mean": 1.4844989379247029
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.523180643717448,
+    "std": 0.033022758533793044,
+    "values": [
+      1.5374696254730225,
+      1.554540991783142,
+      1.4775313138961792
+    ],
+    "test_values": [
+      1.4655612707138062,
+      1.444291114807129,
+      1.400224208831787
+    ],
+    "train_values": [
+      1.2160208225250244,
+      1.3050510883331299,
+      1.2561955451965332
+    ],
+    "train_mean": 1.2590891520182292,
+    "test_mean": 1.436692198117574
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5233551661173503,
+    "std": 0.03742435640511301,
+    "values": [
+      1.5569363832473755,
+      1.541991949081421,
+      1.4711371660232544
+    ],
+    "test_values": [
+      1.5253283977508545,
+      1.482967734336853,
+      1.4604301452636719
+    ],
+    "train_values": [
+      1.4249458312988281,
+      1.439371109008789,
+      1.4557678699493408
+    ],
+    "train_mean": 1.4400282700856526,
+    "test_mean": 1.4895754257837932
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5263660351435344,
+    "std": 0.03385714587115028,
+    "values": [
+      1.5102314949035645,
+      1.5734745264053345,
+      1.495392084121704
+    ],
+    "test_values": [
+      1.4766238927841187,
+      1.4463173151016235,
+      1.4046716690063477
+    ],
+    "train_values": [
+      1.4155112504959106,
+      1.4453891515731812,
+      1.4482182264328003
+    ],
+    "train_mean": 1.4363728761672974,
+    "test_mean": 1.4425376256306965
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5305792888005574,
+    "std": 0.03740192813497317,
+    "values": [
+      1.5315320491790771,
+      1.575903296470642,
+      1.4843025207519531
+    ],
+    "test_values": [
+      1.5000388622283936,
+      1.445739984512329,
+      1.409653663635254
+    ],
+    "train_values": [
+      1.4208320379257202,
+      1.4297751188278198,
+      1.4256432056427002
+    ],
+    "train_mean": 1.4254167874654133,
+    "test_mean": 1.4518108367919922
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5335650046666462,
+    "std": 0.05135395176299905,
+    "values": [
+      1.5297969579696655,
+      1.5982598066329956,
+      1.4726382493972778
+    ],
+    "test_values": [
+      1.6049143075942993,
+      1.5396173000335693,
+      1.4126240015029907
+    ],
+    "train_values": [
+      1.0494613647460938,
+      1.070048451423645,
+      1.1090869903564453
+    ],
+    "train_mean": 1.076198935508728,
+    "test_mean": 1.5190518697102864
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.540355126063029,
+    "std": 0.04001593558819335,
+    "values": [
+      1.5268027782440186,
+      1.5947145223617554,
+      1.499548077583313
+    ],
+    "test_values": [
+      1.4787821769714355,
+      1.4834113121032715,
+      1.4500160217285156
+    ],
+    "train_values": [
+      1.429640531539917,
+      1.438576340675354,
+      1.4561197757720947
+    ],
+    "train_mean": 1.4414455493291218,
+    "test_mean": 1.4707365036010742
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        16,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": [
+        "tanh",
+        "sigmoid"
+      ],
+      "learning_rate": 0.005,
+      "momentum": 0.4,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.5522758960723877,
+    "std": 0.036859356864361384,
+    "values": [
+      1.5282299518585205,
+      1.6043521165847778,
+      1.5242456197738647
+    ],
+    "test_values": [
+      1.4900256395339966,
+      1.4431848526000977,
+      1.454193115234375
+    ],
+    "train_values": [
+      1.4378678798675537,
+      1.4563839435577393,
+      1.4859373569488525
+    ],
+    "train_mean": 1.460063060124715,
+    "test_mean": 1.462467869122823
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-05
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5527445077896118,
+    "std": 0.05414605799209648,
+    "values": [
+      1.5591429471969604,
+      1.6156284809112549,
+      1.4834620952606201
+    ],
+    "test_values": [
+      1.4773577451705933,
+      1.49561607837677,
+      1.4543341398239136
+    ],
+    "train_values": [
+      1.1495213508605957,
+      1.1260011196136475,
+      1.1239500045776367
+    ],
+    "train_mean": 1.13315749168396,
+    "test_mean": 1.475769321123759
+  },
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        32
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.01,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        1e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": "none"
+    },
+    "mean": 1.5656755765279133,
+    "std": 0.0805019316378503,
+    "values": [
+      1.6224935054779053,
+      1.6227045059204102,
+      1.4518287181854248
+    ],
+    "test_values": [
+      1.6006734371185303,
+      1.5243277549743652,
+      1.3850910663604736
+    ],
+    "train_values": [
+      1.067166805267334,
+      1.0575863122940063,
+      1.0895285606384277
+    ],
+    "train_mean": 1.0714272260665894,
+    "test_mean": 1.503364086151123
+  }
+]
