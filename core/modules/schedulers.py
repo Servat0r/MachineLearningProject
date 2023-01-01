@@ -34,8 +34,11 @@ class LinearDecayScheduler(Scheduler):
         self.round_value = round_value
 
     def __call__(self, iteration: int, current_value: float):
-        beta = iteration / self.max_iterations
-        result = (1. - beta) * self.start_value + beta * self.end_value
+        if iteration < self.max_iterations:
+            beta = iteration / self.max_iterations
+            result = (1. - beta) * self.start_value + beta * self.end_value
+        else:
+            result = self.end_value
         if self.round_value is not None:
             result = round(result, self.round_value)
         return result

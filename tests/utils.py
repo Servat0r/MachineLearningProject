@@ -216,15 +216,20 @@ def plot_metrics(
 def plot_data(
         save_path, train_data, train_plot_label, eval_data=None,
         eval_plot_label=None, test_data=None, test_plot_label=None,
-        n_epochs=None, xlabel='Epochs', ylabel='Metrics', makedirs=True, styles=None,
+        n_epochs=None, start_epoch=2, xlabel='Epochs', ylabel='Metrics',
+        makedirs=True, styles=None,
 ):
-    epochs = np.arange(n_epochs)
+    epochs = np.arange(start_epoch, n_epochs)
     styles = styles if styles is not None else ['solid', 'dotted', 'dashed']
-    plt.plot(epochs, train_data[:n_epochs], linestyle=styles[0], label=train_plot_label)
+    plt.plot(epochs, train_data[start_epoch:n_epochs], linestyle=styles[0], label=train_plot_label)
     if eval_data is not None:
-        plt.plot(epochs, eval_data[:n_epochs], linestyle=styles[1], label=(eval_plot_label or 'Validation Set'))
+        plt.plot(
+            epochs, eval_data[start_epoch:n_epochs], linestyle=styles[1], label=(eval_plot_label or 'Validation Set')
+        )
     if test_data is not None:
-        plt.plot(epochs, test_data[:n_epochs], linestyle=styles[2], label=(test_plot_label or 'Test Set'))
+        plt.plot(
+            epochs, test_data[start_epoch:n_epochs], linestyle=styles[2], label=(test_plot_label or 'Test Set')
+        )
     plt.legend()
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

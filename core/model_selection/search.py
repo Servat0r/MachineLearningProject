@@ -4,13 +4,14 @@ import core.modules as cm
 from core.utils.types import *
 from core.utils.initializers import *
 from core.metrics import Metric
-from core.callbacks import Callback, EarlyStopping
+from core.callbacks import Callback, EarlyStopping, TestSetMonitor
 import core.model_selection.validation as cv
 from core.data import *
 import numpy as np
 import os
 import json
 from time import perf_counter
+from copy import deepcopy
 
 
 def cross_product(inp: dict):
@@ -253,13 +254,15 @@ class BaseSearch:
     def __search_base_routine(
             self, parameters_sequence: ParameterSequence, comb: dict,
             inputs: np.ndarray, targets: np.ndarray, cv_shuffle=True,
-            cv_random_state=None, epoch_shuffle=True, *args, **kwargs
+            cv_random_state=None, epoch_shuffle=True, test_set_data: np.ndarray = None,
+            test_set_targets: np.ndarray = None, *args, **kwargs
     ):
         """
         Main loop of the search.
         """
         print(f'Using comb = {comb}')
         best_metric_values = []
+        test_set_values = []
         for train_data, eval_data in self.cross_validator.split(
                 inputs, targets, shuffle=cv_shuffle, random_state=cv_random_state, *args, **kwargs
         ):
@@ -267,6 +270,14 @@ class BaseSearch:
             model.compile(optimizer, loss, metrics=[self.scoring_metric])
             train_dataset = ArrayDataset(*train_data)
             eval_dataset = ArrayDataset(*eval_data) if eval_data is not None else None
+
+            if (test_set_data is not None) and (test_set_targets is not None):
+                test_set_monitor = TestSetMonitor(
+                    test_set_data, test_set_targets, [deepcopy(self.scoring_metric)],
+                    comb['max_epoch'], raw_outputs=False
+                )
+            else:
+                test_set_monitor = None
 
             train_dataloader = DataLoader(train_dataset, batch_size=comb['minibatch_size'], shuffle=epoch_shuffle)
             if eval_data is not None:
@@ -279,6 +290,8 @@ class BaseSearch:
             metric_values = history[f'Val_{self.scoring_metric.get_name()}']
             last_metric_value = metric_values[len(history) - 1].item()
             best_metric_values.append(last_metric_value)
+            if test_set_monitor is not None:
+                test_set_values.append(test_set_monitor[self.scoring_metric.get_name()][-1].item())
 
         mean_metric_value = np.mean(best_metric_values)
         std_metric_value = np.std(best_metric_values)
@@ -287,12 +300,14 @@ class BaseSearch:
             'mean': mean_metric_value.item(),
             'std': std_metric_value.item(),
             'values': best_metric_values,
+            'test_values': test_set_values,
         }
 
     def search(
             self, inputs: np.ndarray, targets: np.ndarray, cv_shuffle=True,
             cv_random_state=None, epoch_shuffle=True, n_jobs: int = os.cpu_count(),
-            search_stats_file='search.txt', *args, **kwargs
+            search_stats_file='search.txt', test_set_data: np.ndarray = None,
+            test_set_targets: np.ndarray = None, *args, **kwargs
     ):
         """
         Main searching method.
@@ -321,7 +336,8 @@ class BaseSearch:
             for comb in hyperpar_comb:
                 self.results.append(self.__search_base_routine(
                     parameters_sequence, comb, inputs, targets, cv_shuffle,
-                    cv_random_state, epoch_shuffle, *args, **kwargs
+                    cv_random_state, epoch_shuffle, test_set_data,
+                    test_set_targets, *args, **kwargs
                 ))
         else:
             print(f'Doing Parallel Search with {n_jobs} workers')

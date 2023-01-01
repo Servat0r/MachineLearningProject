@@ -44,7 +44,7 @@ class RandomNormalDefaultInitializer(Initializer):
         self.rng = np.random.default_rng(seed=seed)
 
     def __call__(self, shape: TShape, dtype=np.float32, *args, **kwargs) -> np.ndarray:
-        result = self.scale * self.rng.normal(loc=0.0, scale=self.scale, size=shape)
+        result = self.rng.normal(loc=0.0, scale=self.scale, size=shape)
         return result.astype(dtype=dtype)
 
 

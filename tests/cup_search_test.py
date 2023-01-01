@@ -31,7 +31,8 @@ def cup_grid_search(
     search_stats_file = os.path.join(save_dir_path, f"grid_search_stats_{config_file_name.split('.json')[0]}.txt")
     grid_search.search(
         train_data, train_targets, cv_shuffle=True, cv_random_state=0, epoch_shuffle=True,
-        search_stats_file=search_stats_file, *args, **kwargs
+        search_stats_file=search_stats_file, test_set_data=int_test_set_data,
+        test_set_targets=int_test_set_targets, *args, **kwargs
     )
 
     if save_all:
@@ -85,7 +86,8 @@ def cup_sequential_search(
     search_stats_file = os.path.join(save_dir_path, f"sequential_search_stats_{config_file_name.split('.json')[0]}.txt")
     sequential_search.search(
         train_data, train_targets, cv_shuffle=True, cv_random_state=0, epoch_shuffle=True,
-        n_jobs=n_jobs, search_stats_file=search_stats_file, *args, **kwargs
+        n_jobs=n_jobs, search_stats_file=search_stats_file, test_set_data=int_test_set_data,
+        test_set_targets=int_test_set_targets, *args, **kwargs
     )
 
     if save_all:

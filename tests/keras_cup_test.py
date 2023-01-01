@@ -43,21 +43,21 @@ def keras_test_cup_once(
     print('Fan-Ins:', fan_in_1, fan_in_2, fan_in_3)
     model.add(
         layers.Dense(
-            10, activation='tanh',
+            64, activation='tanh',
             kernel_initializer=tf.keras.initializers.RandomUniform(-fan_in_1, fan_in_1, seed=0),
             kernel_regularizer=tf.keras.regularizers.L2(1e-6), bias_regularizer=tf.keras.regularizers.L2(1e-6),
         ),
     )
     model.add(
         layers.Dense(
-            8, activation='tanh',
+            16, activation='tanh',
             kernel_initializer=tf.keras.initializers.RandomUniform(-fan_in_2, fan_in_2, seed=0),
             kernel_regularizer=tf.keras.regularizers.L2(1e-6), bias_regularizer=tf.keras.regularizers.L2(1e-6),
         ),
     )
     model.add(
         layers.Dense(
-            6, activation='tanh',
+            8, activation='tanh',
             kernel_initializer=tf.keras.initializers.RandomUniform(-fan_in_2, fan_in_2, seed=0),
             kernel_regularizer=tf.keras.regularizers.L2(1e-6), bias_regularizer=tf.keras.regularizers.L2(1e-6),
         ),

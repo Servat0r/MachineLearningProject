@@ -36,7 +36,7 @@ class DataLoader(Iterable):
         Defaults to False.
         """
         self.dataset = dataset
-        self.batch_size = batch_size
+        self.batch_size = len(dataset) if batch_size is None else batch_size
         self.shuffle_every_epoch = shuffle
         if log_to is not None:
             self.log_to = open(log_to, 'w')

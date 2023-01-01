@@ -76,72 +76,27 @@ def read_cup(
     """
     # read the dataset
     column_names = ['id', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'target_x', 'target_y']
-    internal_test_set_path = os.path.join(directory_path, "CUP-INTERNAL-TEST.csv")
-    dev_set_path = os.path.join(directory_path, "CUP-DEV-SET.csv")
     original_train_set_path = os.path.join(directory_path, "ML-CUP22-TR.csv")
     test_set_path = os.path.join(directory_path, "ML-CUP22-TS.csv")
 
-    # If internal test set is required and paths for it and development one do not exist, create them
-    if use_internal_test_set and not (os.path.exists(internal_test_set_path) and
-                                      os.path.exists(original_train_set_path)):
-        dataframe = pd.read_csv(original_train_set_path, sep=',', names=column_names, skiprows=range(7))
-        # Shuffle the dataframe by using ids
-        dataframe = dataframe.sample(frac=1, axis=0, random_state=0)
-        # Take the first (100*int_ts_size)% of the dataset to form internal test set
-        internal_test_set_dataframe = dataframe.iloc[:math.floor(len(dataframe) * internal_test_set_size), :]
-        # Use the remaining part as development set
-        dev_set_dataframe = dataframe.iloc[math.floor(len(dataframe) * internal_test_set_size):, :]
-        # Save extracted dataframes with 6-digit precision (as they are in original file)
-        internal_test_set_dataframe.to_csv(
-            path_or_buf=internal_test_set_path, index=False, float_format='%.6f', header=False
-        )
-        dev_set_dataframe.to_csv(path_or_buf=dev_set_path, index=False, float_format='%.6f', header=False)
-
-    # If internal test set is required and paths for it and development one already exist, use them
-    int_test_set_data, int_test_set_targets = None, None
-    if use_internal_test_set and os.path.exists(internal_test_set_path) and os.path.exists(dev_set_path):
-        train_data = pd.read_csv(dev_set_path, sep=',', names=column_names, skiprows=range(7), usecols=range(1, 10))
-        train_targets = pd.read_csv(dev_set_path, sep=',', names=column_names, skiprows=range(7), usecols=range(10, 12))
-
-        int_test_set_data = pd.read_csv(internal_test_set_path,  sep=',',
-                                        names=column_names, skiprows=range(7), usecols=range(1, 10))
-        int_test_set_targets = pd.read_csv(internal_test_set_path,  sep=',',
-                                           names=column_names, skiprows=range(7), usecols=range(10, 12))
-
-        int_test_set_data = int_test_set_data.to_numpy(dtype=dtype)
-        int_test_set_targets = int_test_set_targets.to_numpy(dtype=dtype)
-    # Either internal test set is not required or original training set has not been split, load original training set
-    # ("fallback")
-    else:
-        train_data = pd.read_csv(original_train_set_path, sep=',',
-                                 names=column_names, skiprows=range(7), usecols=range(1, 10))
-        train_targets = pd.read_csv(original_train_set_path, sep=',',
-                                    names=column_names, skiprows=range(7), usecols=range(11, 12))
-
+    dataframe = pd.read_csv(
+        original_train_set_path, sep=',', names=column_names, skiprows=range(7), usecols=range(1, 12)
+    )
+    # Convert dataframe to numpy
+    data_array = dataframe.to_numpy(dtype=dtype)
+    x, y = data_array[:, :9], data_array[:, 9:]
     cup_test_set_data = pd.read_csv(
         test_set_path, sep=',', names=column_names[: -2], skiprows=range(7), usecols=range(1, 10)
-    )
-
-    train_data = train_data.to_numpy(dtype=dtype)
-    train_targets = train_targets.to_numpy(dtype=dtype)
-    cup_test_set_data = cup_test_set_data.to_numpy(dtype=dtype)
-
-    if shuffle_once:
-        indexes = np.arange(len(train_targets))
-        rng = np.random.default_rng(seed=shuffle_seed)
-        rng.shuffle(indexes)
-        # todo maybe this is better with np.take(out=train_data/train_targets)
-        train_data = train_data[indexes]
-        train_targets = train_targets[indexes]
-
-    # if internal test set is not in a csv file and is required, extract it from already loaded original training set
-    if use_internal_test_set and os.path.exists(dev_set_path) and not os.path.exists(internal_test_set_path):
-        train_data, int_test_set_data, train_targets, int_test_set_targets = train_test_split(
-            train_data, train_targets, test_size=internal_test_set_size, random_state=0,
+    ).to_numpy(dtype=dtype)
+    if use_internal_test_set:
+        x_dev, x_test, y_dev, y_test = train_test_split(
+            x, y, test_size=internal_test_set_size, random_state=shuffle_seed, shuffle=shuffle_once
         )
-
-    # As with MONKs, return raw numpy arrays for allowing different strategies (hold-out, k-fold etc.)
-    return train_data, train_targets, int_test_set_data, int_test_set_targets, cup_test_set_data
+        # As with MONKs, return raw numpy arrays for allowing different model selection strategies
+        return x_dev, y_dev, x_test, y_test, cup_test_set_data
+    else:
+        # In this case there is no test data
+        return x, y, None, None, cup_test_set_data
 
 
 __all__ = [
