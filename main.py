@@ -125,13 +125,17 @@ def cmd_cup_grid_search(
         folds=typer.Option(5, help=_CUP_GS_FOLDS_HELP),
         save_all=typer.Option(True, help=_CUP_GS_SAVE_ALL_HELP),
         save_best=typer.Option(0, help=_CUP_GS_SAVE_BEST_HELP),
-        save_dir_path=typer.Option('results', help=_CUP_GS_SAVE_DIR_HELP)
+        save_dir_path=typer.Option('results', help=_CUP_GS_SAVE_DIR_HELP),
+        use_test_data: bool = typer.Option(
+            False, help='If True, at the end of train cycle records values on internal test set'
+        )
 ):
     """
     Executes the grid search on the parameters specified in the given configuration file
     and saves the results in the folder specified in `save_dir_path`.
     """
     val_split, folds, save_all, save_best = float(val_split), int(folds), bool(save_all), int(save_best)
+    use_test_data = bool(use_test_data)
     metric = __convert_metric(metric)
     cross_validator = __convert_cv(cross_validator, folds)
     print(file_paths)
@@ -139,12 +143,13 @@ def cmd_cup_grid_search(
         if isinstance(cross_validator, cv.Holdout):
             cup_grid_search(
                 dir_path, file_path, metric, cross_validator, save_all, save_best, save_dir_path=save_dir_path,
-                dataset_dir_path='datasets/cup', validation_split_percentage=val_split
+                dataset_dir_path='datasets/cup', use_int_test_set=use_test_data, validation_split_percentage=val_split
             )
         else:
             cup_grid_search(
                 dir_path, file_path, metric, cross_validator, save_all, save_best,
                 dataset_dir_path='datasets/cup', save_dir_path=save_dir_path,
+                use_int_test_set=use_test_data
             )
 
 

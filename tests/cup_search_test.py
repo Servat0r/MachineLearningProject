@@ -12,7 +12,7 @@ def cup_grid_search(
         config_directory_name: str, config_file_name: str, metric: Metric = MEE(),
         cross_validator: cv.Validator = cv.Holdout(), save_all: bool = True,
         save_best: int = None, dataset_dir_path='../datasets/cup',
-        save_dir_path: str = '../results', *args, **kwargs
+        save_dir_path: str = '../results', use_int_test_set=False, *args, **kwargs
 ):
     config_file_path = os.path.join(config_directory_name, config_file_name)
     with open(config_file_path, 'r') as fp:
@@ -29,11 +29,17 @@ def cup_grid_search(
 
     grid_search = GridSearch(params_of_search, metric, cross_validator)
     search_stats_file = os.path.join(save_dir_path, f"grid_search_stats_{config_file_name.split('.json')[0]}.txt")
-    grid_search.search(
-        train_data, train_targets, cv_shuffle=True, cv_random_state=0, epoch_shuffle=True,
-        search_stats_file=search_stats_file, test_set_data=int_test_set_data,
-        test_set_targets=int_test_set_targets, *args, **kwargs
-    )
+    if use_int_test_set:
+        grid_search.search(
+            train_data, train_targets, cv_shuffle=True, cv_random_state=0, epoch_shuffle=True,
+            search_stats_file=search_stats_file, test_set_data=int_test_set_data,
+            test_set_targets=int_test_set_targets, *args, **kwargs
+        )
+    else:
+        grid_search.search(
+            train_data, train_targets, cv_shuffle=True, cv_random_state=0, epoch_shuffle=True,
+            search_stats_file=search_stats_file, test_set_data=None, test_set_targets=None, *args, **kwargs
+        )
 
     if save_all:
         grid_search.save_all(directory_path=save_dir_path, file_name=f"results_{config_file_name}")

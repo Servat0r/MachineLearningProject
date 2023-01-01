@@ -267,17 +267,9 @@ class BaseSearch:
                 inputs, targets, shuffle=cv_shuffle, random_state=cv_random_state, *args, **kwargs
         ):
             model, optimizer, loss, callbacks = parameters_sequence.convert(comb)
-            model.compile(optimizer, loss, metrics=[self.scoring_metric])
+            model.compile(optimizer, loss, metrics=[deepcopy(self.scoring_metric)])
             train_dataset = ArrayDataset(*train_data)
             eval_dataset = ArrayDataset(*eval_data) if eval_data is not None else None
-
-            if (test_set_data is not None) and (test_set_targets is not None):
-                test_set_monitor = TestSetMonitor(
-                    test_set_data, test_set_targets, [deepcopy(self.scoring_metric)],
-                    comb['max_epoch'], raw_outputs=False
-                )
-            else:
-                test_set_monitor = None
 
             train_dataloader = DataLoader(train_dataset, batch_size=comb['minibatch_size'], shuffle=epoch_shuffle)
             if eval_data is not None:
@@ -290,8 +282,11 @@ class BaseSearch:
             metric_values = history[f'Val_{self.scoring_metric.get_name()}']
             last_metric_value = metric_values[len(history) - 1].item()
             best_metric_values.append(last_metric_value)
-            if test_set_monitor is not None:
-                test_set_values.append(test_set_monitor[self.scoring_metric.get_name()][-1].item())
+            if (test_set_data is not None) and (test_set_targets is not None):
+                model.set_to_test()
+                predicted = model.predict(test_set_data)
+                test_set_metric = deepcopy(self.scoring_metric)
+                test_set_values.append(test_set_metric.update(predicted, test_set_targets).item())
 
         mean_metric_value = np.mean(best_metric_values)
         std_metric_value = np.std(best_metric_values)
@@ -344,7 +339,8 @@ class BaseSearch:
             self.results = Parallel(n_jobs)(
                 delayed(BaseSearch.__search_base_routine)(
                     self, parameters_sequence, comb, inputs, targets, cv_shuffle,
-                    cv_random_state, epoch_shuffle, *args, **kwargs
+                    cv_random_state, epoch_shuffle, test_set_data,
+                    test_set_targets, *args, **kwargs
                 ) for comb in hyperpar_comb
             )
         current_time = perf_counter() - current_time
