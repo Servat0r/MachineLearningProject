@@ -24,7 +24,7 @@ The framework provides a system of metrics and callbacks for customizing behavio
 Finally, the base classes \texttt{BaseSearch} and \texttt{Validator} define the base structure for search strategies and validation techniques and are sub-classed by \texttt{GridSearch}, \texttt{Holdout} and \texttt{KFold}. Search can be done in parallel by using up to all the available cores.
 
 \subsection{Validation Schema}
-At first, we divided the whole CUP dataset into a \textbf{Development Set ($90\%$)} and an \textbf{Internal Test Set ($10\%$)} to be used for testing the final model. We conducted some preliminary trials with several architectures and hyperparameters for excluding irrelevant / under-performing ones.
+At first, we divided the whole CUP dataset into a \textbf{Development Set ($90\%$)} and an \textbf{Internal Test Set ($10\%$)} to be used for testing the final model. We conducted some preliminary trials with several architectures and hyperparameters for excluding irrelevant and under-performing ones.
 
 After that, we performed several exhaustive \textbf{coarse-grained Grid Searches} with large steps and \textbf{3-fold cross validation} technique for finding good intervals for the hyperparameters through observation of the average performance of each one in this first Grid Search.
 In particular, we first ranked all the configurations according to their average validation MEE over all the folds and then we calculated a score for each hyperparameter as an heuristic for choosing which intervals to consider.
