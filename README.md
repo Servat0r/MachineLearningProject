@@ -6,6 +6,37 @@ The project consists in implementing a framework for building Neural Networks fr
 Framework is tested with the MONK datasets () for classification and the "ML-CUP" dataset,
 an internal competition between the students of the current a.y., for regression.
 
+### Installation and Usage
+Before running the application, run: `pip install -r requirements.txt`
+from the project home directory to install all required dependencies.
+The application exposes the following command-line interface (all the commands
+described here must be preceeded by `python main.py` from terminal):
+
+`monk <number> <options>`: runs the `number`-th MONK test (by default,
+5 training cycles with default hyperparameters) and produces the corresponding
+log files (train and test loss/(pure) MSE/MEE), a `.model` file containing the pickle
+model of the last run and two `.png` files containing the MSE and MEE plots;
+
+`cup-grid <config_file_paths> <options>`: runs a Grid Search by using the configurations
+specified in the given JSON files (config_file_paths, generates all the possible configurations
+from the given values). Can be specified as option both the validation technique to use
+(`--cross-validator=holdout` or `--cross-validator=kfold`) and other parameters for
+these techniques. Produces log files (train+validation and test separately), `.model` and plot files
+similarly to `monk` command.
+
+`cup-sequential <config_file_paths> <options>`: runs a Sequential Search over all the configurations
+specified in the given JSON files (in this case they contain lists instead of dictionaries). Same options
+ and outputs as `cup-grid`.
+
+`final-train <options>`: executes final training of the best model (by default contained
+in `results/best.json`) and produces same outputs as the previous two commands.
+
+For help, type `python main.py --help`. For help about a specific command `<cmd>`,
+type `python main.py <cmd> --help`.
+
+This project has been developed using Python 3.9. It should work also for Python 3.10,
+not tested for Python 3.8 and 3.11.
+
 ### Directory Structure
 ```
 Machine Learning Project
@@ -90,14 +121,6 @@ X_dev, X_test, y_dev, y_test = train_test_split(X, y, test_size=0.2, random_stat
 
 # Split dev set in training and validation ones
 X_train, X_eval, y_train, y_eval = train_test_split(X_dev, y_dev, test_size=0.3, random_state=42, shuffle=True)
-
-# Standardize data format in arrays of shape (l, 1, n)
-# l = number of examples; n = input dimension
-X_train = np.expand_dims(X_train, axis=1)
-X_eval = np.expand_dims(X_eval, axis=1)
-
-y_train = np.expand_dims(y_train, axis=1)
-y_eval = np.expand_dims(y_eval, axis=1)
 
 # Now create datasets and dataloaders
 train_dataset, eval_dataset = ArrayDataset(X_train, y_train), ArrayDataset(X_eval, y_eval)

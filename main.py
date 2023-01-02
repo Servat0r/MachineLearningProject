@@ -217,7 +217,7 @@ def __convert_cv(name: str, folds: int):
 def final_train(
         dataset_dir_path: str = typer.Option('datasets/cup', help=_CUP_FINAL_DATASET_PATH),
         config_file_path: str = typer.Option(
-            'results/results_best_2perc_models.json', help=_CUP_FINAL_CONFIG_FILE_PATH
+            'results/best.json', help=_CUP_FINAL_CONFIG_FILE_PATH
         ),
         results_dir_path: str = typer.Option('results', help=_CUP_FINAL_RESULTS_DIR_PATH),
         training_csv_log_file_name: str = typer.Option('final_model_train_log.csv', help=_CUP_FINAL_TRAIN_CSV_FNAME),

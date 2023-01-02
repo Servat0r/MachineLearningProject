@@ -7,6 +7,7 @@ from core.callbacks import InteractiveLogger, TrainingCSVLogger
 from core.metrics import BinaryAccuracy, MSE
 import core.utils as cu
 import core.modules as cm
+from copy import deepcopy
 
 
 # MONKs filenames
@@ -139,13 +140,14 @@ def test_monk1(
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
         csv_save_path=None, num_iterations=5,
 ):
+    base_callbacks = deepcopy(callbacks)
     for i in range(num_iterations):
         model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
             train_file=MONK1_TRAIN, test_file=MONK1_TEST, hidden_sizes=MONK1_HIDDEN_SIZES,
             validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
             dirpath=dir_path,
         )
-        callbacks = [] if callbacks is None else callbacks
+        callbacks = [] if base_callbacks is None else base_callbacks
         callbacks.append(TrainingCSVLogger(csv_save_path, f'monk1_log_{i}.csv'))
         test_monk(
             model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
@@ -159,13 +161,14 @@ def test_monk2(
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
         csv_save_path=None, num_iterations=5,
 ):
+    base_callbacks = deepcopy(callbacks)
     for i in range(num_iterations):
         model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
             train_file=MONK2_TRAIN, test_file=MONK2_TEST, hidden_sizes=MONK2_HIDDEN_SIZES,
             validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
             dirpath=dir_path,
         )
-        callbacks = [] if callbacks is None else callbacks
+        callbacks = [] if base_callbacks is None else base_callbacks
         callbacks.append(TrainingCSVLogger(csv_save_path, f'monk2_log_{i}.csv'))
         test_monk(
             model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
@@ -179,13 +182,14 @@ def test_monk3(
         plot_save_paths=None, model_save_path=None, dir_path='../datasets/monks',
         csv_save_path=None, l2_lambda=0., num_iterations=5,
 ):
+    base_callbacks = deepcopy(callbacks)
     for i in range(num_iterations):
         model, train_dataset, eval_dataset, test_dataset = get_monk_setup_hold_out(
             train_file=MONK3_TRAIN, test_file=MONK3_TEST, hidden_sizes=MONK3_HIDDEN_SIZES,
             validation_size=validation_size, grad_reduction=reduction, shuffle=shuffle,
             dirpath=dir_path, l2_lambda=l2_lambda
         )
-        callbacks = [] if callbacks is None else callbacks
+        callbacks = [] if base_callbacks is None else base_callbacks
         callbacks.append(TrainingCSVLogger(csv_save_path, f'monk3_log_{i}.csv'))
         test_monk(
             model, train_dataset, eval_dataset, test_dataset, lr, momentum, batch_size, n_epochs,
