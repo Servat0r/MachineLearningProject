@@ -1,6 +1,6 @@
 \section{Introduction}
 
-The project consists in the implementation and testing from scratch of a framework for building Artificial Neural Networks with backpropagation algorithm for both classification and regression problems, providing the essential building blocks for defining the structure of a network, loss functions, optimizers, metrics to monitor performances and callbacks. Our objective was to find the best model for both MONK and ML-CUP22 tasks by using 3-fold validation technique with several first coarse-grained Grid Searches to figure out good intervals for hyperparameters, followed by a finer-grained Grid Search on these intervals with 4-fold cross validation. The most performing model after this search is then used to predict outputs for the blind test set.
+The project consists in the implementation and testing from scratch of a framework for building Artificial Neural Networks with backpropagation algorithm for both classification and regression problems, providing the essential building blocks for defining the structure of a network, loss functions, optimizers, metrics to monitor performances and callbacks. Our objective was to find the best model for both MONK \cite{Thrun1991TheMP} and ML-CUP22 tasks by using 3-fold validation technique with several first coarse-grained Grid Searches to figure out good intervals for hyperparameters, followed by a finer-grained Grid Search on these intervals with 4-fold cross validation. The most performing model after this search is then used to predict outputs for the blind test set.
 
 \section{Method}
 
@@ -13,7 +13,7 @@ For our implementation, we took inspiration from both \texttt{Tensorflow} and \t
 \paragraph{}
 
 Implementation is contained in the \texttt{core} package. Neural networks are implemented by the \texttt{Model} class, which contains a sequence of \texttt{Layer} objects and exposes the \texttt{compile()}, \texttt{train()} and \texttt{predict()} methods. The \texttt{Layer} class is specialized by \texttt{Dense}, \texttt{Linear} and activation layers. The \texttt{Dense} class implements a fully-connected layer, while \texttt{Linear} implements a fully-connected layer with identity as (implicit) activation.
-The optimizer provided is the standard \texttt{SGD} with momentum, while \texttt{L1}, \texttt{L2} and \texttt{L1L2} techniques are available for regularization. Provided losses are \texttt{MSE} and \texttt{Cross Entropy}. Training can be done either in batch, online or minibatch mode by using the \texttt{DataLoader} class. Weights initialization is available with Normal and Uniform distribution.
+The optimizer provided is the standard \texttt{SGD} with momentum, while \texttt{L1}, \texttt{L2} and \texttt{L1L2} techniques are available for regularization. Provided losses are \texttt{MSE} and \texttt{Cross Entropy}. Training can be done either in batch, online or minibatch mode by using the \texttt{DataLoader} class. Weights initialization is available with Normal and Uniform distribution. Provided activation functions are \texttt{tanh}, \texttt{sigmoid}, \texttt{relu}, \texttt{softmax}.
 
 \paragraph{}
 
