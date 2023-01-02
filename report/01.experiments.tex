@@ -47,8 +47,6 @@ Our choice of hyper-parameters is shown in \cref{fig:hyper} below, along with th
     \label{fig:monk3}
 \end{figure}
 
-\todo{Add MONK without regularization!}
-
 \subsection{CUP results}
 
 At the beginning, we split the CUP dataset in \textbf{Development Set} ($90\%$ of the dataset, $1342$ records) and in  \textbf{Internal Test Set ($10\%$ of the dataset, $150$ records)}. The aim of the first dataset was to be used for subsequent training-validation splits for model selection and training, while the second one was used for testing.
@@ -57,9 +55,9 @@ At the beginning, we split the CUP dataset in \textbf{Development Set} ($90\%$ o
 
 Before starting the grid search we decided to run some tests with early stopping, splitting the development set in train set ($75\%$) and validation set ($25\%$).
 
-We initially ran several experiments using \texttt{Early Stopping} for figuring out the order of magnitude of the maximum number of epoch for which there is still significant improvement; our \texttt{EarlyStopping} was configured such that it considered $10^{-4}$ or $10^{-5}$ to be minimum difference on Validation MEE to consider it an improvement. They revealed us that in many cases the improvement on training set was at most of order of $10^-4$ between epoch $500$ and $1000$, while the loss and MEE on the validation set either remained stable or started to grow. We then decided to put $500$ as the maximum number of epochs, also to limit possible overfitting since we wanted to use k-fold cross-validation for our model selection. We similarly ran other test to discard some parameters and speed up the grid search. 
+We initially ran several experiments using \texttt{EarlyStopping} for figuring out the order of magnitude of the maximum number of epoch for which there is still significant improvement; our \texttt{EarlyStopping} was configured such that it considered $10^{-4}$ or $10^{-5}$ to be minimum difference on Validation MEE to consider it an improvement. They revealed us that in many cases the improvement on training set was at most of order of $10^-4$ between epoch $500$ and $1000$, while the loss and MEE on the validation set either remained stable or started to grow. We then decided to put $500$ as the maximum number of epochs, also to limit possible overfitting since we wanted to use k-fold cross-validation for our model selection. We similarly ran other test to discard some parameters and speed up the grid search. 
 
-After that, we discarded learning rates of order $ \geq 10^-1$ or $\leq 10^-4$, since they showed worse results than $10^-2$ and $10^-3$, and we selected $256$ aas minibatch size, since it appeared to us the best compromise between the capability of minibatch algorithm to reach better results than batch ones, the speed of training phases and the stability and smoothness of the learning curves.
+After that, we discarded learning rates of order $ \geq 10^-1$ or $\leq 10^-4$, since they showed worse results than $10^-2$ and $10^-3$, and we selected $256$ aas minibatch size, since it appeared to us the best compromise between the capability of minibatch algorithm to reach better results than batch ones, the speed of training phases and the stability and smoothness of the learning curves. Similarly, for L2 regularization lambda we have discarded values of order $\ge 10^{-3}$ or $\le 10^{-8}$.
 
 We also tested different network architectures, and we noticed that the ones with two hidden layers performed better then the ones with a single hidden layer. Moreover, architectures with three hidden layers did not perform better than the former, so we decided to focus on architectures with 2 hidden layers.
 
@@ -87,7 +85,7 @@ After that first search, we ranked all the configurations according to their ave
 After that, we performed another exhaustive finer-grained Grid Search with \textbf{4-fold cross validation} over all the $2880$ combinations of the following hyperparameters:
 \begin{itemize}
     \item \textbf{Architecture (hidden units)}: $\{32-16, 16-16, 16-8\}$;
-    \item \textbf{Activation functions (for hidden layers)}: {tanh, tanh-sigmoid};
+    \item \textbf{Activation functions (for hidden layers)}: {tanh-tanh, tanh-sigmoid};
     \item \textbf{(Initial) learning rate ($\eta_0$)}: $\{0.01, 0.009, 0.008, 0.007, 0.006, 0.005\}$;
     \item \textbf{Momentum}: $\{0.4, 0.5, 0.6, 0.7, 0.8\}$;
     \item \textbf{L2 Regularization Lambda}: $\{1e-5, 8e-6, 6e-6, 4e-6, 2e-6, 1e-6, 8e-7, 6e-7\}$;
@@ -122,8 +120,6 @@ As before, we ranked all the configurations according to their average Validatio
 The two coarse-grained searches cumulatively took $22$ minutes to complete, while the second one took $57$ minutes using an Intel Core i7-10870H @ 2.00 GHz (16 logical CPUs). We used the \texttt{joblib} library for parallelizing the search by using a pool of $16$ worker processes. The average time requested for a training cycle of a model during the grid search is between $3$ and $5$ seconds for the three different architectures, which is slightly higher than the time needed for a full training of the final chosen model, which is about $3.08$ seconds.
 
 \subsubsection{Chosen model}
-
-% dobbiamo inventarci delle osservazioni intelligenti?
 We finally chose the model that performed best on the validation set, which has the following hyperparameters and training and test errors (MEE) after a full training on the whole development set, which took $3.08$ seconds.
 
 \todo{Use another run (this is clearly overfitting!)}
@@ -150,23 +146,6 @@ We can see the learning curve for loss (MSE) and MEE in \cref{fig:typeA} below.
     \subfloat[MEE\label{fig:cup_MEE}]{\includegraphics[width=0.55\textwidth]{../results/cup_MEE.png}}
     \caption{Learning curves for CUP network}
 \end{figure}
-
-%Then we tried an \emph{ensemble} approach: we trained 20 networks of type A and regarded the output of our model as the average of the outputs of the 10 bests (over validation benchmark) trained networks. (non l'abbiamo fatto, vero?)
-
-%In this way we achieved a MEE error on the internal test set of $1.085$.
-
-\begin{figure}
-    \centering
-    \begin{tabular}{|l|l|l|l|}
-        \hline
-        id & Train MEE & Valid MEE & Test MEE \\ \hline
-        1 & 1.271 & 1.434 & non so \\ \hline
-    \end{tabular}
-    \caption{MEE of our NN}
-    \label{fig:cup55-table}
-\end{figure}
- % dove sono i risultati? 
-
 
 
 %%% Local Variables:
