@@ -43,13 +43,6 @@ def test_iris(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=True):
     sc = StandardScaler()
     X_train, X_eval = sc.transform(X_train), sc.transform(X_eval)
 
-    # X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[-1])
-    # X_eval = X_eval.reshape(X_eval.shape[0], 1, X_eval.shape[-1])
-
-    # todo for future, transform them in one-hot encoded versions
-    # y_train = y_train.reshape(y_train.shape[0], 1, 1)
-    # y_eval = y_eval.reshape(y_eval.shape[0], 1, 1)
-
     train_dataset, eval_dataset = ArrayDataset(X_train, y_train), ArrayDataset(X_eval, y_eval)
     train_dataloader = DataLoader(train_dataset, batch_size=10, shuffle=epoch_shuffle)
     eval_dataloader = DataLoader(eval_dataset, batch_size=len(eval_dataset))
@@ -90,13 +83,6 @@ def test_breast_cancer(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuff
 
     sc = StandardScaler()
     X_train, X_eval = sc.transform(X_train), sc.transform(X_eval)
-
-    X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[-1])
-    X_eval = X_eval.reshape(X_eval.shape[0], 1, X_eval.shape[-1])
-
-    # todo for future, transform them in one-hot encoded versions
-    # y_train = y_train.reshape(y_train.shape[0], 1, 1)
-    # y_eval = y_eval.reshape(y_eval.shape[0], 1, 1)
 
     train_dataset, eval_dataset = ArrayDataset(X_train, y_train), ArrayDataset(X_eval, y_eval)
     train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=epoch_shuffle)
@@ -144,10 +130,6 @@ def test_covtype(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuffle=Tru
 
     y_train -= 1
     y_eval -= 1
-
-    # todo for future, transform them in one-hot encoded versions
-    # y_train = y_train.reshape(y_train.shape[0], 1, 1)
-    # y_eval = y_eval.reshape(y_eval.shape[0], 1, 1)
 
     train_dataset, eval_dataset = ArrayDataset(X_train, y_train), ArrayDataset(X_eval, y_eval)
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=epoch_shuffle)

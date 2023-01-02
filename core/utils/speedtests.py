@@ -17,7 +17,7 @@ def timeit_ns(func):
         crt = perf_counter_ns()
         res = func(*args, **kwargs)
         crt = perf_counter_ns() - crt
-        print(f"Elapsed time for {func.__name__}: {crt} seconds")   # todo nanoseconds?
+        print(f"Elapsed time for {func.__name__}: {crt} nanoseconds")
         return res
     return new_f
 

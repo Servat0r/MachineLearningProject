@@ -87,8 +87,6 @@ class EarlyStopping(Callback):
         else:
             return target_metric > self.last_value_recorded + self.min_delta
 
-    # todo we can set parameters with after_training_cycle() directly
-    #  into the original model instead of copying every time
     def get_best(self):
         return self.best_model
 

@@ -68,5 +68,5 @@ param_of_search = {
     "minibatch_size": [8, 16, 32],
     # NOTE: For "linear", the first value v is inteded s.t. final learning rate will be comb["learning_rate"] * v
     # e.g. for comb["learning_rate"] = 1e-3, v = 1e-2, there will be end_value = 1e-5 for scheduler
-    "decay": ["none", ("linear", 1e-1, 8), ("linear", 1e-2, 8)],  # todo eventualmente aggiungere altri decay
+    "decay": ["none", ("linear", 1e-1, 8), ("linear", 1e-2, 8)],
 }

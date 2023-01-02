@@ -36,7 +36,7 @@ class Softmax(Callable):
         y[:, ind, ind] += s[:, 0, ind]
         return y
 
-    def vjp(self, x: np.ndarray, delta_values: np.ndarray):    # todo check!
+    def vjp(self, x: np.ndarray, delta_values: np.ndarray):
         s = self(x)
         sd = s * delta_values
         sd_sum = np.sum(sd, axis=-1, keepdims=True)
@@ -117,9 +117,6 @@ def accuracy(predicted: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.nda
     return np.equal(predicted, truth).astype(dtype)
 
 
-# todo this implementation shall be made more efficient (need to replace argmax for truth indexes
-# todo with something that access the correct elements of the array and return the array given by
-# todo accessing with them)
 def categorical_accuracy(predicted: np.ndarray, truth: np.ndarray, dtype=np.int32) -> np.ndarray:
     """
     Accuracy for one-hot encoded labels.

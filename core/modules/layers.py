@@ -32,8 +32,6 @@ class Layer:
             2) case when updates are of concern but input/output not;
             3) case when both updates and input/output are of concern (e.g. a backup).
 
-        todo actually it does NOT work properly for input / output (now they are not saved)
-
         :param other: Other layer for verifying equality.
         :param include_updates: For case 2) (used in subclasses).
         :param include_all: For case 3) (used in subclasses).
@@ -300,8 +298,8 @@ class Linear(Layer):
             'out_features': self.out_features,
             'gradients_reduction': self.gradients_reduction,
             'dtype': self.dtype,
-            'weights_regularizer': self.weights_regularizer,    # todo getstate?
-            'biases_regularizer': self.biases_regularizer,      # todo getstate?
+            'weights_regularizer': self.weights_regularizer,
+            'biases_regularizer': self.biases_regularizer,
         })
         if self.is_training() or self._serialize_all:
             # Attributes that are saved ONLY if model is layer is in

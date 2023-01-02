@@ -109,9 +109,6 @@ def test_save_load_predict_trained_model(fpath='trained_model.model'):
     print(f'{test_save_load_predict_trained_model} passed')
 
 
-# todo we should also add a test for models DURING training (this requires to modify pickle serialization!)
-
-
 if __name__ == '__main__':
     test_save_load_parameters()
     test_save_load_untrained_model()

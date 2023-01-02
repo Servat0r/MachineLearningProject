@@ -263,7 +263,7 @@ class Model:
         if validation_set_exists:
             eval_dataloader.after_cycle()
         for callback in callbacks:
-            callback.after_training_cycle(self, logs=None)  # todo check also this!
+            callback.after_training_cycle(self, logs=None)
         return self.history
 
     def _compile_validation_metrics(self, metrics: Metric | Sequence[Metric]):
@@ -272,7 +272,7 @@ class Model:
         """
         metrics = [metrics] if isinstance(metrics, Metric) else metrics
         for metric in metrics:
-            val_metric = copy.deepcopy(metric)  # todo maybe a clone method is better
+            val_metric = copy.deepcopy(metric)
             val_metric.set_name(f'Val_{val_metric.get_name()}')
             self.validation_metrics.append(val_metric)
 
@@ -292,7 +292,7 @@ class Model:
         train_dataloader.before_epoch()
         self.optimizer.before_epoch()
         for callback in callbacks:
-            callback.before_training_epoch(self, epoch, logs=metric_logs)  # todo check if it is okay in general!
+            callback.before_training_epoch(self, epoch, logs=metric_logs)
         train_minibatch_losses.fill(0.)
 
         # Minibatch-training loop
@@ -306,7 +306,7 @@ class Model:
         for metric in self.train_metrics:
             result = metric.result()  # result at epoch level
             metric_logs['training'][metric.get_name()] = result
-            metric.reset()  # todo should we modify this for allowing multi-epochs metrics?
+            metric.reset()
         # Callbacks after training epoch
         train_dataloader.after_epoch()
         self.optimizer.after_epoch()
@@ -367,7 +367,7 @@ class Model:
             eval_dataloader.before_epoch()
             input_eval, target_eval = next(eval_dataloader)
             for callback in callbacks:
-                callback.before_evaluate(self, epoch, logs=metric_logs['validation'])  # todo check this also!
+                callback.before_evaluate(self, epoch, logs=metric_logs['validation'])
             # Validation metrics 'callback'
             for validation_metric in self.validation_metrics:
                 validation_metric.before_batch()

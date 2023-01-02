@@ -48,7 +48,6 @@ class ModelBackup(Callback):
 
     def __save_model(self, model):
         # serialize_all = True for saving also updating status
-        # todo modify linear layer for saving momentums
         model.save(self.file_path, include_compile_objs=True, include_history=True, serialize_all=True)
 
 

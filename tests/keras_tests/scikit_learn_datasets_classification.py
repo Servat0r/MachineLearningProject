@@ -78,10 +78,6 @@ def keras_test_covtype(hidden_sizes, winit_low=-0.1, winit_high=0.1, epoch_shuff
     y_train -= 1
     y_eval -= 1
 
-    # todo for future, transform them in one-hot encoded versions
-    # y_train = y_train.reshape(y_train.shape[0], 1, 1)
-    # y_eval = y_eval.reshape(y_eval.shape[0], 1, 1)
-
     # Optimizer and loss
     optimizer = tf.keras.optimizers.SGD(learning_rate=1e-5, momentum=0.9)
     loss = tf.keras.losses.SparseCategoricalCrossentropy()
