@@ -39,11 +39,11 @@ default_monk_parameters = {
         'momentum': 0.0,
     },
     2: {
-        'lr': 1e-1,
+        'lr': 0.2,
         'momentum': 0.0,
     },
     3: {
-        'lr': 1e-2,
+        'lr': 0.02,
         'momentum': 0.0,
     }
 }
@@ -56,7 +56,7 @@ def monk(
         plot_dir_path=typer.Option('results/monks', help=_MONK_PLOT_SAVE_DIR_PATH_HELP),
         lr=typer.Option(None, help=_MONK_PLOT_LR_HELP),
         momentum=typer.Option(None, help=_MONK_PLOT_MOMENTUM_HELP),
-        l2_lambda: float = typer.Option(1e-5, help=_MONK_PLOT_L2_LAMBDA_HELP),
+        l2_lambda: float = typer.Option(1e-4, help=_MONK_PLOT_L2_LAMBDA_HELP),
 ):
     """
     Executes the MONK test specified by the `number` parameter.
@@ -87,7 +87,7 @@ def monk(
             test_monk1(
                 lr=lr, momentum=momentum, plot_save_paths=plot_save_paths,
                 dir_path='datasets/monks', model_save_path=model_save_path,
-                csv_save_path=plot_dir_path, batch_size=2, num_iterations=num_iterations,
+                csv_save_path=plot_dir_path, batch_size=4, num_iterations=num_iterations,
             )
         elif number == 2:
             test_monk2(
