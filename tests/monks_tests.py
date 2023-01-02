@@ -205,7 +205,8 @@ if __name__ == '__main__':
         csv_save_path='../results/monks',
     )
     test_monk3(
-        lr=1e-2, batch_size=2, shuffle=True, n_epochs=200, model_save_path='../results/monks/monk3_model.model',
+        lr=1e-2, batch_size=2, shuffle=True, n_epochs=200,
+        model_save_path='../results/monks/monk3_regularization_model.model',
         plot_save_paths=['../results/monks/monk3_losses.png', '../results/monks/monk3_accuracy.png'],
         csv_save_path='../results/monks', l2_lambda=1e-5,
     )

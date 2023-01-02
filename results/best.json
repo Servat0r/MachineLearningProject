@@ -1,0 +1,56 @@
+[
+  {
+    "config": {
+      "minibatch_size": 256,
+      "size_hidden_layers": [
+        32,
+        16
+      ],
+      "input_dim": 9,
+      "output_dim": 2,
+      "activation": "tanh",
+      "learning_rate": 0.005,
+      "momentum": 0.8,
+      "regularization": [
+        "l2",
+        6e-06
+      ],
+      "monitor": "Val_MEE",
+      "early_stopping": "none",
+      "weights_initialization": [
+        "Uniform",
+        -0.7,
+        0.7,
+        null
+      ],
+      "max_epoch": 500,
+      "decay": [
+        "linear",
+        0.1,
+        null
+      ]
+    },
+    "mean": 1.4245950281620026,
+    "std": 0.06135016029383669,
+    "values": [
+      1.4695911407470703,
+      1.36235773563385,
+      1.5003297328948975,
+      1.3661015033721924
+    ],
+    "test_values": [
+      1.3952209949493408,
+      1.4113342761993408,
+      1.3449938297271729,
+      1.3911688327789307
+    ],
+    "train_values": [
+      1.2657434940338135,
+      1.271777868270874,
+      1.2617597579956055,
+      1.272700309753418
+    ],
+    "train_mean": 1.2679953575134277,
+    "test_mean": 1.3856794834136963
+  }
+]

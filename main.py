@@ -223,6 +223,7 @@ def final_train(
         training_csv_log_file_name: str = typer.Option('final_model_train_log.csv', help=_CUP_FINAL_TRAIN_CSV_FNAME),
         blind_test_set_results_name: str = typer.Option('blind_test_set_predictions.csv', help=_CUP_FINAL_BLIND_TS_FNAME),
         final_model_save_path: str = typer.Option('final_model.model', help=_CUP_FINAL_MODEL_SAVE_PATH),
+        num_iterations: int = typer.Option(1, help='Number of training cycles to do.')
 ):
     """
     Executes training of the final selected model by loading its configuration from the results
@@ -234,7 +235,7 @@ def final_train(
         dataset_dir_path, config_file_path=config_file_path, dir_path=results_dir_path,
         training_csv_log_file_name=training_csv_log_file_name,
         blind_test_set_results_name=blind_test_set_results_name,
-        final_model_save_path=final_model_save_path
+        final_model_save_path=final_model_save_path, num_iterations=num_iterations
     )
 
 
