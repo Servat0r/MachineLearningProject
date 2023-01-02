@@ -1,6 +1,6 @@
 \section{Introduction}
 
-The project consists in the implementation and testing from scratch of a framework for building Artificial Neural Networks with backpropagation algorithm for both classification and regression problems, providing the essential building blocks for defining the structure of a network, loss functions, optimizers, metrics to monitor performances and callbacks. Our objective was to find the best model for both MONK and ML-CUP22 tasks by using Grid Search with Holdout split for development set and a subsequent evaluation of the best $25\%$ configuration using k-fold technique. The most performing one is then used to predict outputs for the blind test set.
+The project consists in the implementation and testing from scratch of a framework for building Artificial Neural Networks with backpropagation algorithm for both classification and regression problems, providing the essential building blocks for defining the structure of a network, loss functions, optimizers, metrics to monitor performances and callbacks. Our objective was to find the best model for both MONK and ML-CUP22 tasks by using 3-fold validation technique with several first coarse-grained Grid Searches to figure out good intervals for hyperparameters, followed by a finer-grained Grid Search on these intervals with 4-fold cross validation. The most performing model after this search is then used to predict outputs for the blind test set.
 
 \section{Method}
 
@@ -13,7 +13,7 @@ For our implementation, we took inspiration from both \texttt{Tensorflow} and \t
 \paragraph{}
 
 Implementation is contained in the \texttt{core} package. Neural networks are implemented by the \texttt{Model} class, which contains a sequence of \texttt{Layer} objects and exposes the \texttt{compile()}, \texttt{train()} and \texttt{predict()} methods. The \texttt{Layer} class is specialized by \texttt{Dense}, \texttt{Linear} and activation layers. The \texttt{Dense} class implements a fully-connected layer, while \texttt{Linear} implements a fully-connected layer with identity as (implicit) activation.
-The optimizer provided is the standard \texttt{SGD} with momentum, while \texttt{L1}, \texttt{L2} and \texttt{L1L2} techniques are available for regularization. Provided losses are \texttt{MSE} and \texttt{Cross Entropy}. Training can be done either in batch, online or minibatch mode by using the \texttt{DataLoader} class. Weights initialization is available with Normal and Uniform distribution and with fan-in and fan-out techniques.
+The optimizer provided is the standard \texttt{SGD} with momentum, while \texttt{L1}, \texttt{L2} and \texttt{L1L2} techniques are available for regularization. Provided losses are \texttt{MSE} and \texttt{Cross Entropy}. Training can be done either in batch, online or minibatch mode by using the \texttt{DataLoader} class. Weights initialization is available with Normal and Uniform distribution.
 
 \paragraph{}
 
@@ -21,19 +21,15 @@ The framework provides a system of metrics and callbacks for customizing behavio
 
 \paragraph{}
 
-% che stai facendo?
-Finally, the base classes \texttt{BaseSearch} and \texttt{Validator} define the base structure for search strategies and validation techniques and are sub-classed by \texttt{GridSearch}, \texttt{FixedCombSearch}, \texttt{Holdout} and \texttt{KFold}. Search can be done in parallel by using up to all the available cores.
-
-%preprocessing? one-hot?
+Finally, the base classes \texttt{BaseSearch} and \texttt{Validator} define the base structure for search strategies and validation techniques and are sub-classed by \texttt{GridSearch}, \texttt{Holdout} and \texttt{KFold}. Search can be done in parallel by using up to all the available cores.
 
 \subsection{Validation Schema}
-At first, we divided the whole CUP dataset into a \textbf{Development Set ($90\%$)} and an \textbf{Internal Test Set ($10\%$)} to be used for testing the final model. 
+At first, we divided the whole CUP dataset into a \textbf{Development Set ($90\%$)} and an \textbf{Internal Test Set ($10\%$)} to be used for testing the final model. We conducted some preliminary trials with several architectures and hyperparameters for excluding irrelevant / under-performing ones.
 
-We conducted some preliminary trials using Early Stopping to find the useful range for our hyperparameters.
+After that, we performed several exhaustive \textbf{coarse-grained Grid Searches} with large steps and \textbf{3-fold cross validation} technique for finding good intervals for the hyperparameters through observation of the average performance of each one in this first Grid Search.
+In particular, we first ranked all the configurations according to their average validation MEE over all the folds and then we calculated a score for each hyperparameter as an heuristic for choosing which intervals to consider.
 
-We performed an exhaustive Grid Search accross the previously selected ranges, evaluating each model with an Holdout. 
-
-We then picked up the best $25\%$ configurations and performed a \textbf{5-fold cross validation} on all of them, to get a more accurate evaluation. 
+After that, we performed an exhaustive \textbf{finer-grained Grid Search} on the selected intervals or values with a \textbf{4-fold cross validation technique} and we ranked the configurations accordingly to their average Validation MEE over all the folds.
 
 Finally, we selected the best model as our final model, trained it on the whole development set and used it for predicting outputs for the blind test set.
 
@@ -41,7 +37,9 @@ Finally, we selected the best model as our final model, trained it on the whole 
 \label{subsection:preliminary_trials}
 Monks started working with $100\%$ accuracy immediately after adopting one-hot encoding for representing the inputs, we had just to pay some attention to regularization for the third dataset.
 
-For CUP dataset, instead, we needed to perform several preliminary trials to figure out the best intervals for the hyperparameters and for discarding under-performing values. We decided to use Early Stopping with the same train-validation split used later in the Grid Search for the Holdout. The results are later explained in the Experiments section.
+For CUP dataset, instead, we needed to perform several preliminary trials to figure out the best intervals for the hyperparameters and for discarding under-performing values. We tested several orders of magnitude for initial learning rates, learning rate decay, weights initialization, (mini)batch size and maximum number of epochs. The results are later explained in the Experiments section.
+
+% TODO: Fare i test (con grafici!) su 3-fold cv per essere consistenti!
 
 %%% Local Variables:
 %%% mode: latex
