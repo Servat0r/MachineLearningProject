@@ -17,10 +17,10 @@ For MONK 3, we observed that without regularization there is overfitting in all 
     \begin{tabular}{|c|c|c|c|c|}
         \hline 
         Task & $\eta$ & $\lambda$ & MSE (train/test) & Accuracy (train/test) \\ \hline
-        MONK 1 & 0.5 & 0 & 0.00084/0.00129  & 100\%/100\% \\ \hline
-        MONK 2 & 0.2 & 0 & 0.00063/0.00072 & 100\%/100\% \\ \hline
-        MONK 3 (no regularization) & 0.02 & 0 & 0.05049/0.04242 & 94.26\%/96.06\% \\ \hline
-        MONK 3 (regularization) & 0.02 & $10^{-4}$ & 0.06776/0.05198 & 93.44\%/97.22\% \\ \hline
+        MONK 1 & 0.5 & 0 & 0.00084/0.00128  & 100\%/100\% \\ \hline
+        MONK 2 & 0.2 & 0 & 0.00062/0.00073 & 100\%/100\% \\ \hline
+        MONK 3 (no regularization) & 0.02 & 0 & 0.05048/0.04236 & 94.26\%/96.06\% \\ \hline
+        MONK 3 (regularization) & 0.02 & $10^{-4}$ & 0.06781/0.05215 & 93.44\%/97.22\% \\ \hline
     \end{tabular}
     \caption{Performance results on MONK datasets}
     \label{fig:hyper}
@@ -76,6 +76,7 @@ and we fixed uniform distribution in the range $[-0.7, 0.7]$ for weights initial
 \subsubsection{Grid search}
 
 At first, we conducted a coarse-grained Grid Search over $1296$ possible configurations with large steps for hyperparameters whose purpose was to figure out best intervals or values for the hyperparameters inside the possible values or orders of magnitude we selected after preliminary trials. This first Grid Search uses \textbf{3-fold cross validation} on the Development Set for evaluating configurations and was performed exhaustively among the following hyperparameters:
+
 \begin{itemize}
     \item \textbf{Architecture (hidden units)}: {$32-16$, $16-16$, $16-8$};
     \item \textbf{Activation functions (for hidden layers)}: {\texttt{tanh-tanh}, \texttt{tanh-sigmoid}, \texttt{sigmoid-tanh}, \texttt{sigmoid-sigmoid}};

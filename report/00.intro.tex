@@ -2,13 +2,15 @@
 
 The project consists in the implementation and testing from scratch of a framework for building Artificial Neural Networks with backpropagation algorithm for both classification and regression problems, providing the essential building blocks for defining the structure of a network, loss functions, optimizers, metrics to monitor performances and callbacks. Our objective was to find the best model for both MONK \cite{Thrun1991TheMP} and ML-CUP22 tasks by using 3-fold validation technique with several first coarse-grained Grid Searches to figure out good intervals for hyperparameters, followed by a finer-grained Grid Search on these intervals with 4-fold cross validation. The most performing model after this search is then used to predict outputs for the blind test set.
 
+For installation and usage see the file \texttt{README.md} in the project package.
+
 \section{Method}
 
 \subsection{Code}
 
-The framework has been implemented in Python using \texttt{numpy} for the computational part, some minor utilities from \texttt{sklearn} and \texttt{pandas} and the \texttt{pickle} library for serialization; \texttt{tensorflow} is used in several tests for comparing our results with an industry-standard tool.
-Finally, the \texttt{typer} library is used to build a command-line interface.
-For our implementation, we took inspiration from both \texttt{Tensorflow} and \texttt{PyTorch} frameworks, and in particular from \texttt{keras} API for its clarity, modularity, ease of use and for faster prototyping and comparisons.
+The framework has been implemented in Python using \texttt{numpy} (https://numpy.org/) for the computational part, some minor utilities from \texttt{sklearn} and \texttt{pandas} and the \texttt{pickle} library for serialization; \texttt{tensorflow} is used in several tests for comparing our results with an industry-standard tool.
+Finally, the \texttt{typer} (https://typer.tiangolo.com/) library is used to build a command-line interface.
+For our implementation, we took inspiration from both \texttt{Tensorflow} and \texttt{PyTorch} frameworks, and in particular from \texttt{keras} API for its clarity, modularity, ease of use and for faster prototyping and comparisons (https://keras.io/api/).
 
 \paragraph{}
 
