@@ -46,12 +46,13 @@
   The aim of this report is to illustrate the implementation and testing of a framework for creation and usage of basic Neural Networks.
   We have implemented this framework in Python by exploiting the NumPy numerical library, with a focus on modularity and extensibility of the code.
   We have used the MONK and the ML-CUP22 datasets for testing this framework against respectively classification and regression problems.
-  Model selection is implemented as a Grid Search with Holdout validation followed by a sequential search on the best models with K-fold validation.
+  Model selection is implemented by using 3-fold validation technique on several initial coarse-grained Grid Searches to find good regions for hyperparameters,
+  followed by a finer Grid Search on these regions with 4-fold cross validation.
+
 \end{abstract}
 
 \input{00.intro}
 \input{01.experiments}
 \input{02.conclusions}
 
-\noindent Note: please \textbf{do not} use footnotes in your report!
 \end{document}
