@@ -2,22 +2,25 @@
 
 \subsection{Monk Results}
 
-For all MONK problems, we adopted one-hot encoding for representing the inputs, so we used neural networks with $17$ input units. We used $1$ hidden layer with $4$ units for the first two problems and $15$ for the last one. For what concerns activation functions, we used \texttt{tanh} for the hidden layer, and \texttt{sigmoid} for the output layer to get outputs in the $[0, 1]$ range.
+For all MONK problems, we adopted one-hot encoding for representing the inputs, so we used neural networks with $17$ input units. We used $1$ hidden layer with $4$ units for the first two problems and $5$ for the last one. For what concerns activation functions, we used \texttt{tanh} for the hidden layer, and \texttt{sigmoid} for the output layer to get outputs in the $[0, 1]$ range.
 
 We chose \texttt{MSE} as the loss function over the "raw" output of the \texttt{sigmoid} in order to have differentiability, and instead for predictions every input is classified as $1$ if the output of the \texttt{sigmoid} is $\ge 0.5$ and $0$ otherwise.
 
-We used mini-batch gradient descent with $\texttt{batch\_size}=2$ for all Monk problems, and L2 regularization for Monk3.
+We used mini-batch gradient descent with $\texttt{batch\_size} = 4$ for the first Monk problem and $2$ for the others, and L2 regularization for Monk3.
 
 Our choice of hyper-parameters is shown in \cref{fig:hyper} below, along with the performance averaged over $5$ different runs to avoid the bias due to weights initialization.
 
+For MONK 3, we observed that without regularization there is overfitting in all the $5$ runs, so we needed to introduce a regularization penalty (L2) of $10^{-4}$.
+
 \begin{figure}[h]
     \centering
-    \begin{tabular}{|l|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|c|}
         \hline 
         Task & $\eta$ & $\lambda$ & Loss (train/test) & Accuracy (train/test) \\ \hline
-        MONK 1 & 0.5 & 0 & 0.00039/0.00047  & 100\%/100\% \\ \hline
-        MONK 2 & 0.1 & 0 & 0.00223/0.00261 & 100\%/100\% \\ \hline
-        MONK 3 & 0.01 & $10^{-5}$ & 0.06075/0.04557 & 93.44\%/97.22\% \\ \hline
+        MONK 1 & 0.5 & 0 & 0.00084/0.00129  & 100\%/100\% \\ \hline
+        MONK 2 & 0.2 & 0 & 0.00063/0.00072 & 100\%/100\% \\ \hline
+        MONK 3 (no regularization) & 0.02 & 0 & 0.05049/0.04242 & 94.26\%/96.06\% \\ \hline
+        MONK 3 (regularization) & 0.02 & $10^{-4}$ & 0.06776/0.05198 & 93.44\%/97.22\% \\ \hline
     \end{tabular}
     \caption{Performance results on MONK datasets}
     \label{fig:hyper}
@@ -41,9 +44,17 @@ Our choice of hyper-parameters is shown in \cref{fig:hyper} below, along with th
 
 \begin{figure}
     \centering
-    \subfloat[Loss]{\includegraphics[width=0.5\textwidth]{../results/monks/monk3_losses.png}}
-    \subfloat[Accuracy]{\includegraphics[width=0.5\textwidth]{../results/monks/monk3_accuracy.png}}
-    \caption{Loss and accuracy of MONK 3}
+    \subfloat[Loss]{\includegraphics[width=0.5\textwidth]{../results/monks/monk3_noregularization_losses.png}}
+    \subfloat[Accuracy]{\includegraphics[width=0.5\textwidth]{../results/monks/monk3_noregularization_accuracy.png}}
+    \caption{Loss and accuracy of MONK 3 without regularization.}
+    \label{fig:monk3_no_reg}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \subfloat[Loss]{\includegraphics[width=0.5\textwidth]{../results/monks/monk3_regularization_losses.png}}
+    \subfloat[Accuracy]{\includegraphics[width=0.5\textwidth]{../results/monks/monk3_regularization_accuracy.png}}
+    \caption{Loss and accuracy of MONK 3 with L2 regularization.}
     \label{fig:monk3}
 \end{figure}
 
@@ -117,10 +128,10 @@ As before, we ranked all the configurations according to their average Validatio
 \end{table}
 
 \subsubsection{Computing time and hardware}
-The two coarse-grained searches cumulatively took $22$ minutes to complete, while the second one took $57$ minutes using an Intel Core i7-10870H @ 2.00 GHz (16 logical CPUs). We used the \texttt{joblib} library for parallelizing the search by using a pool of $16$ worker processes. The average time requested for a training cycle of a model during the grid search is between $3$ and $5$ seconds for the three different architectures, which is slightly higher than the time needed for a full training of the final chosen model, which is about $3.08$ seconds.
+The two coarse-grained searches cumulatively took $22$ minutes to complete, while the second one took $57$ minutes using an Intel Core i7-10870H @ 2.00 GHz (16 logical CPUs). We used the \texttt{joblib} library for parallelizing the search by using a pool of $16$ worker processes. The average time requested for a training cycle of a model during the grid search is between $3$ and $5$ seconds for the three different architectures, which is slightly higher than the time needed for a full training of the final chosen model, which is about $3.2$ seconds.
 
 \subsubsection{Chosen model}
-We finally chose the model that performed best on the validation set, which has the following hyperparameters and training and test errors (MEE) after a full training on the whole development set, which took $3.08$ seconds.
+We finally chose the model that performed best on the validation set, which has the following hyperparameters and training and test errors (MEE) after a full training on the whole development set, which took $3.2$ seconds.
 
 \todo{Use another run (this is clearly overfitting!)}
 \begin{table}[htb]
@@ -129,22 +140,22 @@ We finally chose the model that performed best on the validation set, which has 
     \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
         \hline
         Architecture & Activation & Learning Rate & Momentum & Lambda & Decay & Error TR (MEE) & Error TS (MEE) \\ \hline
-        $32-16$ & \texttt{tanh} & $0.005$ & $0.8$ & $6e-6$ & linear $0.1$ & $1.2601$ & $1.4090$ \\ \hline
+        $32-16$ & \texttt{tanh} & $0.005$ & $0.8$ & $6e-6$ & linear $0.1$ & $1.2369$ & $1.4401$ \\ \hline
     \end{tabular}
     }
     \caption{Hyperparameters and training and test error of the chosen model after a full training on the whole development set}
     \label{table:final_train_results}
 \end{table}
-We achieved a MEE of $1.409$ on our internal test set, and we estimate the performance on the blind test set as being near to that value.
+We achieved a MEE of $1.4401$ on our internal test set, and we estimate the performance on the blind test set as being near to that value.
 
-We can see the learning curve for loss (MSE) and MEE in \cref{fig:typeA} below.
+We can see the learning curve for loss (MSE) and MEE in \cref{fig:cup_plots} below.
 
-\todo{Add correct plots!}
 \begin{figure}[h]
     \centering
     \subfloat[Loss\label{fig:cup_loss}]{\includegraphics[width=0.55\textwidth]{../results/cup_loss.png}}
     \subfloat[MEE\label{fig:cup_MEE}]{\includegraphics[width=0.55\textwidth]{../results/cup_MEE.png}}
     \caption{Learning curves for CUP network}
+    \label{fig:cup_plots}
 \end{figure}
 
 
